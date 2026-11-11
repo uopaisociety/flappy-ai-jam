@@ -122,7 +122,10 @@
   </main>
   <footer><div class="wrap"><span>University of Portsmouth AI Society</span><a href="https://github.com/uopaisociety/flappy-ai-jam">Jam repository</a></div></footer>
   <dialog id="player" aria-labelledby="player-title">
-    <div class="dialog-bar"><span class="meta">BUILD PREVIEW</span><form method="dialog"><button>Close</button></form></div>
+    <div class="dialog-bar">
+      <a class="action primary" id="open-game" target="_blank" rel="noopener noreferrer">Open game in new tab</a>
+      <form method="dialog"><button>Close</button></form>
+    </div>
     <div class="dialog-grid">
       <div class="frame-box" id="frame-box">
         <p class="frame-message" id="frame-message" role="status">Loading build…</p>
@@ -131,7 +134,6 @@
         <h2 id="player-title"></h2>
         <p id="player-builder" class="byline"></p>
         <p id="player-controls"></p>
-        <a class="action primary" id="standalone" target="_blank" rel="noopener noreferrer" hidden>Open standalone</a>
         <a class="action" id="source" target="_blank" rel="noopener noreferrer">Fork / View Source</a>
         <button type="button" id="copy">Copy direct share link</button>
         <input id="share-url" aria-label="Direct share link" type="url" readonly hidden>
@@ -152,7 +154,7 @@
   const curated = new Map([
     ["baseline", { path: "index.html", controls: "Use Space, the up arrow or tap to thrust." }],
     ["01-neural-autopilot", { path: "examples/01-neural-autopilot.html", controls: "Press A or select Autopilot to start the trajectory solver." }],
-    ["02-voice-frequency-thruster", { path: "examples/02-voice-frequency-thruster.html", controls: "The preview supports Space and tap. Open the standalone game for microphone controls." }],
+    ["02-voice-frequency-thruster", { path: "examples/02-voice-frequency-thruster.html", controls: "The preview supports Space and tap. Open the game in a new tab for microphone controls." }],
     ["03-overclock-boss-protocol", { path: "examples/03-overclock-boss-protocol.html", controls: "Press Shift to dash. Choose Boss practice to jump straight to the encounter." }],
   ]);
   const handlePattern = /^[a-z0-9](?:[a-z0-9-]{0,37}[a-z0-9])?$/i;
@@ -166,7 +168,6 @@
   let builds = [];
   let filter = "all";
   let frame;
-  let launchRequest;
   let active;
   let loaded = false;
 
@@ -243,6 +244,18 @@
     return canvas;
   }
 
+  function publicGameUrl(value) {
+    if (typeof value !== "string" || value.length > 2048 || /[\s<>\\\x00-\x1f\x7f]/u.test(value)) return "";
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" && !url.username && !url.password && !url.port
+        && /^[a-z0-9.-]+\.[a-z][a-z0-9-]*$/.test(url.hostname)
+        && !url.hostname.endsWith(".localhost") && !url.hostname.endsWith(".local") ? url.href : "";
+    } catch {
+      return "";
+    }
+  }
+
   function validBuild(build) {
     if (!build || typeof build.id !== "string" || !handlePattern.test(build.id)
       || typeof build.title !== "string" || !build.title
@@ -250,7 +263,9 @@
       || typeof build.github !== "string" || !handlePattern.test(build.github)
       || !Object.hasOwn(tracks, build.track)) return false;
     const expectedKind = build.id === "baseline" ? "baseline" : curated.has(build.id) ? "reference" : "submission";
-    return build.kind === expectedKind && (expectedKind !== "submission" || build.id === build.github.toLowerCase());
+    return build.kind === expectedKind && (expectedKind !== "submission" ||
+      (build.id === build.github.toLowerCase() && Boolean(publicGameUrl(build.url)) &&
+        Number.isSafeInteger(build.issue) && build.issue > 0));
   }
 
   function card(build) {
@@ -288,7 +303,7 @@
     const launch = element("button", "Launch Build", "action primary launch");
     launch.type = "button";
     launch.setAttribute("aria-label", "Launch " + build.title);
-    launch.addEventListener("click", () => { void launchBuild(build); });
+    launch.addEventListener("click", () => launchBuild(build));
     body.append(launch);
     result.append(renderArtwork(build), body);
     return result;
@@ -317,10 +332,7 @@
     frameBox.style.setProperty("--frame-scale", String(frameBox.clientWidth / 480));
   }
 
-  async function launchBuild(build) {
-    launchRequest?.abort();
-    launchRequest = new AbortController();
-    const { signal } = launchRequest;
+  function launchBuild(build) {
     frame?.remove();
     frame = null;
     active = build;
@@ -330,14 +342,14 @@
     byId("copy-status").textContent = "";
     byId("share-url").hidden = true;
     const known = curated.get(build.id);
-    const path = known?.path ?? "submissions/" + build.id + ".html";
-    byId("source").href = repository + "/blob/main/" + path;
-    byId("standalone").hidden = !known;
-    if (known) byId("standalone").href = path;
-    else byId("standalone").removeAttribute("href");
-    byId("player-controls").textContent = known?.controls ?? "Click inside the game to give it keyboard focus.";
+    const gameUrl = known?.path ?? publicGameUrl(build.url);
+    const source = byId("source");
+    source.href = known ? repository + "/blob/main/" + known.path : repository + "/issues/" + build.issue;
+    source.textContent = known ? "Fork / View Source" : "View submission";
+    byId("open-game").href = gameUrl;
+    byId("player-controls").textContent = known?.controls ??
+      "If the preview is blocked or the controls do not respond, open the game in a new tab.";
     frameMessage.hidden = false;
-    frameMessage.textContent = "Loading build…";
     if (!dialog.open) dialog.showModal();
     resizeFrame();
 
@@ -348,32 +360,13 @@
     preview.setAttribute("sandbox", "allow-scripts");
     preview.setAttribute("allow", "microphone 'none'; camera 'none'");
     preview.referrerPolicy = "no-referrer";
-    if (known) {
-      preview.src = path;
-    } else {
-      try {
-        const response = await fetch("submissions/" + build.id + ".txt", { cache: "no-cache", signal });
-        if (!response.ok) throw new Error("Build unavailable");
-        const source = await response.text();
-        if (signal.aborted) return;
-        // Start in an opaque origin and keep the untrusted, single-file game
-        // offline. The policy comes before any user markup or scripts.
-        const policy = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; " +
-          "img-src data: blob:; media-src data: blob:; font-src data:; base-uri 'none'; form-action 'none'";
-        preview.srcdoc = '<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="' +
-          policy + '">' + source.replace(/^\s*<!doctype\s+html\s*>/i, "");
-      } catch {
-        if (!signal.aborted) frameMessage.textContent = "This build could not be loaded. Use View Source or try again.";
-        return;
-      }
-    }
+    preview.src = gameUrl;
     preview.addEventListener("load", () => { if (frame === preview) frameMessage.hidden = true; });
     frame = preview;
     frameBox.append(preview);
   }
 
   dialog.addEventListener("close", () => {
-    launchRequest?.abort();
     frame?.remove();
     frame = active = null;
     history.replaceState(null, "", directLink(null));
@@ -422,7 +415,7 @@
       render();
       const selected = new URLSearchParams(location.search).get("build");
       const build = builds.find((entry) => entry.id === selected);
-      if (build) void launchBuild(build);
+      if (build) launchBuild(build);
       else if (selected) {
         const message = byId("message");
         message.textContent = "That build is not in the gallery.";

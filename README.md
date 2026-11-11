@@ -32,7 +32,7 @@ Nothing to install, and no local server. Gemini Canvas can run the file, and so 
 
 This is the way to enter if you have never used git. Everything happens in the browser. No terminal.
 
-Use the [GitHub submission form](#submission-and-judging) to enter the gallery by pasting your finished HTML. The optional Star and Fork route below gives you a public project and a game link of your own.
+Use the [GitHub submission form](#submission-and-judging) to enter the gallery with a public game link. The optional Star and Fork route below gives you a public project and a game link of your own.
 
 1. **Sign up or sign in.** Open [github.com/signup](https://github.com/signup) or [github.com/login](https://github.com/login). The buttons say **Sign up** and **Sign in**.
 2. **Star.** On this page, click **Star** at the top right.
@@ -170,9 +170,9 @@ Fix only that bug, keep every feature, and return the FULL working index.html.
 
 ## Submission and judging
 
-Open [Submit Your Build](https://github.com/uopaisociety/flappy-ai-jam/issues/new?template=submit-build.yml) while signed in to GitHub. Enter your build title, builder name, track and key prompt, then paste your full `index.html`. LinkedIn and Gemini Canvas links are optional. A maintainer reviews the issue and applies `approved`. Once Pages finishes deploying, the bot replies with your playable gallery link. You can also use the submission form displayed at the jam if you are entering without GitHub.
+Open [Submit Your Build](https://github.com/uopaisociety/flappy-ai-jam/issues/new?template=submit-build.yml) while signed in to GitHub. Enter your build title, builder name, track and key prompt, then paste the public link to your game. A GitHub Pages URL, Gemini Canvas share link or another public HTTPS game link works. LinkedIn is optional. A maintainer reviews the issue and applies `approved`. Once Pages finishes deploying, the bot replies with your playable gallery link. You can also use the submission form displayed at the jam if you are entering without GitHub.
 
-Your issue, HTML and key prompt will be public. Keep CSS, JavaScript and assets inside the HTML and under 60,000 characters. For an updated build, submit a new issue. The newest approved issue per GitHub account owns that account’s gallery link.
+Your issue, game link and key prompt will be public. Keep your game and any assets on the host you chose. If the gallery preview is blocked, select **Open game in new tab**. For an updated build, submit a new issue. The newest approved issue per GitHub account owns that account’s gallery link.
 
 | Category | What it rewards | How we judge it |
 | --- | --- | --- |
@@ -193,10 +193,10 @@ Open the [live gallery](https://uopaisociety.github.io/flappy-ai-jam/showcase.ht
 ### Maintainer setup
 
 1. In **Settings → Pages → Source**, choose **GitHub Actions**, then run **Publish Jam Showcase** from the Actions tab on `main`. The workflow creates the `submission` and `approved` labels and deploys the seed gallery.
-2. Review submissions and apply `approved` when ready. The workflow accepts approvals from accounts with repository write access. If a student edits an issue before publication, review it and reapply the label. If the job fails, fix the cause and rerun it or reapply approval.
+2. Open each submission link, check that the game is public and playable, then apply `approved`. The workflow accepts approvals from accounts with repository write access. If a student edits an issue before publication, review it and reapply the label. If the job fails, fix the cause and rerun it or reapply approval.
 3. After judging, set `"winner": true` on the relevant entries in `submissions/manifest.json` and merge the changes. Those entries appear in **Event Winners**.
 
-The workflow stages student HTML as text for Pages. The gallery runs it in a sandboxed iframe with a policy that blocks external assets and fetches. Keep the Pages source on **GitHub Actions** so repository files cannot bypass that packaging step.
+The workflow writes each approved game link and its details to the manifest. The gallery previews hosted games in a sandbox and offers a separate tab for hosts that block embeds.
 
 ## About the society
 

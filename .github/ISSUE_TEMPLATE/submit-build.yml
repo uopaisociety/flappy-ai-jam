@@ -5,7 +5,7 @@ labels: ["submission"]
 body:
   - type: markdown
     attributes:
-      value: Paste the complete single-file game. Issues and approved builds are public. The gallery plays inline scripts and assets embedded in the HTML.
+      value: Share a public link that opens your game. GitHub Pages, Gemini Canvas, and other public HTTPS hosts are welcome. Issues and approved builds are public.
   - type: input
     id: title
     attributes:
@@ -44,15 +44,10 @@ body:
     validations:
       required: true
   - type: input
-    id: gemini
+    id: game_url
     attributes:
-      label: Gemini Canvas Share URL (optional)
-      placeholder: https://gemini.google.com/share/...
-  - type: textarea
-    id: html
-    attributes:
-      label: Full index.html Code
-      description: Paste the complete HTML file. Keep CSS, JavaScript and assets inline and keep the code below 60,000 characters.
-      render: html
+      label: Game URL
+      description: Paste the link people use to open your game.
+      placeholder: https://your-name.github.io/flappy-ai-jam/
     validations:
       required: true
