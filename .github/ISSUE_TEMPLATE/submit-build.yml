@@ -1,0 +1,58 @@
+name: Submit Your Build
+description: Add your Flappy AI Jam game to the playable gallery.
+title: "[Submission] "
+labels: ["submission"]
+body:
+  - type: markdown
+    attributes:
+      value: Paste the complete single-file game. Issues and approved builds are public. The gallery plays inline scripts and assets embedded in the HTML.
+  - type: input
+    id: title
+    attributes:
+      label: Build Title
+      placeholder: Flappy Seagull
+    validations:
+      required: true
+  - type: input
+    id: builder
+    attributes:
+      label: Builder Name
+      placeholder: Your name or team name
+    validations:
+      required: true
+  - type: input
+    id: linkedin
+    attributes:
+      label: LinkedIn URL (optional)
+      placeholder: https://www.linkedin.com/in/your-name/
+  - type: dropdown
+    id: track
+    attributes:
+      label: Track
+      options:
+        - Technical Execution
+        - Game Feel
+        - Creative Mutation
+      default: 0
+    validations:
+      required: true
+  - type: textarea
+    id: prompt
+    attributes:
+      label: Key Prompt Used
+      description: Paste the exact one or two sentences you used to make your main change.
+    validations:
+      required: true
+  - type: input
+    id: gemini
+    attributes:
+      label: Gemini Canvas Share URL (optional)
+      placeholder: https://gemini.google.com/share/...
+  - type: textarea
+    id: html
+    attributes:
+      label: Full index.html Code
+      description: Paste the complete HTML file. Keep CSS, JavaScript and assets inline and keep the code below 60,000 characters.
+      render: html
+    validations:
+      required: true

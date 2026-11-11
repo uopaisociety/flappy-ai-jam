@@ -1,0 +1,110 @@
+name: Publish Jam Showcase
+
+on:
+  issues:
+    types: [labeled]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: flappy-ai-jam-pages
+  queue: max
+
+jobs:
+  stage:
+    if: github.ref == 'refs/heads/main' && (github.event_name != 'issues' || github.event.label.name == 'approved')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pages: read
+    outputs:
+      issue: ${{ steps.submission.outputs.issue }}
+      build: ${{ steps.submission.outputs.build }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+      - name: Ensure form and approval labels exist
+        if: github.event_name != 'issues'
+        run: |
+          set -euo pipefail
+          labels=$(gh label list --limit 1000 --json name --jq '.[].name')
+          if ! grep -Fxq submission <<< "$labels"; then
+            gh label create submission --color 073B5C --description 'Flappy AI Jam gallery submission'
+          fi
+          if ! grep -Fxq approved <<< "$labels"; then
+            gh label create approved --color A7BFB4 --description 'Reviewed for publication in the Flappy AI Jam gallery'
+          fi
+      - name: Require GitHub Actions as the Pages source
+        run: |
+          set -euo pipefail
+          build_type=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .build_type)
+          if [[ "$build_type" != workflow ]]; then
+            echo '::error::Select GitHub Actions in Settings → Pages before publishing submissions.'
+            exit 1
+          fi
+      - name: Publish approved issue snapshot
+        if: github.event_name == 'issues'
+        id: submission
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3; do
+            python3 .github/scripts/publish_submission.py
+            git add -- submissions/
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m 'chore: publish approved jam submission'
+            if git push origin HEAD:main; then exit 0; fi
+            if [[ "$attempt" == 3 ]]; then exit 1; fi
+            git fetch origin main
+            git reset --hard FETCH_HEAD
+          done
+      - name: Stage approved gallery files
+        run: python3 .github/scripts/stage_pages.py "$RUNNER_TEMP/jam-pages"
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: ${{ runner.temp }}/jam-pages
+
+  deploy:
+    needs: stage
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.pages.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+        id: pages
+
+  notify:
+    needs: [stage, deploy]
+    if: needs.stage.outputs.issue != ''
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE: ${{ needs.stage.outputs.issue }}
+      BUILD: ${{ needs.stage.outputs.build }}
+      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+    steps:
+      - name: Post the live gallery link
+        run: |
+          set -euo pipefail
+          marker='<!-- flappy-ai-jam:published -->'
+          endpoint="repos/$GITHUB_REPOSITORY/issues/$ISSUE/comments"
+          posted=$(gh api --paginate "$endpoint" --jq '.[] | select(.user.login == "github-actions[bot]") | .body')
+          if grep -Fq "$marker" <<< "$posted"; then exit 0; fi
+          printf 'Your build is live: %s/showcase.html?build=%s\n\n%s\n' "${PAGE_URL%/}" "$BUILD" "$marker" |
+            gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body-file -

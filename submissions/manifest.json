@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "builds": [
+    {
+      "id": "baseline",
+      "kind": "baseline",
+      "title": "Flappy AI Jam Starter",
+      "builder": "University of Portsmouth AI Society",
+      "github": "uopaisociety",
+      "track": "technical-execution",
+      "description": "The starting point for every build. Flap through the gates and beat your best score.",
+      "prompt": null
+    },
+    {
+      "id": "01-neural-autopilot",
+      "kind": "reference",
+      "title": "Autonomous Trajectory Solver",
+      "builder": "University of Portsmouth AI Society",
+      "github": "uopaisociety",
+      "track": "technical-execution",
+      "description": "Watch the drone plan a safe path through moving gates and commit to each thrust.",
+      "prompt": "Add an A-key autopilot that plans flap-or-coast decisions using the existing fixed-step physics. Draw its predicted flight path, the target gate, and a ray showing the remaining distance to the gate."
+    },
+    {
+      "id": "02-voice-frequency-thruster",
+      "kind": "reference",
+      "title": "Acoustic Pitch Controller",
+      "builder": "University of Portsmouth AI Society",
+      "github": "uopaisociety",
+      "track": "game-feel",
+      "description": "Thrust with a short voice pulse or whistle while the arena displays the live spectrum.",
+      "prompt": "Use the browser microphone locally to trigger thrust from short voice pulses or high whistles. Draw a 64-band spectrum behind the gates and keep Space and tap working when the mic is unavailable."
+    },
+    {
+      "id": "03-overclock-boss-protocol",
+      "kind": "reference",
+      "title": "Overclock Boss Protocol",
+      "builder": "University of Portsmouth AI Society",
+      "github": "uopaisociety",
+      "track": "creative-mutation",
+      "description": "Dash through projectile patterns in a boss encounter that starts every ten gates.",
+      "prompt": "Add a short Shift dash with a cooldown, screen shake, and a directional particle burst. Every ten gates, pause the pipe stream, warn the player, then spawn a Firewall Core that alternates projectile patterns."
+    }
+  ]
+}
