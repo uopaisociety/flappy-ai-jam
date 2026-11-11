@@ -1,0 +1,1386 @@
+<!doctype html>
+<!--
+  Protocol: Aero · University of Portsmouth AI Society
+  Open this file directly, or paste the entire file into Gemini Canvas.
+  The AI PROMPT ZONE labels mark safe starting points for jam changes.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#091722">
+<title>Autonomous Trajectory Solver · Flappy AI Jam</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23091722'/%3E%3Cpath d='M5 21l11-12 11 12-11-3z' fill='white'/%3E%3C/svg%3E">
+<style>
+  /* AI PROMPT ZONE: BRAND. Canvas reads these same values through BRAND_TOKENS. */
+  :root {
+    --navy: #073B5C;
+    --cream: #F7F5F0;
+    --sand: #E8D9B9;
+    --sage: #A7BFB4;
+    --gold: #D7BF78;
+    --sea: #287D9B;
+    --ink: #091722;
+    --panel: #112532;
+    --muted: #a6bdc6;
+    --line: #304652;
+    --warning: #ffa59a;
+    --mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    min-height: 100svh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    background: radial-gradient(ellipse at 66% 42%, #132c3a, var(--ink) 64%);
+    color: var(--cream);
+    font: 1rem/1.5 system-ui, sans-serif;
+  }
+  button { font: inherit; cursor: pointer; touch-action: manipulation; }
+  button:focus-visible, canvas:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 4px;
+  }
+  .shell-header, .shell-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px 22px;
+    padding: 12px max(20px, calc((100% - 1100px) / 2));
+    background: var(--ink);
+  }
+  .shell-header { border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .shell-footer { border-top: 1px solid var(--line); }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font: 700 .68rem/1.5 var(--mono);
+    letter-spacing: .075em;
+  }
+  .brand svg { color: var(--gold); flex: none; }
+  .brand span { color: var(--muted); }
+  .telemetry { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; }
+  .pill {
+    display: flex;
+    align-items: baseline;
+    gap: .55em;
+    padding: 4px 7px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--panel);
+    color: var(--muted);
+    font: 650 .62rem/1.35 var(--mono);
+    letter-spacing: .025em;
+    white-space: nowrap;
+  }
+  .pill dd { margin: 0; color: var(--cream); font-variant-numeric: tabular-nums; }
+  #telemetry-state { color: var(--sage); min-width: 7ch; }
+  #telemetry-fps, #telemetry-score, #telemetry-record { min-width: 3ch; }
+  body[data-phase="BREACH"] #telemetry-state { color: var(--warning); }
+
+  main {
+    width: min(100% - 40px, 840px);
+    margin: auto;
+    padding: 22px 0;
+    display: grid;
+    grid-template-columns: minmax(220px, .85fr) minmax(0, 1.35fr);
+    align-items: center;
+    gap: clamp(28px, 6vw, 84px);
+  }
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0 0 14px;
+    color: var(--sage);
+    font: 700 .69rem/1.45 var(--mono);
+    letter-spacing: .12em;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border: 1px solid var(--sage);
+    transform: rotate(45deg);
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(3rem, 6.1vw, 5.1rem);
+    font-weight: 780;
+    letter-spacing: -.075em;
+    line-height: .91;
+  }
+  h1 span { display: block; color: var(--gold); }
+  .brief { max-width: 27ch; color: var(--muted); margin: 20px 0 22px; }
+  .control-guide {
+    width: fit-content;
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 14px 0 0;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font: .72rem/1.55 var(--mono);
+    list-style: none;
+  }
+  kbd {
+    padding: 2px 5px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: var(--panel);
+    color: var(--cream);
+    font: inherit;
+  }
+  .stage {
+    position: relative;
+    justify-self: center;
+    width: min(100%, 480px, max(330px, calc((100svh - 156px) * .75)));
+    aspect-ratio: 3 / 4;
+    isolation: isolate;
+    border-radius: 14px;
+    background: var(--navy);
+    box-shadow: 0 16px 55px #0006, 0 0 0 1px var(--line);
+  }
+  canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    touch-action: none;
+  }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 15px;
+    border-radius: inherit;
+    background: #06141c72;
+    touch-action: manipulation;
+  }
+  .dialogue {
+    width: min(100%, 296px);
+    padding: clamp(16px, 3.4vw, 27px);
+    border: 1px solid #506972;
+    border-radius: 9px;
+    border-top: 2px solid var(--gold);
+    background: #0b1c27f7;
+    box-shadow: 0 10px 40px #0006;
+  }
+  .dialogue .eyebrow { margin-bottom: 8px; color: var(--gold); }
+  .dialogue .eyebrow::before { display: none; }
+  h2 { margin: 0; font-size: clamp(1.25rem, 4vw, 1.7rem); letter-spacing: -.035em; line-height: 1.12; }
+  .dialogue p:not(.eyebrow) { margin: 9px 0 17px; color: var(--muted); font-size: .86rem; }
+  .primary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 4px;
+    background: var(--gold);
+    color: var(--ink);
+    font-size: .86rem;
+    font-weight: 750;
+  }
+  .primary:hover { background: var(--sand); }
+  .primary:disabled { opacity: .7; cursor: default; }
+  .shell-footer p { margin: 0; color: var(--muted); font: .66rem/1.4 var(--mono); }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tool {
+    min-height: 36px;
+    padding: 4px 9px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--panel);
+    color: var(--cream);
+    font: 650 .67rem/1 var(--mono);
+  }
+  .tool:hover:not(:disabled), .tool[aria-pressed="true"] { border-color: var(--sage); color: var(--sage); }
+  .tool:disabled { opacity: .55; cursor: default; }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  @media (max-width: 700px) {
+    main { width: min(100% - 32px, 480px); grid-template-columns: 1fr; gap: 14px; padding: 15px 0 19px; }
+    .shell-header, .shell-footer { padding: 9px 16px; gap: 8px; }
+    .intro .eyebrow { margin-bottom: 6px; }
+    h1 { font-size: clamp(2.3rem, 8vw, 3.5rem); }
+    h1 span { display: inline; }
+    .brief { margin: 7px 0 0; max-width: none; font-size: .86rem; }
+    .control-guide { display: flex; flex-wrap: wrap; padding-top: 7px; margin-top: 8px; font-size: .63rem; }
+    .tool { min-height: 42px; }
+  }
+  @media (max-width: 390px) {
+    .shell-footer { flex-wrap: wrap; }
+    .pill { padding-inline: 5px; }
+  }
+  .shell-footer .actions { flex-wrap: wrap; justify-content: flex-end; }
+  #mod-status { font: 11px ui-monospace, monospace; }
+</style>
+</head>
+<body data-phase="READY">
+<header class="shell-header">
+  <div class="brand">
+    <svg width="25" height="25" viewBox="0 0 25 25" aria-hidden="true">
+      <path d="M12.5 1.5 23 7.5v10l-10.5 6L2 17.5v-10z" fill="none" stroke="currentColor"/>
+      <path d="m6 16 6.5-8 6.5 8-6.5-2z" fill="currentColor"/>
+    </svg>
+    <div>UNIVERSITY OF PORTSMOUTH AI SOCIETY <span>// FLAPPY-AI-JAM</span></div>
+  </div>
+  <dl class="telemetry" aria-label="Live telemetry">
+    <div class="pill"><dt>FPS</dt><dd id="telemetry-fps">—</dd></div>
+    <div class="pill"><dt>STATE</dt><dd id="telemetry-state">READY</dd></div>
+    <div class="pill"><dt>SCORE</dt><dd id="telemetry-score">0</dd></div>
+    <div class="pill"><dt>HIGH SCORE</dt><dd id="telemetry-record">0</dd></div>
+    <div class="pill" id="mods-pill"><dt>ACTIVE MODS</dt><dd id="telemetry-mods">0</dd></div>
+  </dl>
+</header>
+<main>
+  <section class="intro" aria-labelledby="title">
+    <p class="eyebrow">NODE-01 / DRONE SIMULATION</p>
+    <h1 id="title">Autonomous Trajectory Solver</h1>
+    <p class="brief">A fixed-step flight planner draws its next move over the arena.</p>
+    <ul class="control-guide" id="flight-controls" aria-label="Flight controls">
+      <li><kbd>Space</kbd> <kbd>↑</kbd> or tap to thrust</li>
+      <li><kbd>P</kbd> pause <kbd>M</kbd> mute <kbd>D</kbd> debug</li>
+      <li><kbd>A</kbd> toggle autopilot</li>
+    </ul>
+  </section>
+  <section class="stage" id="flight-deck" aria-label="Flight deck">
+    <canvas id="game" width="480" height="640" tabindex="0" aria-label="Protocol: Aero playfield"
+      aria-describedby="flight-controls">This game requires a browser with Canvas 2D support.</canvas>
+    <div class="overlay" id="overlay">
+      <div class="dialogue">
+        <p class="eyebrow" id="overlay-label">FLIGHT CONTROL</p>
+        <h2 id="overlay-title">Ready for launch</h2>
+        <p id="overlay-detail">Tap or press Space to thrust through each opening.</p>
+        <button class="primary" id="flight-action" type="button">
+          <span id="flight-action-label">Launch NODE-01</span><span aria-hidden="true">↗</span>
+        </button>
+      </div>
+    </div>
+    <p class="sr-only" id="announcer" role="status"></p>
+  </section>
+</main>
+<footer class="shell-footer">
+  <p>30-MINUTE AI GAME JAM</p>
+  <div class="actions" aria-label="Simulation settings">
+    <button class="tool" id="mod-toggle" type="button" aria-pressed="false">Autopilot off</button>
+    <button class="tool" id="pause" type="button" disabled>Pause</button>
+    <button class="tool" id="mute" type="button" aria-pressed="false">Mute</button>
+    <button class="tool" id="debug" type="button" aria-pressed="false">Debug</button>
+  </div>
+</footer>
+<noscript><p>Enable JavaScript to run Protocol: Aero.</p></noscript>
+<script>
+(() => {
+  "use strict";
+
+  const byId = (id) => document.getElementById(id);
+  const canvas = byId("game");
+  const flightDeck = byId("flight-deck");
+  const ctx = canvas.getContext("2d", { alpha: false });
+  const ui = {
+    fps: byId("telemetry-fps"), phase: byId("telemetry-state"), score: byId("telemetry-score"),
+    high: byId("telemetry-record"), mods: byId("telemetry-mods"), modsPill: byId("mods-pill"),
+    overlay: byId("overlay"), label: byId("overlay-label"), title: byId("overlay-title"),
+    detail: byId("overlay-detail"), action: byId("flight-action"), actionLabel: byId("flight-action-label"),
+    announcer: byId("announcer"), pause: byId("pause"), mute: byId("mute"), debug: byId("debug"),
+  };
+  if (!ctx) {
+    ui.title.textContent = "Canvas 2D unavailable";
+    ui.detail.textContent = "Open this file in a browser with Canvas 2D enabled.";
+    ui.action.disabled = true;
+    ui.mute.disabled = true;
+    ui.debug.disabled = true;
+    return;
+  }
+
+  // === AI PROMPT ZONE: CONFIG ===
+  // Positions and extents are in logical px. Speeds use px/s and acceleration uses px/s².
+  const CONFIG = Object.freeze({
+    width: 480,
+    height: 640,
+    step: 1 / 120,
+    maxFrameDelta: 0.05,
+    top: 42,
+    bottom: 598,
+    playerX: 137,
+    playerY: 320,
+    playerHalfWidth: 15,
+    playerHalfHeight: 10,
+    gravity: 930,
+    thrust: 315,
+    terminalSpeed: 540,
+    gateWidth: 64,
+    gateSpacing: 248,
+    firstGateX: 331,
+    gateSpeed: 172,
+    maxGateSpeed: 282,
+    gateSpeedPerPoint: 4,
+    gap: 194,
+    minGap: 148,
+    gapPerPoint: 2,
+    gapCenterDrift: 94,
+    gatePoolSize: 6,
+    particlePoolSize: 160,
+    trailInterval: 1 / 36,
+    restartDelay: .24,
+    telemetryInterval: 0.3,
+    scoreKey: "01-neural-autopilot-best",
+    muteKey: "protocolAeroMuted",
+  });
+
+  // Read CSS once; resize and rendering reuse this immutable mirror of the palette.
+  const css = getComputedStyle(document.documentElement);
+  const token = (name) => css.getPropertyValue(name).trim();
+  const BRAND_TOKENS = Object.freeze({
+    navy: token("--navy"), cream: token("--cream"), sand: token("--sand"),
+    sage: token("--sage"), gold: token("--gold"), sea: token("--sea"),
+    ink: token("--ink"), panel: token("--panel"), muted: token("--muted"),
+    line: token("--line"), warning: token("--warning"),
+  });
+  const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+  const mix = (a, b, alpha) => a + (b - a) * alpha;
+  const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const PHASE = Object.freeze({ READY: "READY", RUNNING: "RUNNING", PAUSED: "PAUSED", BREACH: "BREACH" });
+
+  // The jam already stored a best score under this key. File previews and sandboxed
+  // frames can deny storage, so the in-memory score remains the source of truth.
+  const storage = {
+    read(key) {
+      try { return window.localStorage.getItem(key); } catch { return null; }
+    },
+    write(key, value) {
+      try { window.localStorage.setItem(key, String(value)); } catch { /* optional persistence */ }
+    },
+  };
+  const savedScore = Number(storage.read(CONFIG.scoreKey));
+  let highScore = Number.isSafeInteger(savedScore) && savedScore > 0 ? savedScore : 0;
+
+  // === AI PROMPT ZONE: AUDIO ===
+  // Frequency sweeps and short envelopes keep cues intelligible without external files.
+  const CUES = {
+    flap: [[0, 410, 255, .085, .12, "triangle"]],
+    score: [[0, 660, 760, .09, .10, "sine"], [.065, 880, 995, .12, .10, "triangle"]],
+    record: [[.19, 780, 850, .085, .09, "sine"], [.265, 990, 1100, .085, .09, "sine"],
+      [.34, 1320, 1480, .14, .10, "triangle"]],
+    breach: [[0, 165, 46, .26, .15, "triangle"], [.025, 91, 45, .16, .065, "sawtooth"]],
+  };
+
+  class SoundEngine {
+    #context = null;
+    #master = null;
+    #muted = storage.read(CONFIG.muteKey) === "1";
+    #resumePending = false;
+    #unavailable = false;
+    #voices = 0;
+
+    get muted() { return this.#muted; }
+
+    // Call directly inside a click, touch or key handler for autoplay policies.
+    unlock() {
+      if (this.#muted || this.#unavailable) return;
+      if (!this.#context) {
+        const Audio = window.AudioContext ?? window.webkitAudioContext;
+        if (!Audio) {
+          this.#unavailable = true;
+          return;
+        }
+        try {
+          this.#context = new Audio();
+          this.#master = this.#context.createGain();
+          this.#master.gain.value = .6;
+          this.#master.connect(this.#context.destination);
+        } catch {
+          this.#unavailable = true;
+          return;
+        }
+      }
+      if (this.#context.state !== "running" && !this.#resumePending) {
+        this.#resumePending = true;
+        this.#context.resume().catch(() => {}).finally(() => { this.#resumePending = false; });
+      }
+    }
+
+    toggle() {
+      this.#muted = !this.#muted;
+      storage.write(CONFIG.muteKey, this.#muted ? 1 : 0);
+      if (!this.#muted) this.unlock();
+      if (this.#master) {
+        const now = this.#context.currentTime;
+        const gain = this.#master.gain;
+        gain.cancelScheduledValues(now);
+        gain.setTargetAtTime(this.#muted ? 0 : .6, now, .012);
+      }
+      return this.#muted;
+    }
+
+    play(name) {
+      if (this.#muted || this.#unavailable || this.#context?.state !== "running") return;
+      const now = this.#context.currentTime;
+      const notes = CUES[name];
+      for (let i = 0; i < notes.length && this.#voices < 20; i++) {
+        const [delay, from, to, duration, peak, waveform] = notes[i];
+        const start = now + delay;
+        const end = start + duration;
+        const oscillator = this.#context.createOscillator();
+        const envelope = this.#context.createGain();
+        oscillator.type = waveform;
+        oscillator.frequency.setValueAtTime(from, start);
+        oscillator.frequency.exponentialRampToValueAtTime(to, end);
+        envelope.gain.setValueAtTime(.0001, start);
+        envelope.gain.exponentialRampToValueAtTime(peak, start + .012);
+        envelope.gain.exponentialRampToValueAtTime(.0001, end);
+        oscillator.connect(envelope).connect(this.#master);
+        this.#voices++;
+        oscillator.onended = () => {
+          oscillator.disconnect();
+          envelope.disconnect();
+          this.#voices--;
+        };
+        oscillator.start(start);
+        oscillator.stop(end + .012);
+      }
+    }
+  }
+
+  // === AI PROMPT ZONE: STATE ===
+  class StateMachine {
+    #phase = PHASE.READY;
+
+    get phase() { return this.#phase; }
+
+    transition(next) {
+      const current = this.#phase;
+      const allowed =
+        (current === PHASE.READY && next === PHASE.RUNNING) ||
+        (current === PHASE.RUNNING && (next === PHASE.PAUSED || next === PHASE.BREACH)) ||
+        ((current === PHASE.PAUSED || current === PHASE.BREACH) && next === PHASE.RUNNING);
+      if (!allowed) return false;
+      this.#phase = next;
+      return true;
+    }
+  }
+
+  // === AI PROMPT ZONE: ENTITIES ===
+  // Pool entries keep the same shape and identity across runs. Previous positions
+  // belong to the fixed step; presentation interpolates without mutating them.
+  const Entities = {
+    player: { x: CONFIG.playerX, y: CONFIG.playerY, prevY: CONFIG.playerY, vy: 0, prevVy: 0 },
+    gates: Array.from({ length: CONFIG.gatePoolSize }, () => ({
+      active: false, scored: false, x: 0, prevX: 0, top: 0, bottom: 0,
+    })),
+    particles: Array.from({ length: CONFIG.particlePoolSize }, () => ({
+      life: 0, duration: 0, x: 0, y: 0, prevX: 0, prevY: 0, vx: 0, vy: 0, size: 0, color: "",
+    })),
+  };
+  const { player, gates, particles } = Entities;
+  const playerView = Object.freeze({
+    get x() { return player.x; },
+    get y() { return player.y; },
+    get vy() { return player.vy; },
+    halfWidth: CONFIG.playerHalfWidth,
+    halfHeight: CONFIG.playerHalfHeight,
+  });
+  const gateViews = gates.map((gate) => Object.freeze({
+    get x() { return gate.x; },
+    width: CONFIG.gateWidth,
+    get top() { return gate.top; },
+    get bottom() { return gate.bottom; },
+    get scored() { return gate.scored; },
+  }));
+  const machine = new StateMachine();
+  const sound = new SoundEngine();
+  let score = 0;
+  let runId = 0;
+  let tick = 0;
+  let debug = false;
+  let thrustQueued = false;
+  let runSeed = 0;
+  let gateRandomState = 0;
+  let particleCursor = 0;
+  let trailTime = 0;
+  let distance = 0;
+  let prevDistance = 0;
+  let gateSpeed = CONFIG.gateSpeed;
+  let lastGateCenter = CONFIG.playerY;
+  let firstGate = true;
+  let isNewRecord = false;
+  let restartLocked = false;
+
+  const stateView = Object.freeze({
+    get phase() { return machine.phase; },
+    get runId() { return runId; },
+    get seed() { return runSeed; },
+    get tick() { return tick; },
+    get elapsed() { return tick * CONFIG.step; },
+    get score() { return score; },
+    get highScore() { return highScore; },
+    get debug() { return debug; },
+    player: playerView,
+  });
+
+  // === AI PROMPT ZONE: MOD_HOOKS ===
+  // A single ordered registry means no per-frame filtering, closures or snapshots.
+  const MOD_HOOKS = Object.freeze({
+    onInit: null,
+    onFlap: null,
+    onUpdate: null,
+    onRenderBackground: null,
+    onRenderEntities: null,
+    onScore: null,
+    onCollision: null,
+  });
+  const hookNames = Object.keys(MOD_HOOKS);
+  const mods = [];
+  let inHook = false;
+
+  function syncMods() {
+    ui.mods.textContent = String(mods.length);
+    ui.modsPill.title = mods.length ? mods.map((mod) => mod.id).join(", ") : "No mods registered";
+  }
+
+  function invoke(hook, first, second) {
+    let gravityScale = 1;
+    inHook = true;
+    try {
+      for (let i = 0; i < mods.length; i++) {
+        const mod = mods[i];
+        const callback = mod.hooks[hook];
+        if (!callback) continue;
+        try {
+          if (hook === "onRenderBackground" || hook === "onRenderEntities") {
+            ctx.save();
+            ctx.beginPath();
+            try { callback(ctx); } finally {
+              ctx.restore();
+              ctx.beginPath();
+            }
+          } else if (hook === "onUpdate") {
+            const scale = callback(first, second);
+            if (Number.isFinite(scale)) gravityScale = clamp(gravityScale * clamp(scale, -2, 2), -2, 2);
+          } else if (hook === "onCollision") {
+            callback(first, second);
+          } else if (hook === "onScore") {
+            callback(first);
+          } else {
+            callback();
+          }
+        } catch (error) {
+          mods.splice(i--, 1);
+          syncMods();
+          console.error("Protocol: Aero disabled mod " + mod.id + " in " + hook, error);
+        }
+      }
+    } finally {
+      inHook = false;
+    }
+    return gravityScale;
+  }
+
+  const GameModAPI = Object.freeze({
+    register(id, hooks) {
+      if (inHook) throw new Error("Register and dispose mods outside callbacks.");
+      if (typeof id !== "string" || !/^[a-z0-9][a-z0-9-]{0,47}$/.test(id)) {
+        throw new TypeError("Use a lowercase mod ID with letters, digits or hyphens.");
+      }
+      if (!hooks || typeof hooks !== "object" || mods.some((mod) => mod.id === id)) {
+        throw new TypeError("Supply a hook object and a unique mod ID.");
+      }
+      const registered = Object.create(null);
+      for (const name of hookNames) {
+        const callback = hooks[name];
+        if (callback === undefined) continue;
+        if (typeof callback !== "function") throw new TypeError(name + " must be a function.");
+        registered[name] = callback;
+      }
+      const mod = { id, hooks: registered };
+      // A failed initializer never installs its mod or changes the active count.
+      inHook = true;
+      try {
+        const init = registered.onInit;
+        if (init) init();
+      } catch (error) {
+        console.error("Protocol: Aero could not initialize mod " + id, error);
+        return () => false;
+      } finally {
+        inHook = false;
+      }
+      mods.push(mod);
+      syncMods();
+      return () => {
+        if (inHook) throw new Error("Register and dispose mods outside callbacks.");
+        const index = mods.indexOf(mod);
+        if (index === -1) return false;
+        mods.splice(index, 1);
+        syncMods();
+        return true;
+      };
+    },
+  });
+
+  // Uncomment one example to start a jam mod. A Canvas 2D layer draws a scanline;
+  // the second example flips flight after three gates and resets with the score.
+  /*
+  GameModAPI.register("scanline", {
+    onRenderBackground(ctx) {
+      if (motion.matches) return;
+      ctx.fillStyle = BRAND_TOKENS.sea;
+      ctx.globalAlpha = .22;
+      ctx.fillRect(0, (stateView.elapsed * 45) % CONFIG.height, CONFIG.width, 2);
+    },
+  });
+
+  GameModAPI.register("inverted-flight", {
+    onUpdate(dt, state) {
+      return state.score >= 3 ? -1 : 1;
+    },
+  });
+  */
+
+  // === AI PROMPT ZONE: PIPES / LEVEL ===
+  function nextGateRandom() {
+    // xorshift32. Keep cosmetic Math.random() calls off the gameplay RNG.
+    gateRandomState ^= gateRandomState << 13;
+    gateRandomState ^= gateRandomState >>> 17;
+    gateRandomState ^= gateRandomState << 5;
+    return (gateRandomState >>> 0) / 4294967296;
+  }
+
+  function spawnGate(x) {
+    for (let i = 0; i < gates.length; i++) {
+      const gate = gates[i];
+      if (gate.active) continue;
+      const halfGap = Math.max(CONFIG.minGap, CONFIG.gap - score * CONFIG.gapPerPoint) / 2;
+      const center = firstGate ? CONFIG.playerY : clamp(
+        lastGateCenter + (nextGateRandom() * 2 - 1) * CONFIG.gapCenterDrift,
+        CONFIG.top + halfGap + 42, CONFIG.bottom - halfGap - 42,
+      );
+      gate.active = true;
+      gate.scored = false;
+      gate.x = gate.prevX = x;
+      gate.top = center - halfGap;
+      gate.bottom = center + halfGap;
+      lastGateCenter = center;
+      firstGate = false;
+      return;
+    }
+    // If a student compresses gate spacing past capacity, the next tick can
+    // retry after a gate leaves. Never overwrite a gate still in the arena.
+  }
+
+  function resetRun() {
+    runId++;
+    runSeed = Math.floor(Math.random() * 4294967296) || 1;
+    gateRandomState = runSeed | 0;
+    score = tick = 0;
+    isNewRecord = false;
+    player.y = player.prevY = CONFIG.playerY;
+    player.vy = player.prevVy = 0;
+    distance = prevDistance = trailTime = 0;
+    gateSpeed = CONFIG.gateSpeed;
+    particleCursor = 0;
+    firstGate = true;
+    lastGateCenter = CONFIG.playerY;
+    for (let i = 0; i < gates.length; i++) gates[i].active = false;
+    for (let i = 0; i < particles.length; i++) particles[i].life = 0;
+    spawnGate(CONFIG.firstGateX);
+    syncScore();
+  }
+
+  function emitParticle(x, y, vx, vy, life, size, color) {
+    // Overwrite the oldest emission if a burst fills the pool.
+    const particle = particles[particleCursor];
+    particleCursor = (particleCursor + 1) % particles.length;
+    particle.x = particle.prevX = x;
+    particle.y = particle.prevY = y;
+    particle.vx = vx;
+    particle.vy = vy;
+    particle.life = particle.duration = life;
+    particle.size = size;
+    particle.color = color;
+  }
+
+  function trail() {
+    emitParticle(player.x - 17, player.y + Math.random() * 6 - 3,
+      -90 - Math.random() * 95, Math.random() * 42 - 21,
+      .18 + Math.random() * .15, 2 + Math.random() * 2, BRAND_TOKENS.sage);
+  }
+
+  function burst(x, y, count, color) {
+    if (motion.matches) return;
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 32 + Math.random() * 115;
+      emitParticle(x, y, Math.cos(angle) * speed - 35, Math.sin(angle) * speed,
+        .24 + Math.random() * .27, 2 + Math.random() * 2, color);
+    }
+  }
+
+  function moveParticles(dt) {
+    for (let i = 0; i < particles.length; i++) {
+      const particle = particles[i];
+      if (particle.life <= 0) continue;
+      particle.life -= dt;
+      particle.prevX = particle.x;
+      particle.prevY = particle.y;
+      particle.x += particle.vx * dt;
+      particle.y += particle.vy * dt;
+      particle.vy += 80 * dt;
+    }
+  }
+
+  // === AI PROMPT ZONE: SCORE & GAME OVER ===
+  function syncScore() {
+    ui.score.textContent = String(score);
+    ui.high.textContent = String(highScore);
+  }
+
+  function clearGate(gate) {
+    gate.scored = true;
+    score++;
+    sound.play("score");
+    if (score > highScore) {
+      highScore = score;
+      storage.write(CONFIG.scoreKey, highScore);
+      // Play the distinct record cue once per flight, even if the record grows.
+      if (!isNewRecord) sound.play("record");
+      isNewRecord = true;
+    }
+    syncScore();
+    burst(player.x - CONFIG.playerHalfWidth, player.y, 15, BRAND_TOKENS.gold);
+    invoke("onScore", score);
+  }
+
+  function breach(obstacle) {
+    thrustQueued = false;
+    if (!changePhase(PHASE.BREACH)) return;
+    // An input meant to save the previous flight must not launch the next one.
+    restartLocked = ui.action.disabled = true;
+    window.setTimeout(() => { restartLocked = ui.action.disabled = false; }, CONFIG.restartDelay * 1000);
+    burst(player.x, player.y, 24, BRAND_TOKENS.warning);
+    sound.play("breach");
+    invoke("onCollision", playerView, obstacle);
+  }
+
+  // === AI PROMPT ZONE: PHYSICS ===
+  function simulate(dt) {
+    tick++;
+    player.prevY = player.y;
+    player.prevVy = player.vy;
+    prevDistance = distance;
+    const gravityScale = invoke("onUpdate", dt, stateView);
+    if (thrustQueued) {
+      thrustQueued = false;
+      player.vy = gravityScale < 0 ? CONFIG.thrust : -CONFIG.thrust;
+      sound.play("flap");
+      invoke("onFlap");
+      burst(player.x - 16, player.y, 5, BRAND_TOKENS.sea);
+    }
+
+    player.vy = clamp(player.vy + CONFIG.gravity * gravityScale * dt,
+      -CONFIG.terminalSpeed, CONFIG.terminalSpeed);
+    player.y += player.vy * dt;
+
+    gateSpeed = Math.min(CONFIG.maxGateSpeed, CONFIG.gateSpeed + score * CONFIG.gateSpeedPerPoint);
+    distance += gateSpeed * dt;
+    let farthest = -CONFIG.gateWidth;
+    for (let i = 0; i < gates.length; i++) {
+      const gate = gates[i];
+      if (!gate.active) continue;
+      gate.prevX = gate.x;
+      gate.x -= gateSpeed * dt;
+      if (gate.x + CONFIG.gateWidth < 0) gate.active = false;
+      farthest = Math.max(farthest, gate.x);
+    }
+    const spawnX = farthest + CONFIG.gateSpacing;
+    if (spawnX <= CONFIG.width + 24) spawnGate(spawnX);
+
+    moveParticles(dt);
+    if (!motion.matches) {
+      trailTime += dt;
+      while (trailTime >= CONFIG.trailInterval) {
+        trailTime -= CONFIG.trailInterval;
+        trail();
+      }
+    }
+
+    const left = player.x - CONFIG.playerHalfWidth;
+    const right = player.x + CONFIG.playerHalfWidth;
+    const top = player.y - CONFIG.playerHalfHeight;
+    const bottom = player.y + CONFIG.playerHalfHeight;
+    if (top <= CONFIG.top || bottom >= CONFIG.bottom) {
+      player.y = clamp(player.y, CONFIG.top + CONFIG.playerHalfHeight, CONFIG.bottom - CONFIG.playerHalfHeight);
+      breach(null);
+      return;
+    }
+    for (let i = 0; i < gates.length; i++) {
+      const gate = gates[i];
+      if (gate.active && right >= gate.x && left <= gate.x + CONFIG.gateWidth &&
+          (top <= gate.top || bottom >= gate.bottom)) {
+        breach(gateViews[i]);
+        return;
+      }
+    }
+    // Collision takes precedence. Award only once, after the entire hull clears.
+    for (let i = 0; i < gates.length; i++) {
+      const gate = gates[i];
+      if (gate.active && !gate.scored && gate.x + CONFIG.gateWidth < left) clearGate(gate);
+    }
+  }
+
+  // === AI PROMPT ZONE: GRAPHICS ===
+  // Cache reusable vector paths at startup and the gradient on backing-store resize.
+  const droneHull = new Path2D("M-16 -1 L-9 -7 L3 -9 L11 -5 L16 0 L7 7 L-6 8 L-16 3 Z");
+  const droneWing = new Path2D("M-7 -3 L6 -2 L1 4 L-11 5 Z");
+  const city = new Path2D(
+    "M0 412 V375 H18 V387 H30 V349 H44 V362 H60 V337 H70 V383 H92 V373 H103 V354 H114 V387 " +
+    "H134 V367 H151 V340 H160 V373 H176 V391 H201 V371 H224 V383 H240 V348 H252 V357 H269 V387 " +
+    "H285 V363 H299 V328 H308 V352 H321 V380 H345 V354 H360 V376 H373 V388 H391 V356 H402 V369 " +
+    "H422 V341 H433 V373 H449 V383 H464 V360 H480 V412 Z",
+  );
+  const canvasFont = "600 10px ui-monospace, monospace";
+  let background = null;
+  let resizePending = true;
+  let pixelRatio = 0;
+  let fpsText = "FPS —";
+
+  function resizeCanvas(dpr) {
+    resizePending = false;
+    pixelRatio = dpr;
+    const bounds = canvas.getBoundingClientRect();
+    // Display size and DPR only affect the backing store, never gameplay.
+    const width = Math.max(1, Math.round(bounds.width * dpr));
+    const height = Math.max(1, Math.round(bounds.height * dpr));
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+    ctx.setTransform(width / CONFIG.width, 0, 0, height / CONFIG.height, 0, 0);
+    background = ctx.createLinearGradient(0, 0, 0, CONFIG.height);
+    background.addColorStop(0, BRAND_TOKENS.ink);
+    background.addColorStop(.57, BRAND_TOKENS.navy);
+    background.addColorStop(1, BRAND_TOKENS.ink);
+  }
+
+  function renderBackground(travel) {
+    ctx.fillStyle = background;
+    ctx.fillRect(0, 0, CONFIG.width, CONFIG.height);
+
+    // Two reusable layers: a slow skyline and the faster floor grid.
+    const offset = (travel * .08) % CONFIG.width;
+    ctx.save();
+    ctx.fillStyle = BRAND_TOKENS.ink;
+    ctx.globalAlpha = .36;
+    ctx.translate(-offset, 0);
+    ctx.fill(city);
+    ctx.translate(CONFIG.width, 0);
+    ctx.fill(city);
+    ctx.restore();
+
+    ctx.strokeStyle = BRAND_TOKENS.sea;
+    ctx.globalAlpha = .34;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    const gridOffset = (travel * .34) % 64;
+    for (let x = -64; x <= CONFIG.width + 64; x += 64) {
+      ctx.moveTo(CONFIG.width * .5 + (x - gridOffset - CONFIG.width * .5) * .2, 412);
+      ctx.lineTo(x - gridOffset, CONFIG.bottom);
+    }
+    for (let y = 421, spacing = 10; y < CONFIG.bottom; y += spacing, spacing *= 1.35) {
+      ctx.moveTo(0, y);
+      ctx.lineTo(CONFIG.width, y);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  function renderRail() {
+    ctx.fillStyle = BRAND_TOKENS.ink;
+    ctx.fillRect(0, 0, CONFIG.width, CONFIG.top);
+    ctx.fillRect(0, CONFIG.bottom, CONFIG.width, CONFIG.height - CONFIG.bottom);
+    ctx.fillStyle = BRAND_TOKENS.sea;
+    ctx.fillRect(0, CONFIG.top - 1, CONFIG.width, 1);
+    ctx.fillRect(0, CONFIG.bottom, CONFIG.width, 1);
+    ctx.fillStyle = BRAND_TOKENS.sage;
+    ctx.font = canvasFont;
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "left";
+    ctx.fillText("NODE-01  /  FLIGHT DECK", 17, CONFIG.top / 2);
+    ctx.fillStyle = BRAND_TOKENS.muted;
+    ctx.fillText("FIREWALL TRANSIT", 17, (CONFIG.height + CONFIG.bottom) / 2);
+    ctx.textAlign = "right";
+    ctx.fillText("480 × 640", CONFIG.width - 17, (CONFIG.height + CONFIG.bottom) / 2);
+    ctx.textAlign = "left";
+  }
+
+  function renderGate(gate, x) {
+    const width = CONFIG.gateWidth;
+    const upperHeight = gate.top - CONFIG.top;
+    const lowerHeight = CONFIG.bottom - gate.bottom;
+    ctx.fillStyle = BRAND_TOKENS.panel;
+    ctx.fillRect(x, CONFIG.top, width, upperHeight);
+    ctx.fillRect(x, gate.bottom, width, lowerHeight);
+    ctx.fillStyle = BRAND_TOKENS.sea;
+    ctx.fillRect(x, CONFIG.top, 2, upperHeight);
+    ctx.fillRect(x + width - 2, CONFIG.top, 2, upperHeight);
+    ctx.fillRect(x, gate.bottom, 2, lowerHeight);
+    ctx.fillRect(x + width - 2, gate.bottom, 2, lowerHeight);
+    ctx.fillStyle = BRAND_TOKENS.line;
+    for (let y = gate.top - 30; y > CONFIG.top + 8; y -= 19) ctx.fillRect(x + 11, y, width - 22, 2);
+    for (let y = gate.bottom + 28; y < CONFIG.bottom - 8; y += 19) ctx.fillRect(x + 11, y, width - 22, 2);
+
+    // Endcaps mark the same edges the collision test uses.
+    ctx.fillStyle = gate.scored ? BRAND_TOKENS.sage : BRAND_TOKENS.gold;
+    ctx.fillRect(x, gate.top - 2, width, 2);
+    ctx.fillRect(x, gate.bottom, width, 2);
+    for (let stripe = 0; stripe < 3; stripe++) {
+      ctx.fillRect(x + 9 + stripe * 8, gate.top - 12, 3, 5);
+      ctx.fillRect(x + 9 + stripe * 8, gate.bottom + 7, 3, 5);
+    }
+  }
+
+  function renderParticles(alpha) {
+    if (motion.matches) return;
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      if (p.life <= 0) continue;
+      ctx.globalAlpha = p.life / p.duration;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(mix(p.prevX, p.x, alpha), mix(p.prevY, p.y, alpha), p.size, p.size);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function renderDrone(y, vy) {
+    ctx.save();
+    ctx.translate(player.x, y);
+    ctx.rotate(clamp(vy / 820, -.4, .49));
+    ctx.fillStyle = BRAND_TOKENS.gold;
+    ctx.fillRect(-21, -1.5, 6, 3);
+    ctx.fillStyle = BRAND_TOKENS.cream;
+    ctx.fill(droneHull);
+    ctx.fillStyle = BRAND_TOKENS.navy;
+    ctx.fill(droneWing);
+    ctx.fillStyle = BRAND_TOKENS.sea;
+    ctx.fillRect(3, -6, 5, 2);
+    ctx.strokeStyle = BRAND_TOKENS.sage;
+    ctx.lineWidth = 1;
+    ctx.stroke(droneHull);
+    ctx.restore();
+  }
+
+  function renderDebug() {
+    // Raw fixed-step boxes are deliberately distinct from interpolated artwork.
+    ctx.strokeStyle = BRAND_TOKENS.warning;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0.5, CONFIG.top, CONFIG.width - 1, CONFIG.bottom - CONFIG.top);
+    ctx.beginPath();
+    for (let i = 0; i < gates.length; i++) {
+      const gate = gates[i];
+      if (!gate.active) continue;
+      ctx.strokeRect(gate.x, CONFIG.top, CONFIG.gateWidth, gate.top - CONFIG.top);
+      ctx.strokeRect(gate.x, gate.bottom, CONFIG.gateWidth, CONFIG.bottom - gate.bottom);
+      if (machine.phase === PHASE.READY) continue;
+      const x = gate.x + CONFIG.gateWidth / 2;
+      const y = (gate.top + gate.bottom) / 2;
+      const tip = x - gateSpeed * .12;
+      ctx.moveTo(x, y);
+      ctx.lineTo(tip, y);
+      ctx.lineTo(tip + 5, y - 4);
+      ctx.moveTo(tip, y);
+      ctx.lineTo(tip + 5, y + 4);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = BRAND_TOKENS.sage;
+    ctx.strokeRect(player.x - CONFIG.playerHalfWidth, player.y - CONFIG.playerHalfHeight,
+      CONFIG.playerHalfWidth * 2, CONFIG.playerHalfHeight * 2);
+    const tip = player.y + player.vy * .12;
+    const tail = tip - Math.sign(player.vy) * 6;
+    ctx.beginPath();
+    ctx.moveTo(player.x, player.y);
+    ctx.lineTo(player.x, tip);
+    if (player.vy !== 0) {
+      ctx.moveTo(player.x - 4, tail);
+      ctx.lineTo(player.x, tip);
+      ctx.lineTo(player.x + 4, tail);
+    }
+    ctx.stroke();
+    ctx.font = canvasFont;
+    ctx.fillStyle = BRAND_TOKENS.gold;
+    ctx.textAlign = "right";
+    ctx.fillText(fpsText, CONFIG.width - 17, CONFIG.top / 2);
+    ctx.textAlign = "left";
+  }
+
+  function render(alpha) {
+    const travel = motion.matches ? 0 : mix(prevDistance, distance, alpha);
+    renderBackground(travel);
+    invoke("onRenderBackground");
+    renderParticles(alpha);
+    for (let i = 0; i < gates.length; i++) {
+      const gate = gates[i];
+      if (gate.active) renderGate(gate, mix(gate.prevX, gate.x, alpha));
+    }
+    renderDrone(mix(player.prevY, player.y, alpha), mix(player.prevVy, player.vy, alpha));
+    invoke("onRenderEntities");
+    renderRail();
+    if (debug) renderDebug();
+  }
+
+  // === AI PROMPT ZONE: INPUT AND TELEMETRY ===
+  function setDebug(enabled) {
+    debug = Boolean(enabled);
+    ui.debug.setAttribute("aria-pressed", String(debug));
+  }
+
+  function changePhase(next) {
+    if (!machine.transition(next)) return false;
+    document.body.dataset.phase = next;
+    ui.phase.textContent = next;
+    ui.overlay.hidden = next === PHASE.RUNNING;
+    ui.pause.disabled = next !== PHASE.RUNNING && next !== PHASE.PAUSED;
+    ui.pause.textContent = next === PHASE.PAUSED ? "Resume" : "Pause";
+    switch (next) {
+      case PHASE.RUNNING:
+        ui.announcer.textContent = "Flight in progress.";
+        break;
+      case PHASE.PAUSED:
+        ui.label.textContent = "FLIGHT CONTROL";
+        ui.title.textContent = "Flight paused";
+        ui.detail.textContent = "Resume when you’re ready.";
+        ui.actionLabel.textContent = "Resume flight";
+        ui.announcer.textContent = "Flight paused.";
+        break;
+      case PHASE.BREACH: {
+        const summary = "Score " + score + " · High score " + highScore;
+        ui.label.textContent = isNewRecord ? "NEW FLIGHT RECORD" : "SIGNAL LOST";
+        ui.title.textContent = "Firewall breach";
+        ui.detail.textContent = summary;
+        ui.actionLabel.textContent = "Relaunch NODE-01";
+        ui.announcer.textContent = "Firewall breach. " + summary + ".";
+        break;
+      }
+    }
+    return true;
+  }
+
+  let lastTime = null;
+  let accumulator = 0;
+  let sampleTime = 0;
+  let sampleFrames = 0;
+
+  function resetClock() {
+    lastTime = null;
+    accumulator = 0;
+  }
+
+  function pauseFlight() {
+    if (!changePhase(PHASE.PAUSED)) return;
+    thrustQueued = false;
+    resetClock();
+  }
+
+  function resumeFlight() {
+    if (document.hidden || !changePhase(PHASE.RUNNING)) return;
+    // Hold the exact pause pose until the first new fixed tick.
+    player.prevY = player.y;
+    player.prevVy = player.vy;
+    prevDistance = distance;
+    for (let i = 0; i < gates.length; i++) gates[i].prevX = gates[i].x;
+    for (let i = 0; i < particles.length; i++) {
+      particles[i].prevX = particles[i].x;
+      particles[i].prevY = particles[i].y;
+    }
+    resetClock();
+  }
+
+  function flightInput() {
+    if (document.hidden || restartLocked) return;
+    sound.unlock();
+    if (machine.phase === PHASE.PAUSED) {
+      resumeFlight();
+      return;
+    }
+    if (machine.phase !== PHASE.RUNNING) {
+      resetRun();
+      changePhase(PHASE.RUNNING);
+      resetClock();
+    }
+    thrustQueued = true;
+  }
+
+  function togglePause() {
+    if (machine.phase === PHASE.RUNNING) pauseFlight();
+    else if (machine.phase === PHASE.PAUSED && !document.hidden) {
+      sound.unlock();
+      resumeFlight();
+    }
+  }
+
+  function toggleMute() {
+    ui.mute.setAttribute("aria-pressed", String(sound.toggle()));
+  }
+
+  function handleKey(event) {
+    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+    const target = event.target;
+    if (target instanceof HTMLElement &&
+        (target.isContentEditable || target.closest("input, textarea, select"))) return;
+    const key = event.key.toLowerCase();
+    if (key === "a") { if (!event.repeat) toggleAutopilot(); event.preventDefault(); return; }
+    const isThrust = key === " " || key === "arrowup";
+    if (isThrust && key === " " && target instanceof HTMLElement && target.closest("button, a")) return;
+    if (!isThrust && key !== "p" && key !== "m" && key !== "d") return;
+    event.preventDefault();
+    if (event.repeat) return;
+    if (isThrust) {
+      const previous = machine.phase;
+      flightInput();
+      if (previous !== PHASE.RUNNING) canvas.focus({ preventScroll: true });
+    } else if (key === "p") togglePause();
+    else if (key === "m") toggleMute();
+    else setDebug(!debug);
+  }
+
+  // The clamped real delta feeds a fixed-step accumulator. Rendering can happen
+  // at any refresh rate. The same seed and per-tick input give the same flight.
+  function frame(timestamp) {
+    const dpr = window.devicePixelRatio || 1;
+    if (resizePending || pixelRatio !== dpr) resizeCanvas(dpr);
+    const elapsed = lastTime === null ? 0 : (timestamp - lastTime) / 1000;
+    const dt = clamp(elapsed, 0, CONFIG.maxFrameDelta);
+    lastTime = timestamp;
+    if (elapsed > 0) {
+      sampleTime += elapsed;
+      sampleFrames++;
+      if (sampleTime >= CONFIG.telemetryInterval) {
+        const fps = String(Math.round(sampleFrames / sampleTime));
+        ui.fps.textContent = fps;
+        fpsText = "FPS " + fps;
+        sampleTime = sampleFrames = 0;
+      }
+    }
+
+    if (machine.phase === PHASE.RUNNING) {
+      accumulator += dt;
+      // An epsilon avoids dropping a tick to floating-point summation noise.
+      while (accumulator + 1e-9 >= CONFIG.step && machine.phase === PHASE.RUNNING) {
+        accumulator = Math.max(0, accumulator - CONFIG.step);
+        simulate(CONFIG.step);
+      }
+    } else {
+      accumulator = 0;
+    }
+    const alpha = machine.phase === PHASE.RUNNING ? accumulator / CONFIG.step : 1;
+    render(alpha);
+    requestAnimationFrame(frame);
+  }
+
+  Object.defineProperties(window, {
+    UoPGame: { value: Object.freeze({
+      config: CONFIG, brand: BRAND_TOKENS, state: stateView, mods: GameModAPI, setDebug,
+    }), configurable: true },
+    GameModAPI: { value: GameModAPI, configurable: true },
+  });
+
+  // One native activation path covers touch, mouse and keyboard button clicks.
+  flightDeck.addEventListener("click", () => {
+    flightInput();
+    canvas.focus({ preventScroll: true });
+  });
+  ui.pause.addEventListener("click", togglePause);
+  ui.mute.addEventListener("click", toggleMute);
+  ui.debug.addEventListener("click", () => setDebug(!debug));
+  window.addEventListener("keydown", handleKey);
+  window.addEventListener("resize", () => { resizePending = true; });
+  if (typeof ResizeObserver === "function") {
+    new ResizeObserver(() => { resizePending = true; }).observe(canvas);
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) pauseFlight();
+    resetClock();
+    sampleTime = sampleFrames = 0;
+    fpsText = "FPS —";
+    ui.fps.textContent = "—";
+  });
+
+  // === AI PROMPT ZONE: AUTONOMOUS TRAJECTORY SOLVER ===
+  const planStride = 8;
+  const planDepth = 18;
+  const beamWidth = 18;
+  const prediction = new Float32Array(planDepth + 1);
+  const hazards = new Array(CONFIG.gatePoolSize);
+  let hazardCount = 0;
+  let autopilot = false;
+  let planCount = 0;
+  let targetGate = null;
+  let targetTime = 0;
+  let targetY = CONFIG.playerY;
+  let decision = "MANUAL";
+  let lastPlan = -1;
+
+  function toggleAutopilot() {
+    autopilot = !autopilot;
+    lastPlan = -1;
+    planCount = 0;
+    byId("mod-toggle").setAttribute("aria-pressed", String(autopilot));
+    byId("mod-toggle").textContent = autopilot ? "Autopilot on" : "Autopilot off";
+    if (autopilot && machine.phase !== PHASE.RUNNING) flightInput();
+  }
+  byId("mod-toggle").addEventListener("click", toggleAutopilot);
+
+  function planTrajectory(dt, state) {
+    const speed = Math.min(CONFIG.maxGateSpeed, CONFIG.gateSpeed + state.score * CONFIG.gateSpeedPerPoint);
+    hazardCount = 0;
+    targetGate = null;
+    let nearest = Infinity;
+    for (const gate of gates) {
+      if (!gate.active || gate.x + CONFIG.gateWidth < player.x - CONFIG.playerHalfWidth) continue;
+      hazards[hazardCount++] = gate;
+      if (gate.x < nearest) {
+        nearest = gate.x;
+        targetGate = gate;
+      }
+    }
+    targetTime = targetGate ? Math.max(0, (nearest - player.x - CONFIG.playerHalfWidth) / speed) : 0;
+    targetY = targetGate ? (targetGate.top + targetGate.bottom) / 2 : CONFIG.playerY;
+
+    // Each branch is a flap followed by coasting, or coasting alone. The
+    // integrator is the engine's semi-implicit parabola, including its speed
+    // clamp. Every tick of every candidate segment must clear the hull bounds.
+    let beam = [{ y: player.y, vy: player.vy, cost: 0, path: 0, parent: null }];
+    const dtGravity = CONFIG.gravity * dt;
+    for (let step = 0; step < planDepth; step++) {
+      const next = [];
+      for (const node of beam) {
+        for (let flap = 0; flap <= 1; flap++) {
+          let y = node.y;
+          let vy = flap ? -CONFIG.thrust : node.vy;
+          let margin = Infinity;
+          let alive = true;
+          for (let substep = 1; substep <= planStride; substep++) {
+            vy = clamp(vy + dtGravity, -CONFIG.terminalSpeed, CONFIG.terminalSpeed);
+            y += vy * dt;
+            const t = (step * planStride + substep) * dt;
+            if (y - CONFIG.playerHalfHeight <= CONFIG.top + 3 || y + CONFIG.playerHalfHeight >= CONFIG.bottom - 3) {
+              alive = false;
+              break;
+            }
+            for (let i = 0; i < hazardCount; i++) {
+              const gate = hazards[i];
+              const x = gate.x - speed * t;
+              if (player.x + CONFIG.playerHalfWidth + 7 < x ||
+                  player.x - CONFIG.playerHalfWidth - 7 > x + CONFIG.gateWidth) continue;
+              const gapMargin = Math.min(y - CONFIG.playerHalfHeight - gate.top, gate.bottom - y - CONFIG.playerHalfHeight);
+              margin = Math.min(margin, gapMargin);
+              if (gapMargin < 7) {
+                alive = false;
+                break;
+              }
+            }
+            if (!alive) break;
+          }
+          if (!alive) continue;
+          const cost = node.cost + Math.abs(y - targetY) * .012 + Math.abs(vy) * .001
+            + flap * .18 + Math.max(0, 34 - margin) * .22;
+          next.push({ y, vy, cost, path: (node.path << 1) | flap, parent: node });
+        }
+      }
+      if (!next.length) break;
+      next.sort((a, b) => a.cost - b.cost);
+      const distinct = new Set();
+      beam = [];
+      for (const node of next) {
+        const key = Math.round(node.y / 9) * 128 + Math.round(node.vy / 35);
+        if (distinct.has(key)) continue;
+        distinct.add(key);
+        beam.push(node);
+        if (beam.length === beamWidth) break;
+      }
+    }
+    let node = beam[0];
+    let count = 0;
+    for (let cursor = node; cursor.parent; cursor = cursor.parent) count++;
+    planCount = count;
+    for (let i = count; i >= 0; i--) {
+      prediction[i] = node.y;
+      node = node.parent;
+    }
+    const flap = count ? Boolean(beam[0].path & (1 << (count - 1))) : player.y > targetY && player.vy > -80;
+    if (autopilot) thrustQueued = flap;
+    decision = autopilot ? (flap ? "THRUST" : "COAST") : "MANUAL";
+  }
+
+  GameModAPI.register("neural-autopilot", {
+    onUpdate(dt, state) {
+      if (state.tick < lastPlan || lastPlan === -1 || state.tick - lastPlan >= planStride) {
+        lastPlan = state.tick;
+        planTrajectory(dt, state);
+      } else if (autopilot) {
+        thrustQueued = false;
+      }
+    },
+    onRenderEntities(context) {
+      if (!planCount || machine.phase !== PHASE.RUNNING) return;
+      context.strokeStyle = BRAND_TOKENS.sage;
+      context.lineWidth = 1;
+      if (targetGate) {
+        const targetX = targetGate.x + CONFIG.gateWidth / 2;
+        context.beginPath();
+        context.moveTo(player.x, player.y);
+        context.lineTo(targetX, targetY);
+        context.moveTo(targetX - 8, targetY);
+        context.lineTo(targetX + 8, targetY);
+        context.moveTo(targetX, targetY - 8);
+        context.lineTo(targetX, targetY + 8);
+        context.stroke();
+        context.strokeStyle = BRAND_TOKENS.gold;
+        context.beginPath();
+        context.moveTo(player.x + CONFIG.playerHalfWidth, player.y);
+        context.lineTo(Math.max(player.x + CONFIG.playerHalfWidth, targetGate.x), player.y);
+        context.stroke();
+      }
+      context.strokeStyle = BRAND_TOKENS.gold;
+      context.lineWidth = 2;
+      context.beginPath();
+      context.moveTo(player.x, prediction[0]);
+      for (let i = 1; i <= planCount; i++) context.lineTo(player.x + i * 13, prediction[i]);
+      context.stroke();
+      context.fillStyle = BRAND_TOKENS.ink;
+      context.fillRect(18, 53, 207, 50);
+      context.fillStyle = BRAND_TOKENS.cream;
+      context.font = canvasFont;
+      context.fillText("TRAJECTORY / " + decision, 26, 71);
+      context.fillText("GATE ETA " + targetTime.toFixed(2) + "s   LOCK Y " + Math.round(targetY), 26, 89);
+    },
+  });
+
+  spawnGate(CONFIG.firstGateX);
+  syncScore();
+  syncMods();
+  ui.mute.setAttribute("aria-pressed", String(sound.muted));
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

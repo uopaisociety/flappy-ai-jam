@@ -12,7 +12,9 @@ Thursday 19 November 2026 · 18:30–20:00
 [![Stack](https://img.shields.io/badge/stack-HTML5_Canvas_%7C_Vanilla_JS-073B5C?style=flat-square)](https://github.com/uopaisociety/flappy-ai-jam/blob/main/index.html)
 [![Sprint](https://img.shields.io/badge/sprint-30_minutes-E6B325?style=flat-square&labelColor=073B5C)](https://github.com/uopaisociety/flappy-ai-jam)
 
-[Play the starter](https://uopaisociety.github.io/flappy-ai-jam/)
+[Play the starter](https://uopaisociety.github.io/flappy-ai-jam/) · [Play the Hall of Fame builds](https://uopaisociety.github.io/flappy-ai-jam/showcase.html)
+
+[![Submit Your Build](https://img.shields.io/badge/Submit_Your_Build-Open_GitHub_Form-073B5C?style=flat-square)](https://github.com/uopaisociety/flappy-ai-jam/issues/new?template=submit-build.yml)
 
 </div>
 
@@ -30,7 +32,7 @@ Nothing to install, and no local server. Gemini Canvas can run the file, and so 
 
 This is the way to enter if you have never used git. Everything happens in the browser. No terminal.
 
-Star and Fork is the standard way to enter. You get a public project on your own GitHub profile, and a link you can hand in. Do steps 1 to 3 before you start building. Steps 4 to 7 are how you hand the game in, after Gemini has given you a new file.
+Use the [GitHub submission form](#submission-and-judging) to enter the gallery by pasting your finished HTML. The optional Star and Fork route below gives you a public project and a game link of your own.
 
 1. **Sign up or sign in.** Open [github.com/signup](https://github.com/signup) or [github.com/login](https://github.com/login). The buttons say **Sign up** and **Sign in**.
 2. **Star.** On this page, click **Star** at the top right.
@@ -38,7 +40,7 @@ Star and Fork is the standard way to enter. You get a public project on your own
 4. **Paste your game.** In **your** copy, open `index.html` and click the pencil icon (**Edit this file**). Select all (Ctrl+A, or Cmd+A on a Mac), delete, and paste the full file Gemini gave you. The prompt guide is [further down](#prompt-guide) if you have not made a version yet.
 5. **Commit changes.** Click **Commit changes**. In the box that opens, leave **Commit directly to the `main` branch** selected, then click **Commit changes** again. A message like "Seagull edition" is enough.
 6. **Turn on Pages.** In your copy, open **Settings**, then **Pages**. Under **Build and deployment**, choose **Deploy from a branch**. Set the branch to **main** and the folder to **/ (root)**. Click **Save**. Wait about a minute. The repo needs to stay public.
-7. **Submit the link.** Your game is live at `https://<your-username>.github.io/flappy-ai-jam/`. Open it once. The address must contain your username, not `uopaisociety`. Submit that link on the form shown on the screen at the event (there is a QR code in the room).
+7. **Submit the link.** Your game is live at `https://<your-username>.github.io/flappy-ai-jam/`. Open it once. The address must contain your username, not `uopaisociety`. You can share that link or use it for a live demo. To enter the gallery, follow [Submission and judging](#submission-and-judging).
 
 ## No GitHub account?
 
@@ -46,7 +48,7 @@ Create a free account at [github.com/signup](https://github.com/signup) before t
 
 You can still play and compete with no GitHub account. Build the game in Gemini Canvas, use Canvas's **Share** button to get a public link, and submit that link. A Gemini Canvas share link is accepted for judging.
 
-Star and Fork is still the standard way to enter, and it puts a public project on your own GitHub profile.
+The room submission form accepts a Gemini Canvas share link. Use GitHub if you also want a playable listing in the public gallery.
 
 ## Repository architecture
 
@@ -168,21 +170,33 @@ Fix only that bug, keep every feature, and return the FULL working index.html.
 
 ## Submission and judging
 
-Hand the game in with steps 4 to 7 in [Never used GitHub? Do this](#never-used-github-do-this). The link looks like this:
+Open [Submit Your Build](https://github.com/uopaisociety/flappy-ai-jam/issues/new?template=submit-build.yml) while signed in to GitHub. Enter your build title, builder name, track and key prompt, then paste your full `index.html`. LinkedIn and Gemini Canvas links are optional. A maintainer reviews the issue and applies `approved`. Once Pages finishes deploying, the bot replies with your playable gallery link. You can also use the submission form displayed at the jam if you are entering without GitHub.
 
-```text
-https://<your-username>.github.io/flappy-ai-jam/
-```
-
-Submit it on the form shown on the screen (QR code). Have your name, your game's name, and the prompt you are most proud of ready.
-
-If the Pages link is not live after a minute, refresh once. If it is still down, also submit the link to `index.html` on your fork, or your Gemini Canvas share link, so we can still open the game.
+Your issue, HTML and key prompt will be public. Keep CSS, JavaScript and assets inside the HTML and under 60,000 characters. For an updated build, submit a new issue. The newest approved issue per GitHub account owns that account’s gallery link.
 
 | Category | What it rewards | How we judge it |
 | --- | --- | --- |
 | Best Engineered | Technical execution | The game runs, the new ideas work, and the build is the strongest in the room. |
 | Most Unhinged Prompt | Creative prompting | The idea is bold and the prompts are specific. No coding is required, so this category is open to everyone. |
 | People's Choice | The room vote | Everyone in the room votes. The game people most want to play again wins. |
+
+## Hall of Fame
+
+Open the [live gallery](https://uopaisociety.github.io/flappy-ai-jam/showcase.html) or run `python3 -m http.server 8000` in the repository root and open <http://localhost:8000/showcase.html>. You can double-click any example file for standalone play.
+
+| Reference mod | Quick preview |
+| --- | --- |
+| [Autonomous Trajectory Solver](examples/01-neural-autopilot.html) | Press **A** or tap **Autopilot** to launch and draw the flight plan. |
+| [Acoustic Pitch Controller](examples/02-voice-frequency-thruster.html) | Open standalone on HTTPS or localhost, choose **Enable mic**, launch, and try voice pulses or whistles. **Space** and tap also work. |
+| [Overclock Boss Protocol](examples/03-overclock-boss-protocol.html) | Choose **Boss practice** for an immediate encounter. Press **Shift** or tap **Dash**. Normal flights encounter the boss every 10 points. |
+
+### Maintainer setup
+
+1. In **Settings → Pages → Source**, choose **GitHub Actions**, then run **Publish Jam Showcase** from the Actions tab on `main`. The workflow creates the `submission` and `approved` labels and deploys the seed gallery.
+2. Review submissions and apply `approved` when ready. The workflow accepts approvals from accounts with repository write access. If a student edits an issue before publication, review it and reapply the label. If the job fails, fix the cause and rerun it or reapply approval.
+3. After judging, set `"winner": true` on the relevant entries in `submissions/manifest.json` and merge the changes. Those entries appear in **Event Winners**.
+
+The workflow stages student HTML as text for Pages. The gallery runs it in a sandboxed iframe with a policy that blocks external assets and fetches. Keep the Pages source on **GitHub Actions** so repository files cannot bypass that packaging step.
 
 ## About the society
 
