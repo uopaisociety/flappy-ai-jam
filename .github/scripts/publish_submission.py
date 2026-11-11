@@ -1,4 +1,4 @@
-"""Turn the approved issue snapshot into static data. Student HTML is never executed."""
+"""Add the approved issue snapshot and its game link to the gallery manifest."""
 
 import json
 import os
@@ -16,8 +16,7 @@ LABELS = (
     "LinkedIn URL (optional)",
     "Track",
     "Key Prompt Used",
-    "Gemini Canvas Share URL (optional)",
-    "Full index.html Code",
+    "Game URL",
 )
 TRACKS = {
     "Technical Execution": "technical-execution",
@@ -31,17 +30,18 @@ def gh_json(endpoint):
     return json.loads(subprocess.check_output(["gh", "api", endpoint], text=True))
 
 
-def public_url(value, hosts):
-    if value in {"", "_No response_"}:
-        return None
+def public_url(value):
     try:
+        if len(value) > 2048 or re.search(r"[\s<>\\\x00-\x1f\x7f]", value):
+            raise ValueError
         url = urlsplit(value)
-        if (url.scheme != "https" or url.hostname not in hosts or url.username is not None
-                or url.password is not None or url.port not in {None, 443} or not url.path.strip("/")
-                or re.search(r"[\s<>]", value) or len(value) > 400):
+        host = (url.hostname or "").encode("idna").decode("ascii")
+        if (url.scheme != "https" or url.username is not None or url.password is not None
+                or url.port not in {None, 443} or not re.fullmatch(r"[a-z0-9.-]+\.[a-z][a-z0-9-]*", host)
+                or host.endswith((".localhost", ".local"))):
             raise ValueError
     except ValueError:
-        raise ValueError("An optional URL must use HTTPS and match its listed provider.") from None
+        raise ValueError("Use a public HTTPS URL without embedded credentials.") from None
     return value
 
 
@@ -70,33 +70,25 @@ def parse_submission(issue):
     if issue["user"]["type"] != "User" or not HANDLE.fullmatch(github):
         raise ValueError("Submissions must come from a GitHub user account.")
     identifier = github.lower()
-    title, builder, linkedin, track, prompt, gemini, code = extract_fields(issue["body"] or "")
+    title, builder, linkedin, track, prompt, game_url = extract_fields(issue["body"] or "")
     if not (0 < len(title) <= 100 and 0 < len(builder) <= 100 and 0 < len(prompt) <= 1500
             and all(value != "_No response_" for value in (title, builder, prompt))
             and all("\n" not in value for value in (title, builder)) and track in TRACKS):
         raise ValueError("Check the title, builder, track and key prompt fields.")
-    # The form renders this field in a fenced block. Only the surrounding
-    # fence is removed, so Markdown and heading-like text inside HTML survive.
-    fence = re.fullmatch(r"(`{3,}|~{3,})(?:html)?[^\S\n]*\n(.*)\n\1", code, re.I | re.S)
-    if fence:
-        code = fence[2]
-    if (not code or len(code) > 60_000 or "\x00" in code
-            or not re.search(r"<(?:!doctype\s+html\b|html[\s>])", code, re.I)):
-        raise ValueError("Paste a complete HTML document of at most 60,000 characters.")
     row = {
         "id": identifier, "kind": "submission", "title": title, "builder": builder,
         "github": github, "track": TRACKS[track], "prompt": prompt, "issue": issue["number"],
+        "url": public_url(game_url),
     }
-    linkedin_url = public_url(linkedin, {"linkedin.com", "www.linkedin.com"})
-    gemini_url = public_url(gemini, {"gemini.google.com", "g.co"})
-    if linkedin_url:
+    if linkedin not in {"", "_No response_"}:
+        linkedin_url = public_url(linkedin)
+        if urlsplit(linkedin_url).hostname not in {"linkedin.com", "www.linkedin.com"}:
+            raise ValueError("The optional LinkedIn URL must use linkedin.com.")
         row["linkedin"] = linkedin_url
-    if gemini_url:
-        row["gemini"] = gemini_url
-    return row, code.rstrip() + "\n"
+    return row
 
 
-def record_submission(row, code):
+def record_submission(row):
     manifest = json.loads(MANIFEST.read_text())
     if manifest.get("version") != 1 or not isinstance(manifest.get("builds"), list):
         raise ValueError("The existing manifest must use schema version 1.")
@@ -115,7 +107,6 @@ def record_submission(row, code):
         break
     else:
         rows.append(row)
-    (MANIFEST.parent / (identifier + ".html")).write_text(code, encoding="utf-8")
     MANIFEST.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
@@ -136,8 +127,8 @@ def main():
             or not REQUIRED_LABELS.issubset(label["name"] for label in issue["labels"])
             or issue["body"] != current["body"]):
         raise ValueError("The submission changed, closed or lost approval. Review it and apply approved again.")
-    row, code = parse_submission(issue)
-    record_submission(row, code)
+    row = parse_submission(issue)
+    record_submission(row)
     with Path(os.environ["GITHUB_OUTPUT"]).open("a") as output:
         print(f"build={row['id']}", file=output)
         print(f"issue={row['issue']}", file=output)

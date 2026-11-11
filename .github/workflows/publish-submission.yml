@@ -58,7 +58,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           for attempt in 1 2 3; do
             python3 .github/scripts/publish_submission.py
-            git add -- submissions/
+            git add -- submissions/manifest.json
             if git diff --cached --quiet; then exit 0; fi
             git commit -m 'chore: publish approved jam submission'
             if git push origin HEAD:main; then exit 0; fi
@@ -66,8 +66,14 @@ jobs:
             git fetch origin main
             git reset --hard FETCH_HEAD
           done
-      - name: Stage approved gallery files
-        run: python3 .github/scripts/stage_pages.py "$RUNNER_TEMP/jam-pages"
+      - name: Stage the gallery and curated games
+        run: |
+          set -euo pipefail
+          site="$RUNNER_TEMP/jam-pages"
+          mkdir -p "$site/submissions"
+          cp index.html arcade.html showcase.html "$site/"
+          cp -r examples "$site/"
+          cp submissions/manifest.json "$site/submissions/"
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
           path: ${{ runner.temp }}/jam-pages
