@@ -23,8 +23,12 @@
   header { justify-content:space-between; gap:12px; border-bottom:1px solid rgba(247,245,240,.14); }
   .brand { font-size:13px; font-weight:650; letter-spacing:.14em; text-transform:uppercase; white-space:nowrap; }
   .brand span { display:block; margin-top:3px; font-size:10px; font-weight:500; letter-spacing:.04em; opacity:.62; text-transform:none; }
-  #status { flex:none; white-space:nowrap; font:11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    letter-spacing:.14em; color:var(--accent); border:1px solid var(--accent); border-radius:4px; padding:5px 8px; }
+  #game-action { flex:none; min-width:44px; min-height:44px; white-space:nowrap; cursor:pointer;
+    font:700 11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; letter-spacing:.08em;
+    color:var(--ink); background:var(--accent); border:1px solid var(--accent); border-radius:4px;
+    padding:5px 10px; touch-action:manipulation; }
+  #game-action:focus-visible { outline:2px solid var(--cream); outline-offset:3px; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
   main { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:12px; }
   canvas { background:var(--cream); display:block; touch-action:none; border-radius:16px;
     border:1px solid rgba(247,245,240,.28); box-shadow:0 18px 50px rgba(0,0,0,.45); }
@@ -35,7 +39,8 @@
 <body>
 <header>
   <div class="brand">Flappy AI Jam<span>UoP AI Society</span></div>
-  <div id="status" aria-live="polite">MENU</div>
+  <button id="game-action" type="button" aria-controls="game">PLAY</button>
+  <span id="status" class="sr-only" role="status">Ready to play</span>
 </header>
 <main><canvas id="game" width="400" height="600"></canvas></main>
 <footer>SPACE · UP · CLICK · TAP</footer>
@@ -48,8 +53,9 @@ const PIPE_GAP = 160, PIPE_WIDTH = 64, PIPE_SPEED = 2.6, PIPE_SPACING = 220, GRO
 const COLORS = { navy:"#073B5C", cream:"#F7F5F0", bird:"#FFC93C", beak:"#FF7A00", pipe:"#0E5A8A", ground:"#C9B79C" };
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+const gameAction = document.getElementById("game-action");
 const statusEl = document.getElementById("status");
-let state = "start", bird, pipes, score, frame, overFrame = 0, best = 0;
+let state = "start", bird, pipes, score, frame, overAt = 0, best = 0;
 try { best = Number(localStorage.getItem("flappyAiJamBest")) || 0; } catch (e) {}
 
 function resize() {
@@ -69,11 +75,11 @@ function reset() {
 // === AI PROMPT ZONE: PHYSICS ===
 // Gravity pulls the bird down every frame. A flap sets an upward speed.
 function flap() {
-  if (state === "start") state = "playing";
-  else if (state === "over") {
-    if (frame - overFrame > 30) { reset(); state = "start"; } // Short pause stops accidental restarts
-    return;
+  if (state === "over") {
+    if (performance.now() - overAt < 300) return; // Ignore taps meant for the previous run.
+    reset();
   }
+  state = "playing";
   bird.vy = FLAP_STRENGTH;
 }
 function updateBird() {
@@ -142,7 +148,7 @@ function drawBird() {
 // === AI PROMPT ZONE: SCORE & GAME OVER ===
 function gameOver() {
   if (state !== "playing") return;
-  state = "over"; overFrame = frame;
+  state = "over"; overAt = performance.now();
   if (score > best) { best = score; try { localStorage.setItem("flappyAiJamBest", best); } catch (e) {} }
 }
 function drawText(text, y, size) {
@@ -168,15 +174,22 @@ function drawUI() {
 
 function loop() {
   frame++;
-  const label = state === "playing" ? "PLAYING" : state === "over" ? "GAME OVER" : "MENU";
-  if (statusEl.textContent !== label) statusEl.textContent = label;
+  const label = state === "playing" ? "Playing" : state === "over" ? "Game over" : "Ready to play";
+  if (statusEl.textContent !== label) {
+    statusEl.textContent = label;
+    gameAction.textContent = state === "playing" ? "FLAP" : state === "over" ? "PLAY AGAIN" : "PLAY";
+  }
   if (state === "playing") { updateBird(); updatePipes(); }
   else if (state === "start") bird.y = H / 2 + Math.sin(frame / 15) * 10;
   drawBackground(); drawPipes(); drawGround(); drawBird(); drawUI();
   requestAnimationFrame(loop);
 }
-addEventListener("keydown", e => { if (e.code === "Space" || e.code === "ArrowUp") { e.preventDefault(); flap(); } });
-canvas.addEventListener("pointerdown", e => { e.preventDefault(); flap(); });
+addEventListener("keydown", e => {
+  if (e.defaultPrevented || (e.code === "Space" && e.target === gameAction)) return;
+  if (e.code === "Space" || e.code === "ArrowUp") { e.preventDefault(); flap(); }
+});
+gameAction.addEventListener("click", flap);
+canvas.addEventListener("click", flap);
 reset();
 loop();
 </script>
