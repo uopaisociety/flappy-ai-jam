@@ -83,16 +83,17 @@ Do this on the society page before you edit anything. The clicks are in [Never u
 
 Free Gemini is enough for the evening. The [Google AI Plus student offer](https://gemini.google/gb/students/) is worth claiming beforehand if you can.
 
-**On your own computer (optional).** Still nothing to install.
+**On your own computer (optional).** Gemini Canvas is still the route for the evening. This path is only if you already work on your own machine.
 
-- Click **Code**, then **Download ZIP**. Unzip it and double-click `index.html`.
-- If you already use git, clone your own copy, then double-click the file:
+Nothing to install if you just want to play: click **Code**, then **Download ZIP**, unzip, and double-click `index.html`. If you already use git, clone your fork and double-click the file:
 
 ```bash
 git clone https://github.com/<your-username>/flappy-ai-jam.git
 ```
 
-Open the folder in any editor you like, change `index.html`, save, and refresh the browser. When the game is ready, publish it with steps 5 to 7 above. If you use git, commit `index.html` and push to `main` instead of using the pencil.
+**VS Code or Zed (advanced).** Open that folder, edit `index.html`, save, and refresh the browser. Then use steps 5 to 7 above, or commit `index.html` and push to `main`.
+
+**Antigravity IDE (advanced).** Google's desktop agentic IDE. Install it before Thursday from the [Google Antigravity download page](https://antigravity.google/download), not during the event. If it is already installed: clone your fork or open that folder, open `index.html`, and ask the agent with the same prompts A–D. Open `index.html` in a browser to preview, then commit and push to your fork.
 
 ## Prompt guide
 
