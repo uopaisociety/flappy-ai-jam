@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  FLAPPY AI JAM · UoP AI Society · The 30-Minute AI Game Jam
+  ----------------------------------------------------------------------------
+  This is a COMPLETE Flappy Bird game in ONE file (HTML + CSS + JavaScript).
+  No installs, no libraries, no images: every shape is drawn in code.
+
+  HOW TO USE IT IN THE JAM:
+    1. Copy this WHOLE file (Ctrl/Cmd + A, then Ctrl/Cmd + C).
+    2. Paste it into Gemini (Canvas) and ask for changes.
+    3. Always ask Gemini for the FULL file back, then preview / save it.
+  Look for the "AI PROMPT ZONE" comments: they tell you (and Gemini) where
+  each part of the game lives. Change anything. Break it. Make it weird.
+  ============================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Flappy AI Jam · UoP AI Society</title>
+<style>
+  /* Society colours: navy #073B5C, cream #F7F5F0 */
+  html, body { margin: 0; height: 100%; background: #073B5C; color: #F7F5F0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  h1 { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; margin: 8px 0; opacity: .9; }
+  canvas { background: #F7F5F0; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.4);
+    touch-action: none; display: block; }
+</style>
+</head>
+<body>
+<h1>UoP AI Society · Flappy AI Jam</h1>
+<canvas id="game" width="400" height="600"></canvas>
+<script>
+// === AI PROMPT ZONE: CONFIG ===
+// Tweak these numbers first: they change how the whole game feels.
+const W = 400, H = 600;          // Internal game size (scaled to fit the window)
+const GRAVITY = 0.45;            // How fast the bird falls
+const FLAP_STRENGTH = -7.5;      // Upward kick per flap (more negative = higher)
+const PIPE_GAP = 160;            // Vertical space between top and bottom pipes
+const PIPE_WIDTH = 64;           // Pipe thickness
+const PIPE_SPEED = 2.6;          // How fast pipes scroll left
+const PIPE_SPACING = 220;        // Horizontal distance between pipe pairs
+const GROUND_H = 70;             // Height of the ground strip
+const COLORS = { navy: "#073B5C", cream: "#F7F5F0", bird: "#FFC93C", beak: "#FF7A00", pipe: "#0E5A8A", ground: "#C9B79C" };
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+let state = "start";             // "start" | "playing" | "over"
+let bird, pipes, score, frame, overFrame = 0;
+let best = Number(localStorage.getItem("flappyAiJamBest")) || 0;
+
+// Fit the canvas to the window while keeping its shape (works on phones too)
+function resize() {
+  const scale = Math.min(window.innerWidth / W, (window.innerHeight - 40) / H);
+  canvas.style.width = W * scale + "px";
+  canvas.style.height = H * scale + "px";
+}
+window.addEventListener("resize", resize);
+resize();
+
+function reset() {
+  bird = { x: 100, y: H / 2, vy: 0, r: 16 };
+  pipes = [];
+  score = 0;
+  frame = 0;
+}
+
+// === AI PROMPT ZONE: PHYSICS ===
+// Gravity pulls the bird down every frame; a flap sets an upward speed.
+function flap() {
+  if (state === "start") { state = "playing"; }
+  else if (state === "over") { if (frame - overFrame > 30) { reset(); state = "start"; } return; } // Short pause stops accidental restarts
+  bird.vy = FLAP_STRENGTH;
+}
+function updateBird() {
+  bird.vy += GRAVITY;
+  bird.y += bird.vy;
+  if (bird.y - bird.r < 0) { bird.y = bird.r; bird.vy = 0; }      // Ceiling
+  if (bird.y + bird.r > H - GROUND_H) gameOver();                   // Ground
+}
+
+// === AI PROMPT ZONE: PIPES / LEVEL ===
+// New pipe pairs spawn on the right with a random gap position.
+function updatePipes() {
+  const last = pipes[pipes.length - 1];
+  if (!last || last.x < W - PIPE_SPACING) {
+    const top = 60 + Math.random() * (H - GROUND_H - PIPE_GAP - 120);
+    pipes.push({ x: W, top: top, passed: false });
+  }
+  for (const p of pipes) {
+    p.x -= PIPE_SPEED;
+    // Collision: bird circle vs pipe rectangles (simple box check)
+    const hitX = bird.x + bird.r > p.x && bird.x - bird.r < p.x + PIPE_WIDTH;
+    const hitY = bird.y - bird.r < p.top || bird.y + bird.r > p.top + PIPE_GAP;
+    if (hitX && hitY) gameOver();
+    if (!p.passed && p.x + PIPE_WIDTH < bird.x) { p.passed = true; score++; }
+  }
+  pipes = pipes.filter(p => p.x + PIPE_WIDTH > -10);               // Remove off-screen pipes
+}
+
+// === AI PROMPT ZONE: GRAPHICS ===
+// Everything is drawn with simple shapes: no image files needed.
+function drawBackground() {
+  ctx.fillStyle = COLORS.cream;
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "rgba(7,59,92,0.08)";                               // Soft clouds
+  for (let i = 0; i < 4; i++) {
+    const cx = ((i * 140 - frame * 0.4) % (W + 120) + W + 120) % (W + 120) - 60;
+    ctx.beginPath(); ctx.arc(cx, 90 + i * 45, 30, 0, Math.PI * 2); ctx.arc(cx + 30, 85 + i * 45, 22, 0, Math.PI * 2); ctx.fill();
+  }
+}
+function drawPipes() {
+  for (const p of pipes) {
+    ctx.fillStyle = COLORS.pipe;
+    ctx.fillRect(p.x, 0, PIPE_WIDTH, p.top);                                         // Top pipe
+    ctx.fillRect(p.x, p.top + PIPE_GAP, PIPE_WIDTH, H - GROUND_H - p.top - PIPE_GAP); // Bottom pipe
+    ctx.fillStyle = COLORS.navy;                                                    // Pipe lips
+    ctx.fillRect(p.x - 4, p.top - 20, PIPE_WIDTH + 8, 20);
+    ctx.fillRect(p.x - 4, p.top + PIPE_GAP, PIPE_WIDTH + 8, 20);
+  }
+}
+function drawGround() {
+  ctx.fillStyle = COLORS.ground;
+  ctx.fillRect(0, H - GROUND_H, W, GROUND_H);
+  ctx.fillStyle = COLORS.navy;
+  ctx.fillRect(0, H - GROUND_H, W, 4);
+}
+function drawBird() {
+  ctx.save();
+  ctx.translate(bird.x, bird.y);
+  ctx.rotate(Math.max(-0.5, Math.min(1.2, bird.vy * 0.08)));          // Tilt with speed
+  ctx.fillStyle = COLORS.bird;
+  ctx.beginPath(); ctx.arc(0, 0, bird.r, 0, Math.PI * 2); ctx.fill();  // Body
+  ctx.fillStyle = "#fff";
+  ctx.beginPath(); ctx.arc(6, -5, 6, 0, Math.PI * 2); ctx.fill();      // Eye
+  ctx.fillStyle = COLORS.navy;
+  ctx.beginPath(); ctx.arc(8, -5, 3, 0, Math.PI * 2); ctx.fill();      // Pupil
+  ctx.fillStyle = COLORS.beak;
+  ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(24, 4); ctx.lineTo(12, 8); ctx.fill(); // Beak
+  ctx.restore();
+}
+
+// === AI PROMPT ZONE: SCORE & GAME OVER ===
+function gameOver() {
+  if (state !== "playing") return;
+  state = "over";
+  overFrame = frame;
+  if (score > best) { best = score; localStorage.setItem("flappyAiJamBest", best); }
+}
+function drawText(text, y, size) {
+  ctx.fillStyle = COLORS.navy;
+  ctx.font = "bold " + size + "px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(text, W / 2, y);
+}
+function drawUI() {
+  if (state === "playing") drawText(score, 80, 48);
+  if (state === "start") {
+    drawText("FLAPPY AI JAM", H / 2 - 90, 36);
+    drawText("Space / Click / Tap to flap", H / 2 + 70, 18);
+    drawText("Best: " + best, H / 2 + 100, 18);
+  }
+  if (state === "over") {
+    ctx.fillStyle = "rgba(247,245,240,0.85)";
+    ctx.fillRect(40, H / 2 - 110, W - 80, 200);
+    drawText("GAME OVER", H / 2 - 60, 36);
+    drawText("Score: " + score + "   Best: " + best, H / 2 - 10, 22);
+    drawText("Tap / Space to restart", H / 2 + 40, 18);
+  }
+}
+
+// === MAIN LOOP & CONTROLS ===
+function loop() {
+  frame++;
+  if (state === "playing") { updateBird(); updatePipes(); }
+  else if (state === "start") { bird.y = H / 2 + Math.sin(frame / 15) * 10; }   // Idle bob
+  drawBackground(); drawPipes(); drawGround(); drawBird(); drawUI();
+  requestAnimationFrame(loop);
+}
+window.addEventListener("keydown", e => { if (e.code === "Space" || e.code === "ArrowUp") { e.preventDefault(); flap(); } });
+canvas.addEventListener("pointerdown", e => { e.preventDefault(); flap(); });   // Mouse + touch
+reset();
+loop();
+</script>
+</body>
+</html>
