@@ -29,6 +29,19 @@ function element(tag, value, className) {
   return node;
 }
 
+function buildPreview(build) {
+  if (build.preview !== true) return renderArtwork(build);
+  const preview = element("img", "", "card-art");
+  preview.alt = "";
+  preview.width = 640;
+  preview.height = 400;
+  preview.loading = "lazy";
+  preview.decoding = "async";
+  preview.addEventListener("error", () => preview.replaceWith(renderArtwork(build)), { once: true });
+  preview.src = "event/previews/" + build.id + ".webp";
+  return preview;
+}
+
 function renderArtwork(build) {
   const canvas = element("canvas", "", "card-art");
   canvas.width = 620;
@@ -148,7 +161,7 @@ function card(build) {
   launch.setAttribute("aria-label", "Launch " + build.title);
   launch.addEventListener("click", () => launchBuild(build));
   body.append(launch);
-  result.append(renderArtwork(build), body);
+  result.append(buildPreview(build), body);
   return result;
 }
 

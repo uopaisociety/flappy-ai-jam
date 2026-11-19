@@ -19,7 +19,8 @@
       "github": "uopaisociety",
       "track": "technical-execution",
       "description": "Watch the game plan its own flight path, then switch the autopilot off and try it yourself.",
-      "prompt": "Add an autopilot that plans flap-or-coast decisions using the game’s fixed-step physics. Draw its predicted flight path and let me switch back to manual controls. Use three lives and a gradual difficulty ramp. End the demo round after 90 seconds."
+      "prompt": "Add an autopilot that plans flap-or-coast decisions using the game’s fixed-step physics. Draw its predicted flight path and let me switch back to manual controls. Use three lives and a gradual difficulty ramp. End the demo round after 90 seconds.",
+      "preview": true
     },
     {
       "id": "02-voice-frequency-thruster",
@@ -29,7 +30,8 @@
       "github": "uopaisociety",
       "track": "game-feel",
       "description": "Flap with Space, tap, or your voice. The mic is optional and sound stays on your device.",
-      "prompt": "Use the browser microphone locally to flap when I speak. Show a spectrum behind the game, and keep Space and tap working if the mic is unavailable. Use three lives, short recovery after hits and a gradual difficulty ramp. Limit each demo round to 90 seconds."
+      "prompt": "Use the browser microphone locally to flap when I speak. Show a spectrum behind the game, and keep Space and tap working if the mic is unavailable. Use three lives, short recovery after hits and a gradual difficulty ramp. Limit each demo round to 90 seconds.",
+      "preview": true
     },
     {
       "id": "03-overclock-boss-protocol",
@@ -39,7 +41,8 @@
       "github": "uopaisociety",
       "track": "creative-mutation",
       "description": "Meet the boss straight away. Dash through waves that get tougher as you go. Three lives per round.",
-      "prompt": "Add a Shift or on-screen dash that gives a short shield. Show a slow, clearly signalled boss wave at the start, then alternate gates and boss waves. Use three lives with brief recovery between hits, make each wave tougher, and end the demo round after 90 seconds."
+      "prompt": "Add a Shift or on-screen dash that gives a short shield. Show a slow, clearly signalled boss wave at the start, then alternate gates and boss waves. Use three lives with brief recovery between hits, make each wave tougher, and end the demo round after 90 seconds.",
+      "preview": true
     },
     {
       "id": "megarrito",
@@ -49,7 +52,8 @@
       "description": "Pilot an astronaut through a shifting bookshelf matrix as a black hole pulls you in.",
       "html": true,
       "github": "megarrito",
-      "issue": 16
+      "issue": 16,
+      "preview": true
     },
     {
       "id": "email--stationary-bird",
@@ -58,7 +62,8 @@
       "builder": "Neerav Durve",
       "description": "The bird stays in place while the course moves. Fly through gusts and graze red pillar tips for bonus points.",
       "html": true,
-      "github": "ndurve06"
+      "github": "ndurve06",
+      "preview": true
     },
     {
       "id": "email--miaucalipsis",
@@ -66,7 +71,8 @@
       "title": "Miaucalipsis · The Last Tuna",
       "builder": "Aurora Velasco",
       "description": "Guide Croqueta through zombie-cat barricades, collect tuna cans and use them as decoys.",
-      "html": true
+      "html": true,
+      "preview": true
     },
     {
       "id": "email--flap-battle",
@@ -74,7 +80,8 @@
       "title": "Flap Battle",
       "builder": "Harrison Pinto",
       "description": "Race head to head with W/S and the arrow keys. The downloaded HTML also includes an optional camera mode.",
-      "html": true
+      "html": true,
+      "preview": true
     },
     {
       "id": "email--flappy-parry",
@@ -82,7 +89,8 @@
       "title": "Flappy Parry, the Warrior",
       "builder": "Ryan Evans",
       "description": "Dodge obstacles and parry attacks with F.",
-      "html": true
+      "html": true,
+      "preview": true
     },
     {
       "id": "email--demigod-flight",
@@ -90,7 +98,8 @@
       "title": "Demigod Flight",
       "builder": "Benjamin Colgrove",
       "description": "Fly past Greek monsters and take on Hades and the Olympians. Press Space or tap to flap.",
-      "html": true
+      "html": true,
+      "preview": true
     },
     {
       "id": "email--seagull-snatch",
@@ -98,7 +107,8 @@
       "title": "Seagull Snatch",
       "builder": "Kamal Shukri",
       "description": "Steal chips and dodge pillars. Tap or click to flap in the gallery. Download the HTML for optional hand and head camera controls.",
-      "html": true
+      "html": true,
+      "preview": true
     },
     {
       "id": "email--flappy-shooter",
@@ -106,7 +116,8 @@
       "title": "Flappy AI Jam · Auto-Fire",
       "builder": "Hin Mok (Jake)",
       "description": "Flap to dodge drones and collect power-ups while your bird fires automatically.",
-      "html": true
+      "html": true,
+      "preview": true
     }
   ]
 }

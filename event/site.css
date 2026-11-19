@@ -91,7 +91,7 @@ button:disabled { opacity: .55; cursor: default; }
 .filters { display: flex; flex-wrap: wrap; gap: .4rem; }
 .filters button[aria-pressed="true"] { background: var(--cream); color: var(--deep); }
 .card { overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
-.card-art { display: block; width: 100%; aspect-ratio: 620 / 235; height: auto; border-bottom: 1px solid var(--line); }
+.card-art { display: block; width: 100%; aspect-ratio: 8 / 5; height: auto; object-fit: cover; border-bottom: 1px solid var(--line); }
 .card-body { display: flex; flex-direction: column; align-items: start; gap: .65rem; padding: 1rem; flex: 1; }
 .card p, .dialog-copy p { overflow-wrap: anywhere; }
 .byline { color: var(--muted); font-size: .9rem; }
