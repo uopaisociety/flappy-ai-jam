@@ -242,7 +242,8 @@ async function refresh() {
   if (player.open) return;
   const [manifest, event] = await Promise.allSettled([loadManifest(), loadEvent()]);
   if (manifest.status === "rejected") {
-    if (!started) $("games-message").textContent = "Could not load the games. This page will retry automatically.";
+    // The HTML contains the current games as a fallback. Retain them if
+    // a deployment or network issue prevents the live manifest from loading.
     return;
   }
   const next = [];
