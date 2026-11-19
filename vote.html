@@ -48,6 +48,14 @@
       <ol id="results" hidden></ol>
       <noscript><p>Ask for a paper slip at the help desk to vote in the room.</p></noscript>
     </section>
+    <section class="panel vote-games" aria-label="Optional game previews">
+      <details>
+        <summary>Play submitted games here (optional)</summary>
+        <p class="section-intro">Try the approved games without leaving the ballot. Close the player when you’re ready to vote.</p>
+        <p class="vote-games-status" id="ballot-games-status" role="status">Loading games…</p>
+        <div class="vote-game-list" id="ballot-games-list"></div>
+      </details>
+    </section>
   </main>
   <main class="wrap vote-page" id="projector" hidden>
     <div class="projector-wrap">
@@ -66,6 +74,28 @@
       </div>
       <canvas class="qr" id="projector-qr" role="img" aria-label="QR code for the audience vote" hidden></canvas>
     </div>
+    <details class="panel vote-games vote-projector-games">
+      <summary>Play submitted games on this screen (optional)</summary>
+      <p class="section-intro">Choose a game to play here, then close it to return to the voting QR.</p>
+      <p class="vote-games-status" id="projector-games-status" role="status">Loading games…</p>
+      <div class="vote-game-list" id="projector-games-list"></div>
+    </details>
   </main>
+  <dialog id="vote-player" aria-labelledby="vote-player-title">
+    <div class="dialog-bar">
+      <a class="action" id="vote-player-external" target="_blank" rel="noopener noreferrer">Open game in new tab</a>
+      <form method="dialog"><button type="submit">Close game</button></form>
+    </div>
+    <div class="dialog-grid">
+      <div class="frame-box" id="vote-frame-box">
+        <p class="frame-message" id="vote-frame-status" role="status">Loading game…</p>
+      </div>
+      <div class="dialog-copy">
+        <h2 id="vote-player-title"></h2>
+        <p id="vote-player-builder" class="byline"></p>
+        <p id="vote-player-help">Use the game’s keyboard or touch controls. If the preview cannot run here, use the link above.</p>
+      </div>
+    </div>
+  </dialog>
 </body>
 </html>
