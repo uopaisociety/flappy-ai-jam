@@ -139,6 +139,21 @@ legend { font-weight: 600; margin-bottom: .65rem; }
 .projector-wrap { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: clamp(1.25rem, 5vw, 5rem); align-items: center; min-height: 68svh; }
 .projector-wrap .qr { width: min(44vw, 54svh, 37rem); }
 .projector-wrap .intro { margin-bottom: 1.2rem; }
+.vote-games { margin-top: 1rem; }
+.vote-games details { border-top: 0; }
+.vote-games summary { padding-top: 0; font-size: 1.1rem; }
+.vote-games details[open] > summary, .vote-projector-games[open] > summary { margin-bottom: .9rem; }
+.vote-games .section-intro { margin-bottom: 1rem; }
+.vote-games-status { color: var(--muted); }
+.vote-game-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: .65rem; }
+.vote-game { min-width: 0; padding: .75rem; display: flex; align-items: center; justify-content: space-between; gap: .8rem; border: 1px solid var(--line); border-radius: .4rem; background: var(--deep); }
+.vote-game h3 { font-size: 1.1rem; line-height: 1.2; overflow-wrap: anywhere; }
+.vote-game p { color: var(--muted); font-size: .88rem; margin-top: .25rem; overflow-wrap: anywhere; }
+.vote-game button { flex: none; }
+.projector-choices li { display: flex; justify-content: space-between; align-items: center; gap: .7rem; }
+.projector-choices li + li { margin-top: .4rem; }
+.projector-choices li button { flex: none; }
+.vote-projector-games { max-width: 48rem; }
 @media (max-width: 46rem) {
   .hero, .projector-wrap { grid-template-columns: minmax(0, 1fr); }
   .hero { gap: 1.65rem; }
