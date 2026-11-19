@@ -42,31 +42,61 @@ function fullGameUrl(build) {
   return publicGameUrl(build.url);
 }
 
-async function share(build) {
+const preferredOrder = [
+  "megarrito",
+  "email--seagull-snatch",
+  "email--flappy-shooter",
+  "email--miaucalipsis",
+  "email--flap-battle",
+  "email--demigod-flight",
+  "email--stationary-bird",
+  "email--flappy-parry",
+];
+const copyTimers = new WeakMap();
+
+function notifyCopied(status, button, message) {
+  if (copyTimers.has(status)) clearTimeout(copyTimers.get(status));
+  status.textContent = message;
+  status.hidden = false;
+  if (button) button.classList.add("is-copied");
+  copyTimers.set(status, setTimeout(() => {
+    status.hidden = true;
+    if (button) button.classList.remove("is-copied");
+  }, 3000));
+}
+
+async function copyGameLink(build, status, button = null) {
   const url = shareUrl(build);
-  const message = $("share-status");
-  message.hidden = true;
   $("share-fallback").hidden = true;
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: build.title + " — Flappy AI Jam", text: "Play " + build.title + " by " + build.builder, url });
-      return;
-    } catch (error) {
-      if (error?.name === "AbortError") return;
-    }
-  }
   try {
+    if (!navigator.clipboard?.writeText) throw new Error("Clipboard not available");
     await navigator.clipboard.writeText(url);
-    message.textContent = "Link copied for " + build.title + ".";
-    message.hidden = false;
+    notifyCopied(status, button, "Link copied!");
   } catch {
     const input = $("share-fallback-input");
     input.value = url;
     $("share-fallback").hidden = false;
+    input.focus();
     input.select();
-    message.textContent = "Copy this link to share " + build.title + ".";
-    message.hidden = false;
+    notifyCopied(status, button, "Select and copy the link below");
+    $("share-fallback").scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
+}
+
+function linkIcon() {
+  const svgNS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  for (const d of [
+    "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71",
+    "M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71",
+  ]) {
+    const path = document.createElementNS(svgNS, "path");
+    path.setAttribute("d", d);
+    svg.append(path);
+  }
+  return svg;
 }
 
 function imageFor(build) {
@@ -91,66 +121,49 @@ function imageFor(build) {
 }
 
 function makeCard(build) {
-  const card = element("article", "", "card");
-  const body = element("div", "", "card-body");
-  for (const award of awardsFor(eventState, build)) {
-    body.append(element("span", award, "badge winner"));
+  const card = element("article", "", "card games-card");
+  const media = element("div", "", "games-card-media");
+  media.append(imageFor(build));
+  const placement = eventState?.placements?.find((item) => item.id === build.id);
+  if (placement && Number.isInteger(placement.rank)) {
+    const badgeLabel = awardsFor(eventState, build)[0] || placement.rank + " place";
+    const badge = element("span", badgeLabel, "games-place-pill");
+    badge.classList.add("games-rank-" + placement.rank);
+    media.append(badge);
   }
+  const body = element("div", "", "card-body");
   body.append(element("h3", build.title), element("p", build.builder, "byline"));
-  if (build.description) body.append(element("p", build.description));
+  if (typeof build.description === "string" && build.description) body.append(element("p", build.description));
   const actions = element("div", "", "games-card-actions");
-  const play = element("button", "Play here", "primary");
+  const play = element("button", "Play game", "primary games-play-button");
   play.type = "button";
-  play.setAttribute("aria-label", "Play " + build.title + " on this page");
   play.addEventListener("click", () => void openBuild(build));
-  const full = element("a", "Open full game ↗", "action");
-  full.href = fullGameUrl(build);
-  full.target = "_blank";
-  full.rel = "noopener noreferrer";
-  full.setAttribute("aria-label", "Open " + build.title + " in a new tab");
-  const shareButton = element("button", "Share this game", "games-share-button");
-  shareButton.type = "button";
-  shareButton.addEventListener("click", () => void share(build));
-  actions.append(play, full, shareButton);
+  const copyWrap = element("div", "", "games-copy-wrap");
+  const copy = element("button", "", "games-copy-button");
+  copy.type = "button";
+  copy.title = "Copy link to " + build.title;
+  copy.setAttribute("aria-label", "Copy link to " + build.title);
+  copy.append(linkIcon());
+  const status = element("span", "", "games-copy-feedback");
+  status.setAttribute("role", "status");
+  status.setAttribute("aria-live", "polite");
+  status.hidden = true;
+  copy.addEventListener("click", () => void copyGameLink(build, status, copy));
+  copyWrap.append(copy, status);
+  actions.append(play, copyWrap);
   body.append(actions);
-  card.append(imageFor(build), body);
-  return card;
-}
-
-function makeWinner(build, label) {
-  const card = element("article", "", "panel games-result-card");
-  const badge = element("p", label, "meta");
-  const title = element("h3", build.title);
-  const builder = element("p", "By " + build.builder, "byline");
-  const actions = element("div", "", "actions");
-  const play = element("button", "Play here", "primary");
-  play.type = "button";
-  play.addEventListener("click", () => void openBuild(build));
-  const full = element("a", "Open full game ↗", "action");
-  full.href = fullGameUrl(build);
-  full.target = "_blank";
-  full.rel = "noopener noreferrer";
-  const shareButton = element("button", "Share game");
-  shareButton.type = "button";
-  shareButton.addEventListener("click", () => void share(build));
-  actions.append(play, full, shareButton);
-  card.append(badge, title, builder, actions);
+  card.append(media, body);
   return card;
 }
 
 function render() {
-  const placements = Array.isArray(eventState?.placements) ? eventState.placements : [];
-  const winnerCards = placements.map((placement) => {
-    const build = builds.find((item) => item.id === placement.id);
-    if (!build) return null;
-    const label = awardsFor(eventState, build)[0] ?? "Winner";
-    return makeWinner(build, label);
-  }).filter(Boolean);
-  $("results").hidden = winnerCards.length === 0;
-  $("results-grid").replaceChildren(...winnerCards);
-  $("games-grid").replaceChildren(...builds.map(makeCard));
-  $("games-count").textContent = builds.length + (builds.length === 1 ? " game" : " games");
-  $("games-message").hidden = builds.length > 0;
+  const sorted = [...builds].sort((a,b) => {
+    const ai = preferredOrder.indexOf(a.id), bi = preferredOrder.indexOf(b.id);
+    return (ai < 0 ? preferredOrder.length : ai) - (bi < 0 ? preferredOrder.length : bi);
+  });
+  $("games-grid").replaceChildren(...sorted.map(makeCard));
+  $("games-count").textContent = sorted.length + (sorted.length === 1 ? " game" : " games");
+  $("games-message").hidden = sorted.length > 0;
   $("games-message").textContent = "No approved builds are available yet. Check back for new submissions.";
 }
 
@@ -166,6 +179,7 @@ async function openBuild(build) {
   url.searchParams.set("build", build.id);
   history.replaceState(null, "", url);
   $("games-player-title").textContent = build.title;
+  $("games-player-copy-status").hidden = true;
   $("games-player-builder").textContent = "Built by " + build.builder;
   $("games-player-description").textContent = build.description || "A student-created AI game.";
   $("games-player-full").href = fullGameUrl(build);
@@ -219,7 +233,7 @@ player.addEventListener("close", () => {
   history.replaceState(null, "", url);
 });
 $("games-player-share").addEventListener("click", () => {
-  if (selectedBuild) void share(selectedBuild);
+  if (selectedBuild) void copyGameLink(selectedBuild, $("games-player-copy-status"));
 });
 if (typeof ResizeObserver === "function") new ResizeObserver(resizeFrame).observe(frameBox);
 else window.addEventListener("resize", resizeFrame);

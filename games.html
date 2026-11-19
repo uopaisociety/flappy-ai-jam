@@ -23,40 +23,28 @@
     <a href="https://github.com/uopaisociety" aria-label="University of Portsmouth AI Society on GitHub">
       <img class="society-logo" src="event/brand/lockup.svg" width="1200" height="360" alt="University of Portsmouth AI Society">
     </a>
-    <nav class="society-nav" aria-label="Navigation">
-      <a href="showcase.html">Event guide</a>
-      <a href="vote.html">Voting</a>
-      <a href="https://upsu.net/groups/8F8DP/ai-society" target="_blank" rel="noopener noreferrer">Join the society ↗</a>
-    </nav>
+    <p class="games-header-date"><time datetime="2026-11-19">19 November 2026</time></p>
   </header>
   <main class="wrap games-page">
     <section class="games-hero" aria-labelledby="games-title">
-      <p class="meta">University of Portsmouth AI Society · 19 November 2026</p>
+      <p class="meta">Flappy AI Jam</p>
       <h1 id="games-title">Your games.<br><span>Our arcade.</span></h1>
-      <p class="intro">Explore the games created by students at our Flappy AI Jam. Play them here, open one in a full-size tab, and share your favourites with friends.</p>
+      <p class="intro">Eight games, one AI Game Jam. Play what Portsmouth students made, see the winners, and share your favourites.</p>
       <div class="games-hero-actions">
-        <a class="action primary" href="#all-games">Explore all games</a>
-        <a class="action" href="https://upsu.net/groups/8F8DP/ai-society" target="_blank" rel="noopener noreferrer">Join AI Society — free ↗</a>
+        <a class="action primary" href="https://upsu.net/groups/8F8DP/ai-society" target="_blank" rel="noopener noreferrer">Join the society ↗</a>
       </div>
-    </section>
-    <section class="section" id="results" aria-labelledby="results-title" hidden>
-      <p class="meta">Flappy AI Jam · Official results</p>
-      <h2 class="section-title" id="results-title">The winners</h2>
-      <p class="section-intro">Two games tied for first place, followed by third place. There was no separate second-place award.</p>
-      <div class="grid games-grid" id="results-grid"></div>
     </section>
     <section class="section" id="all-games" aria-labelledby="gallery-title">
       <div class="games-heading">
         <div>
           <p class="meta">Made by students</p>
-          <h2 class="section-title" id="gallery-title">All submitted builds</h2>
-          <p class="section-intro">Each game is a different take on the same challenge. Select Play here for a quick look, or Open full game for more room to play.</p>
+          <h2 class="section-title" id="gallery-title">Play the games</h2>
+          <p class="section-intro">Two games tied for first place. Browse all eight student games below. Use the link icon on a card to copy a link to that game.</p>
         </div>
         <p class="games-count" id="games-count" aria-live="polite">Loading games…</p>
       </div>
       <p class="message" id="games-message" role="status">Loading student builds…</p>
       <div class="grid games-grid" id="games-grid"></div>
-      <p class="games-share-status" id="share-status" role="status" hidden></p>
       <label class="games-share-fallback" id="share-fallback" hidden>Copy the game link
         <input id="share-fallback-input" type="url" readonly>
       </label>
@@ -94,8 +82,9 @@
         <h2 id="games-player-title"></h2>
         <p class="byline" id="games-player-builder"></p>
         <p id="games-player-description"></p>
-        <p class="games-player-tip">For a larger view and keyboard controls, use <strong>Open full game in new tab</strong>.</p>
-        <button type="button" id="games-player-share">Share this game</button>
+        <p class="games-player-tip">For a larger view and keyboard controls, choose <strong>Open full game in new tab</strong>.</p>
+        <button type="button" id="games-player-share">Copy game link</button>
+        <p class="games-player-copy-status" id="games-player-copy-status" role="status" hidden></p>
       </div>
     </div>
   </dialog>
