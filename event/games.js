@@ -71,7 +71,7 @@ async function copyGameLink(build, status, button = null) {
   try {
     if (!navigator.clipboard?.writeText) throw new Error("Clipboard not available");
     await navigator.clipboard.writeText(url);
-    notifyCopied(status, button, "Link copied!");
+    notifyCopied(status, button, "✓ Link copied!");
   } catch {
     const input = $("share-fallback-input");
     input.value = url;
@@ -122,6 +122,9 @@ function imageFor(build) {
 
 function makeCard(build) {
   const card = element("article", "", "card games-card");
+  card.tabIndex = 0;
+  card.setAttribute("role", "group");
+  card.setAttribute("aria-label", "Play " + build.title);
   const media = element("div", "", "games-card-media");
   media.append(imageFor(build));
   const placement = eventState?.placements?.find((item) => item.id === build.id);
@@ -144,14 +147,14 @@ function makeCard(build) {
   copy.title = "Copy link to " + build.title;
   copy.setAttribute("aria-label", "Copy link to " + build.title);
   copy.append(linkIcon());
-  const status = element("span", "", "games-copy-feedback");
+  const status = element("p", "", "games-copy-feedback");
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
   status.hidden = true;
   copy.addEventListener("click", () => void copyGameLink(build, status, copy));
-  copyWrap.append(copy, status);
+  copyWrap.append(copy);
   actions.append(play, copyWrap);
-  body.append(actions);
+  body.append(actions, status);
   card.append(media, body);
   return card;
 }

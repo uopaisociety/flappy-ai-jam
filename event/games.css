@@ -5,11 +5,13 @@
 .games-hero h1 span { color: var(--gold); }
 .games-hero .intro { max-width: 53ch; }
 .games-hero-actions { display: flex; gap: .8rem; flex-wrap: wrap; margin-top: 1.5rem; }
-.games-heading { display: flex; justify-content: space-between; align-items: end; gap: 1rem; flex-wrap: wrap; }
-.games-heading .section-title { margin-top: .35rem; }
-.games-count { font: 500 .85rem/1.4 var(--mono); color: var(--gold); padding-bottom: 1.3rem; }
+.games-heading { display: flex; justify-content: space-between; align-items: center; gap: .35rem .75rem; flex-wrap: wrap; margin-bottom: .8rem; }
+.games-heading .section-title { margin: .25rem 0 0; }
+.games-count { font: 500 .85rem/1.4 var(--mono); color: var(--gold); padding-bottom: 0; }
 .games-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
-.games-card { background: var(--panel); }
+.games-card { background: var(--panel); cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease; }
+.games-card:hover, .games-card:focus-visible { border-color: var(--cream); box-shadow: 0 8px 24px #0003; }
+.games-card:focus-visible { outline: 2px solid var(--cream); outline-offset: 3px; }
 .games-card .card-body { gap: .7rem; }
 .games-card .card-body h3 { font-size: clamp(1.4rem, 2.1vw, 1.8rem); }
 .games-card-media { position: relative; flex: none; }
@@ -25,7 +27,7 @@
 .games-copy-button { display: grid; place-items: center; width: 2.85rem; min-height: 2.85rem; padding: 0; }
 .games-copy-button svg { width: 1.2rem; height: 1.2rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .games-copy-button.is-copied { border-color: var(--gold); color: var(--gold); }
-.games-copy-feedback { position: absolute; bottom: calc(100% + .45rem); right: 0; z-index: 3; white-space: nowrap; color: var(--deep); background: var(--gold); border-radius: .35rem; padding: .3rem .55rem; font: 600 .76rem/1.3 var(--sans); box-shadow: 0 3px 12px #0005; }
+.games-copy-feedback { color: var(--gold); font: 600 .85rem/1.45 var(--sans); margin: .15rem 0 0; }
 .games-share-fallback:not([hidden]) { display: grid; gap: .4rem; margin-top: .6rem; max-width: 45rem; }
 .games-share-fallback input { width: 100%; background: var(--deep); border: 1px solid var(--line); border-radius: .3rem; padding: .65rem; }
 .games-join { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(15rem, .75fr); gap: 2rem; align-items: start; padding: clamp(1.25rem, 4vw, 2.5rem); }
