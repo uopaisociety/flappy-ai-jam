@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<!--
+  FLAPPY AI JAM · University of Portsmouth AI Society
+  This whole file is the starter. Copy it into Gemini Canvas or open it in a browser.
+  Ask for one change, play a round, and keep the last working version.
+
+  FOR AI CODING AGENTS
+  Keep the game in this one HTML file with inline CSS and JavaScript.
+  Keep Space, Arrow Up, mouse and touch working, along with pause, restart and resizing.
+  Use Canvas shapes and inline styles. Avoid external images, libraries, fonts or packages.
+  Keep the labelled AI PROMPT ZONE comments and edit the working Canvas in place.
+  If you return code as text, return the complete file from <!DOCTYPE html> to </html>.
+  Keep best-score storage optional. Wrap all localStorage reads and writes in try/catch
+  so the game works inside sandboxed previews even when storage is unavailable.
+  Physics use seconds in a fixed-step loop. Never tie movement to screen refresh.
+  The default is a three-life game with a gradual difficulty ramp. Keep each gap reachable.
+  The labelled zones below show where to change artwork, physics, obstacles and scoring.
+  After editing, check the first launch, all three lives, restart and a phone-size view.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Meowpocalypse · The Last Tuna</title>
+<style>
+  :root { --ink:#151021; --cream:#fff3d9; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--ink); color:var(--cream); color-scheme:dark;
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+  body { height:100svh; display:flex; flex-direction:column; overflow:hidden; }
+  header, footer { display:flex; align-items:center; padding:10px 16px; flex:none; }
+  header { justify-content:space-between; border-bottom:1px solid rgba(247,245,240,.14); }
+  .brand small { color:#ffac83; letter-spacing:.09em; font-size:9px; }
+  button { border:1px solid #785971; border-radius:8px; padding:6px 9px; background:#2e2039; color:var(--cream); font:inherit; cursor:pointer; }
+  .brand { font-size:13px; font-weight:650; letter-spacing:.14em; text-transform:uppercase; white-space:nowrap; }
+  .society { color:var(--cream); padding:3px; line-height:0; }
+  .society svg { width:36px; height:24px; }
+  .society:focus-visible { outline:2px solid var(--cream); outline-offset:2px; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  main { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:12px; }
+  canvas { background:var(--cream); display:block; touch-action:none; border-radius:16px;
+    outline-offset:4px; border:1px solid rgba(247,245,240,.28); box-shadow:0 18px 50px rgba(0,0,0,.45); }
+  canvas:focus-visible { outline:2px solid var(--cream); }
+  footer { gap:12px; flex-wrap:wrap; text-align:center; justify-content:center; border-top:1px solid rgba(247,245,240,.14);
+    font:11px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; letter-spacing:.16em; opacity:.72; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Meowpocalypse <small> / THE LAST TUNA</small></div>
+  <a class="society" href="https://github.com/uopaisociety" target="_blank" rel="noopener noreferrer" aria-label="University of Portsmouth AI Society on GitHub (new tab)">
+    <svg viewBox="172 248 692 450" aria-hidden="true">
+      <g transform="translate(-22 0) translate(-575.84993366 -793.24494091) scale(4.2459962354)" fill="currentColor">
+        <g transform="translate(600 314) scale(1.2) translate(-600 -314)">
+          <g fill-rule="evenodd" transform="translate(175.41909833 172.66980773) scale(0.4500968704)">
+    <path transform="translate(169.0000000 187.6722702) scale(0.250000000)" d="M0.000 774.000C0.000 772.900 0.450 772.000 1.000 772.000C1.550 772.000 2.000 771.580 2.000 771.067C2.000 770.017 16.468 743.247 24.466 729.500C27.346 724.550 31.967 716.225 34.736 711.000C39.758 701.522 62.605 659.871 73.665 640.032L79.500 629.564 89.000 624.212C94.225 621.269 102.325 616.800 107.000 614.280C111.675 611.761 119.824 607.096 125.110 603.914C130.395 600.732 144.570 593.097 156.610 586.947C168.649 580.797 181.650 574.073 185.500 572.006C189.350 569.938 199.475 564.998 208.000 561.028C216.525 557.058 228.000 551.671 233.500 549.058C241.499 545.256 259.082 537.876 276.500 531.008C277.600 530.574 282.550 528.603 287.500 526.628C308.326 518.317 342.288 507.568 374.500 499.092C389.435 495.162 430.782 488.326 454.500 485.865C473.781 483.865 525.349 484.167 544.000 486.390C584.388 491.203 625.526 501.580 656.260 514.707C658.328 515.590 660.269 516.064 660.573 515.760C661.263 515.070 644.321 481.129 616.269 427.000C604.440 404.175 587.779 372.000 579.244 355.500C570.709 339.000 558.000 314.475 551.002 301.000C544.005 287.525 533.417 267.050 527.473 255.500C515.537 232.307 514.811 231.000 513.859 231.000C513.061 231.000 497.706 257.899 489.027 274.500C485.577 281.100 482.407 286.950 481.982 287.500C481.558 288.050 479.068 292.550 476.450 297.500C473.832 302.450 470.014 309.425 467.965 313.000C465.917 316.575 461.868 324.000 458.968 329.500C456.068 335.000 452.936 340.625 452.009 342.000C451.082 343.375 447.482 349.900 444.009 356.500C440.537 363.100 437.127 369.400 436.431 370.500C435.736 371.600 432.277 377.900 428.745 384.500C425.213 391.100 418.362 403.475 413.522 412.000C408.681 420.525 403.828 429.075 402.737 431.000C401.645 432.925 398.951 437.988 396.750 442.250C393.437 448.664 392.332 450.000 390.339 450.000C383.805 450.000 319.694 469.921 290.008 481.175C277.718 485.834 252.825 495.660 248.500 497.560C227.528 506.770 219.582 510.193 214.976 512.001C211.964 513.183 193.975 522.066 175.000 531.741C156.025 541.416 135.209 552.028 128.742 555.325C122.276 558.621 116.753 561.087 116.471 560.804C115.910 560.244 128.820 535.481 138.003 519.500C141.164 514.000 145.804 505.400 148.315 500.388C150.827 495.377 155.303 487.052 158.263 481.888C166.686 467.195 177.000 448.342 177.000 447.640C177.000 447.290 179.984 441.715 183.630 435.252C187.277 428.788 194.749 415.175 200.235 405.000C205.721 394.825 214.597 378.625 219.961 369.000C229.695 351.532 245.917 321.754 257.550 300.000C267.038 282.257 278.327 261.979 281.489 257.000C283.061 254.525 285.659 249.608 287.263 246.074C288.867 242.540 295.237 230.615 301.418 219.574C307.600 208.533 315.199 194.718 318.305 188.873C321.411 183.029 325.988 174.803 328.476 170.595C330.964 166.386 333.000 162.771 333.000 162.561C333.000 162.351 334.738 159.101 336.862 155.340C338.986 151.578 342.509 145.125 344.690 141.000C346.871 136.875 351.586 128.325 355.167 122.000C358.749 115.675 363.617 106.900 365.985 102.500C375.669 84.510 383.821 69.670 391.529 56.000C393.855 51.875 398.140 44.000 401.052 38.500C403.963 33.000 407.227 26.925 408.304 25.000C409.382 23.075 412.498 17.450 415.229 12.500C417.960 7.550 420.715 2.952 421.350 2.282C422.238 1.348 445.153 0.966 520.003 0.640C573.626 0.406 619.577 0.504 622.115 0.858L626.730 1.500 633.508 14.500C637.237 21.650 644.454 35.600 649.547 45.500C654.640 55.400 662.018 69.575 665.943 77.000C669.868 84.425 675.507 95.545 678.473 101.711C681.440 107.878 685.673 116.015 687.880 119.794C690.087 123.573 697.932 138.553 705.314 153.083C712.695 167.612 725.614 192.775 734.022 209.000C759.949 259.032 835.624 408.383 848.281 434.500C851.480 441.100 855.200 448.525 856.550 451.000C857.899 453.475 863.565 464.725 869.140 476.000C874.716 487.275 885.199 508.425 892.435 523.000C899.671 537.575 906.969 552.425 908.652 556.000C910.335 559.575 915.155 569.333 919.362 577.685L927.011 592.871 926.755 683.185L926.500 773.500 913.500 773.394C889.946 773.203 873.490 770.381 840.500 760.878C802.349 749.887 762.481 728.857 700.254 686.900C654.728 656.203 615.213 631.599 598.500 623.541C557.837 603.937 545.446 598.832 520.500 591.409C502.185 585.958 483.230 581.714 464.000 578.756C451.555 576.842 445.461 576.525 421.000 576.521C390.766 576.515 385.141 577.031 361.251 581.998C348.953 584.556 345.000 586.028 345.000 588.051C345.000 588.494 343.484 591.476 341.632 594.678C336.401 603.720 316.820 637.703 312.348 645.500C310.140 649.350 304.433 659.176 299.667 667.337C294.900 675.497 291.000 682.354 291.000 682.574C291.000 682.795 288.130 687.818 284.623 693.738C281.115 699.657 273.088 713.513 266.784 724.528C260.481 735.543 251.130 751.631 246.004 760.278L236.685 776.000 118.343 776.000L0.000 776.000 0.000 774.000ZM972.250 772.338C971.253 771.935 971.000 693.914 971.000 386.917L971.000 2.000 1085.500 2.000L1200.000 2.000 1200.000 387.500L1200.000 773.000 1086.750 772.921C1024.463 772.878 972.938 772.615 972.250 772.338Z"/>
+          </g>
+        </g>
+      </g>
+    </svg>
+  </a>
+  <span id="status" class="sr-only" role="status">Croqueta has three lives. Press Space or tap to start.</span>
+</header>
+<main><canvas id="game" width="400" height="600" tabindex="0" role="img" aria-label="Meowpocalypse. Space, Up Arrow or tap to fly. P to pause. F to use a decoy." aria-describedby="controls">Your browser needs Canvas 2D to play this game.</canvas></main>
+<footer id="controls"><span>SPACE / ↑ / TAP · FLY</span><button id="pause" type="button" aria-keyshortcuts="P">P · Pause</button><button id="sound" type="button" aria-pressed="false">Sound: off</button><button id="decoy" type="button" aria-keyshortcuts="F">F · Decoy</button></footer>
+<script>
+"use strict";
+
+// === AI PROMPT ZONE: CONFIG ===
+// Positions are pixels, speed is pixels/second, gravity is pixels/second².
+// Start with colours or one mechanic. The first gates teach the rhythm. Speed and gap difficulty then ramp over a minute.
+const W = 400, H = 600;
+const GRAVITY = 880, FLAP_STRENGTH = -285, MAX_FALL_SPEED = 400;
+const PIPE_GAP = 198, MIN_PIPE_GAP = 140, PIPE_WIDTH = 58, PIPE_SPACING = 260;
+const PIPE_SPEED = 146, MAX_PIPE_SPEED = 235, RAMP_DELAY = 6, RAMP_SECONDS = 46;
+const GROUND_H = 50, START_LIVES = 3, RECOVERY_SECONDS = 1.2, STEP = 1 / 120;
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const statusEl = document.getElementById("status");
+let state = "start", bird, pipes, score, lives, recovery, elapsed, nextCenter;
+let nextIndex = 0;
+let overAt = 0, best = 0, lastTime = null, accumulator = 0;
+try {
+  const stored = Number(localStorage.getItem("miaucalipsisBest"));
+  if (Number.isSafeInteger(stored) && stored > 0) best = stored;
+} catch { /* The game also works when browser storage is blocked. */ }
+
+function resize() {
+  const space = document.querySelector("main");
+  const scale = Math.max(0.01, Math.min((space.clientWidth - 24) / W, (space.clientHeight - 24) / H));
+  canvas.style.width = Math.floor(W * scale) + "px";
+  canvas.style.height = Math.floor(H * scale) + "px";
+}
+addEventListener("resize", resize);
+resize();
+
+function reset() {
+  bird = { x:100, y:285, vy:0, r:15 };
+  pipes = [];
+  score = elapsed = recovery = 0;
+  lives = START_LIVES;
+  cans = streak = nextIndex = messageUntil = flashUntil = 0;
+  sparks.length = 0;
+  nextGroan = 1;
+  decoys = decoyUntil = 0;
+  cause = "fall";
+  nextCenter = bird.y;
+}
+
+// === AI PROMPT ZONE: PHYSICS & INPUT ===
+// Each press is one flap. Ignore a held key's repeat events.
+// A resume input leaves the current position intact. A restart creates a new run.
+function flap() {
+  if (!ctx || document.hidden) return;
+  const freshStart = state !== "playing";
+  if (state === "paused") {
+    state = "playing";
+  } else {
+    if (state === "over") {
+      if (performance.now() - overAt < 350) return;
+      reset();
+    }
+    state = "playing";
+    bird.vy = FLAP_STRENGTH;
+    burst(bird.x-12,bird.y+8,"#ffbc71",6);
+  }
+  if (freshStart) {
+    lastTime = performance.now();
+    accumulator = 0;
+    statusEl.textContent = "Flying. Lives: " + lives;
+  }
+}
+function pause() {
+  if (state !== "playing") return;
+  state = "paused";
+  statusEl.textContent = "Tactical nap. Tap or press Space to resume.";
+  lastTime = null;
+  accumulator = 0;
+}
+function updateBird(dt) {
+  bird.vy = Math.min(MAX_FALL_SPEED, bird.vy + GRAVITY * dt);
+  bird.y += bird.vy * dt;
+  // The ceiling is forgiving. The floor uses the same life/recovery rule as pipes.
+  if (bird.y < bird.r) {
+    bird.y = bird.r;
+    bird.vy = Math.max(0, bird.vy);
+  }
+  if (bird.y + bird.r > H - GROUND_H) {
+    bird.y = H - GROUND_H - bird.r;
+    bird.vy = 0;
+    loseLife();
+  }
+}
+
+// === AI PROMPT ZONE: PIPES / LEVEL ===
+// The first two gaps are centered. Later gaps move farther as the run progresses.
+// Store each new gap on its pipe. Existing gaps stay still while the player approaches.
+// Every visible pipe endcap belongs to its collision box.
+function updatePipes(dt) {
+  const difficulty = Math.min(1, Math.max(0, (elapsed - RAMP_DELAY) / RAMP_SECONDS));
+  const speed = PIPE_SPEED + (MAX_PIPE_SPEED - PIPE_SPEED) * difficulty;
+  const last = pipes[pipes.length - 1];
+  if (!last || last.x <= W - PIPE_SPACING) {
+    const gap = PIPE_GAP + (MIN_PIPE_GAP - PIPE_GAP) * difficulty;
+    const drift = 55 + 30 * difficulty;
+    if (score > 0) nextCenter = Math.max(gap / 2 + 50,
+      Math.min(H - GROUND_H - gap / 2 - 50, nextCenter + (Math.random() * 2 - 1) * drift));
+    const index = nextIndex++;
+    const ambush = index>=2 && (index<10 ? index%3===2 : index%4!==0);
+    const side = index%2 ? -1 : 1;
+    pipes.push({x:last ? W : W+65,top:nextCenter-gap/2,gap,index,side,ambush,
+      canOffset:ambush ? side*21 : 0,passed:false,collected:false});
+
+  }
+  for (const pipe of pipes) {
+    pipe.x -= speed * dt;
+    const overlaps = bird.x + bird.r - 3 > pipe.x && bird.x - bird.r + 3 < pipe.x + PIPE_WIDTH;
+    const extension = ambushLength(pipe);
+    const baseCollision = bird.y-12 < pipe.top || bird.y+12 > pipe.top+pipe.gap;
+    const clawCollision = extension>0 && Math.abs(bird.x-pipe.x-PIPE_WIDTH/2)<26 &&
+      (pipe.side===1 ? bird.y-12<pipe.top+extension : bird.y+12>pipe.top+pipe.gap-extension);
+    const outsideGap = baseCollision || clawCollision;
+    if (!recovery && overlaps && outsideGap) {
+      loseLife(pipe, clawCollision && !baseCollision ? "ambush" : "crash");
+      if (state === "over") return;
+    }
+    if (!pipe.collected && Math.abs(bird.x-pipe.x-PIPE_WIDTH/2)<22 &&
+        Math.abs(bird.y-pipe.top-pipe.gap/2-(pipe.canOffset||0))<21) {
+      pipe.collected = true;
+      cans++;
+      const charged = cans%3===0;
+      if(charged) decoys++;
+      sound([[440,630,.09],[660,880,.13]],"sine",.07);
+      streak++;
+      burst(bird.x,bird.y,"#d8ff86",16);
+      if (streak % 5 === 0 && lives < START_LIVES) {
+        lives++;
+        note("Five in a row! One life restored.");
+        statusEl.textContent = "Life restored. Lives: " + lives;
+      } else if(charged) {
+        note("Decoy ready. Press F to pop a can.");
+      } else {
+        note(streak===1 ? "Croqueta: Is this the good tuna?" : "Tuna streak ×" + streak + "!");
+      }
+    }
+    if (!pipe.passed && pipe.x + PIPE_WIDTH < bird.x - bird.r) {
+      pipe.passed = true;
+      score++;
+      if (!pipe.collected) streak=0;
+      if (score===7 || score===14) note("Entering "+districts[score/7]);
+      if (radio[score]) note(radio[score]);
+      if (score > best) {
+        best = score;
+        try { localStorage.setItem("miaucalipsisBest", String(best)); } catch { /* Optional. */ }
+      }
+    }
+  }
+  pipes = pipes.filter(pipe => pipe.x + PIPE_WIDTH > 0);
+}
+
+// === AI PROMPT ZONE: SCORE & GAME OVER ===
+// One contact costs one life. Recovery prevents overlapping obstacles taking all lives.
+// Return immediately when the last life is lost. Never score after game over.
+function ambushLength(pipe) {
+  if(!pipe.ambush || elapsed<decoyUntil) return 0;
+  const lead = pipe.x-bird.x;
+  const reach = pipe.index<10 ? 32 : 43;
+  return reach*Math.max(0,Math.min(1,(52-lead)/36,(lead+PIPE_WIDTH+13)/15));
+}
+function useDecoy() {
+  if(state!=="playing" || !decoys || elapsed<decoyUntil) return;
+  decoys--;
+  decoyUntil=elapsed+2.4;
+  burst(bird.x,bird.y,"#cafa8a",22);
+  sound([[490,170,.18],[190,60,.23]],"triangle",.09);
+  note("POP. The horde is checking the kitchen.");
+}
+function loseLife(pipe, reason="fall") {
+  if (recovery || state !== "playing") return;
+  lives--;
+  flashUntil = clock + .22;
+  sound([[139,71,.21],[100,52,.3]],"sawtooth",.085);
+  streak = 0;
+  burst(bird.x,bird.y,"#fa7b9d",18);
+  note(reactions[lives]);
+  if (!lives) {
+    cause=reason;
+    state = "over";
+    overAt = performance.now();
+    statusEl.textContent = "Game over. Barricades cleared: " + score + ". Press Space or tap to play again.";
+    return;
+  }
+  recovery = RECOVERY_SECONDS;
+  const next = pipe || pipes.find(item => item.x + PIPE_WIDTH >= bird.x - bird.r);
+  bird.y = next ? next.top + next.gap / 2 : 285;
+  bird.vy = 0;
+  statusEl.textContent = "Lives remaining: " + lives;
+}
+
+// === AI PROMPT ZONE: GRAPHICS ===
+// Draw with shapes. Keep controls and the score legible over any new artwork.
+const posters = ["LOCKDOWN", "DO NOT PET", "INFECTED", "NO ENTRY", "TURN BACK", "BREACH"];
+const districts = ["Tuna Row", "Howling Rooftops", "The Nine Lives District"];
+const reactions = ["", "Croqueta: My insurance excludes cats.", "Croqueta: That was my old vet."];
+const radio = {
+  1:"Red eyes in the grate? Change altitude.",
+  4:"Radio: Do not mrrp back.",
+  8:"Radio: Send a priest. With a scratching post.",
+  12:"Radio: Crisis team asleep in a cardboard box.",
+  17:"Radio: The antivirus is salmon-flavoured."
+};
+const obituaries = {
+  fall:"Cause of death: aggravated gravity.",
+  ambush:"Cause of death: full-body petting.",
+  crash:"Cause of death: ignored “DO NOT PET”."
+};
+let decoys=0,decoyUntil=0,cause="fall";
+const sparks = [];
+let clock = 0, flashUntil = 0;
+let audio, soundOn = false, nextGroan = 0;
+function sound(notes, type, volume) {
+  if(!soundOn || audio?.state!=="running") return;
+  let offset=0;
+  for(const [from,to,seconds] of notes){
+    const at=audio.currentTime+offset;
+    const oscillator=audio.createOscillator();
+    const gain=audio.createGain();
+    oscillator.type=type;
+    oscillator.frequency.setValueAtTime(from,at);
+    oscillator.frequency.exponentialRampToValueAtTime(to,at+seconds);
+    gain.gain.setValueAtTime(.001,at);
+    gain.gain.linearRampToValueAtTime(volume,at+.025);
+    gain.gain.exponentialRampToValueAtTime(.001,at+seconds);
+    oscillator.connect(gain);gain.connect(audio.destination);
+    oscillator.start(at);oscillator.stop(at+seconds);
+    offset+=seconds*.8;
+  }
+}
+let message = "", messageUntil = 0, streak = 0, cans = 0;
+
+function label(value, x, y, size, color="#fff3d9", align="center", mono=false) {
+  ctx.fillStyle = color;
+  ctx.font = `900 ${size}px ${mono ? "monospace" : "system-ui"}`;
+  ctx.textAlign = align;
+  ctx.fillText(value, x, y);
+}
+function box(x,y,w,h,r,color) {
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fill();
+}
+function disk(x,y,r,color) {
+  ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+}
+function shape(points,color) {
+  ctx.beginPath(); ctx.moveTo(...points[0]);
+  for (const point of points.slice(1)) ctx.lineTo(...point);
+  ctx.closePath(); ctx.fillStyle=color; ctx.fill();
+}
+function note(text) {
+  message = text;
+  messageUntil = elapsed + 2;
+}
+function burst(x,y,color,count) {
+  for (let i=0;i<count;i++) {
+    sparks.push({x,y,vx:-85+Math.random()*120,vy:-65+Math.random()*130,life:.5+Math.random()*.25,color});
+  }
+}
+function updateSparks(dt) {
+  for (let i=sparks.length-1;i>=0;i--) {
+    const p=sparks[i];
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt;
+    if (p.life<=0) sparks.splice(i,1);
+  }
+}
+function cat(x,y,s,fur,zombie=false) {
+  ctx.save(); ctx.translate(x,y); ctx.scale(s,s);
+  const ink="#100e16";
+  shape([[-19,-2],[-18,-20],[-5,-11],[7,-11],[17,-20],[20,1]],ink);
+  shape([[-16,-6],[-16,-16],[-7,-9]],fur);
+  shape([[9,-9],[16,-16],[17,-5]],fur);
+  box(-21,-11,42,31,13,ink);
+  box(-18,-9,36,26,10,fur);
+  shape([[-5,-9],[-2,-2],[1,-9],[3,-3],[7,-9]],zombie?"#496a4c":"#ba5258");
+  if(zombie) {
+    disk(-8,0,7,"#553f60");
+    disk(-9,1,5,"#1c1729");
+    disk(8,1,9,"#e3ff6b45");
+    disk(8,1,5.5,"#efff83");
+    disk(9,1,2.2,"#302337");
+    shape([[-17,-10],[-11,-8],[-17,-4]],ink);
+    shape([[13,-13],[20,-21],[18,-11],[16,-12],[18,-8]],"#937eab");
+    ctx.strokeStyle="#523745";ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.moveTo(-5,-11);ctx.lineTo(4,-7);
+    for(let i=0;i<4;i++){ctx.moveTo(-4+i*2,-13+i);ctx.lineTo(-6+i*2,-9+i);}
+    ctx.stroke();
+    shape([[-15,3],[-9,5],[-11,8],[-15,10],[-16,6]],"#533a45");
+    shape([[11,-5],[16,-7],[17,2],[12,4],[15,0]],"#514148");
+    box(-11,7,25,11,3,ink);
+    box(-8,13,18,3,1,"#733e46");
+    for(let i=0;i<4;i++) shape([[-8+i*5,8],[-4+i*5,8],[-6+i*5,13+i%2]],"#fff1ca");
+    box(8,15,2,5+Math.sin(clock*5+x)*2,1,"#baff65");
+    shape([[-3,4],[3,4],[0,7]],"#c9769f");
+  } else {
+    disk(-7,1,5,"#fff4d4");disk(8,1,5,"#fff4d4");
+    box(-6,-2,2,6,1,ink);box(9,-2,2,6,1,ink);
+    shape([[-3,6],[4,6],[0,10]],"#d95582");
+    box(-4,10,10,4,2,ink);
+  }
+  ctx.strokeStyle=ink;ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(-11,8);ctx.lineTo(-21,6);ctx.moveTo(-11,11);ctx.lineTo(-20,13);
+  ctx.moveTo(12,8);ctx.lineTo(22,6);ctx.moveTo(12,11);ctx.lineTo(21,13);ctx.stroke();
+  ctx.restore();
+}
+function drawBackground() {
+  const shift=Math.min(1,score/16);
+  const gradient=ctx.createLinearGradient(0,0,0,550);
+  gradient.addColorStop(0,"#080711"); gradient.addColorStop(.58,shift>.65?"#3b1b37":"#491a2e");gradient.addColorStop(1,"#9b493e");
+  ctx.fillStyle=gradient;ctx.fillRect(0,0,W,H);
+  for(let i=0;i<48;i++) {
+    const x=(i*73+13)%W, y=(i*i*17+25)%350;
+    disk(x,y,i%9===0?1.6:.75,i%3===0?"#fca5b4":"#c187ad");
+  }
+  disk(280,146,86,"#a04e702c");disk(280,146,69,"#e89a8645");disk(280,146,57,"#fbb273");disk(303,128,48,"#a32f3e55");
+  disk(261,130,12,"#efab85");disk(301,152,17,"#efab85");disk(274,178,7,"#efab85");
+  for(let i=0;i<8;i++){
+    const x=((i*79-elapsed*13)%632+632)%632-100;
+    box(x,150+i%3*43,98,7,3,"#311d4299");
+    box(x+25,160+i%3*43,82,4,2,"#311d4277");
+  }
+  for(let layer=0;layer<2;layer++) {
+    for(let i=0;i<12;i++){
+      const x=((i*45-elapsed*(layer?34:17))%540+540)%540-50;
+      const roof=385+layer*40-(i*31%106);
+      box(x,roof,39,550-roof,1,layer?"#211c35":"#412843");
+      box(x+10,roof-7,12,8,1,layer?"#211c35":"#412843");
+      for(let row=0;row<4;row++) for(let col=0;col<3;col++) {
+        box(x+5+col*11,roof+13+row*19,5,8,1,(i+row*3+col)%7===0?"#f6a16c":"#563b53");
+      }
+      if(i%3===0) {
+        shape([[x+5,roof],[x+5,roof-17],[x+29,roof-8],[x+29,roof+2]],"#211727");
+        ctx.strokeStyle="#171220";ctx.lineWidth=2;ctx.beginPath();
+        ctx.moveTo(x+5,roof-15);ctx.lineTo(x+3,roof-31);
+        ctx.moveTo(x-3,roof-26);ctx.lineTo(x+11,roof-22);ctx.stroke();
+      }
+      if(layer && i%3===1) {
+        cat(x+16,roof-4,.54,"#758263",true);
+        if(i%2) label("?",x+29,roof-12,9,"#d9ff9b");
+      }
+      if(layer && i%5===2) {
+        for(let j=0;j<5;j++){
+          const rise=(j*17+clock*22)%83;
+          disk(x+22+Math.sin(j+clock)*7,roof-rise,4+rise*.12,"#21122962");
+        }
+        shape([[x+14,roof+3],[x+18,roof-13-Math.sin(clock*14)*3],[x+22,roof-3],[x+26,roof-10],[x+28,roof+4]],"#f57a4a");
+        disk(x+21,roof+1,4,"#ffdf8e");
+      }
+    }
+  }
+  const street=((286-elapsed*29)%680+680)%680-165;
+  shape([[street+6,397],[street+4,503],[street+17,503],[street+13,397]],"#16101d");
+  ctx.save();ctx.translate(street+8,398);ctx.rotate(-.13);
+  box(-50,-16,103,31,1,"#131019");
+  box(-48,-14,99,27,1,"#6e4d45");
+  box(-45,-11,93,21,0,"#261c24");
+  label("SHELTER 02",0,3,10,"#e7ba8f","center",true);
+  ctx.strokeStyle="#bc4e45";ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(-43,9);ctx.lineTo(42,-9);ctx.stroke();ctx.restore();
+  const rubble=((450-elapsed*37)%610+610)%610-120;
+  shape([[rubble,536],[rubble+14,459],[rubble+29,435],[rubble+42,446],[rubble+48,425],[rubble+77,433],[rubble+92,493],[rubble+119,543]],"#211620");
+  shape([[rubble+27,460],[rubble+39,451],[rubble+42,461],[rubble+60,452],[rubble+64,464],[rubble+54,470],[rubble+43,468],[rubble+29,479]],"#63414a");
+  for(let i=0;i<5;i++) {
+    const x=rubble+15+i*13;
+    shape([[x,530-i%3*5],[x+4,510-i%3*3],[x+13,514],[x+22,535]],i%2?"#704a45":"#4c3139");
+  }
+  const dusk=ctx.createLinearGradient(0,435,0,550);
+  dusk.addColorStop(0,"#97565200");dusk.addColorStop(.65,"#9858523d");dusk.addColorStop(1,"#111021");
+  ctx.fillStyle=dusk;ctx.fillRect(0,435,W,115);
+  // Abandoned van, broken pavement and the silhouettes of a whole horde.
+  const wreck=((110-elapsed*55)%520+520)%520-45;
+  shape([[wreck,543],[wreck+7,521],[wreck+17,514],[wreck+57,514],[wreck+75,534],[wreck+83,543]],"#100d1d");
+  shape([[wreck+16,519],[wreck+52,519],[wreck+67,532],[wreck+10,532]],"#6c3242");
+  box(wreck+22,516,33,4,2,"#fb6355");
+  disk(wreck+16,544,7,"#090814");disk(wreck+67,544,7,"#090814");
+  for(let i=0;i<11;i++){
+    const x=((i*44-elapsed*68)%484+484)%484-38;
+    const y=539+Math.sin(clock*3+i)*3;
+    shape([[x-12,y+12],[x-9,y-4],[x-10,y-16],[x-3,y-9],[x+6,y-10],[x+12,y-18],[x+13,y+10]],"#100b1b");
+    disk(x-3,y-4,1.6,i%3?"#c9ff57":"#ff5847");
+    disk(x+5,y-4,1.6,i%3?"#c9ff57":"#ff5847");
+  }
+  for(let i=0;i<25;i++){
+    const x=((i*91+clock*(5+i%4))%420)-10;
+    const y=550-((i*57+clock*(12+i%6))%540);
+    disk(x,y,i%4===0?1.5:.7,i%4===0?"#ffad714f":"#ca63355c");
+  }
+  if(score>=7 && (clock%11)>10.86) {
+    ctx.fillStyle="#fcbda822";ctx.fillRect(0,0,W,550);
+  }
+
+}
+function barricade(x,y,h,isTop,index) {
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.beginPath();ctx.rect(0,0,PIPE_WIDTH,h);ctx.clip();
+  const edge=isTop?h-13:0;
+  const ribs=index%3===0;
+  box(0,0,PIPE_WIDTH,h,1,"#101117");
+  box(4,0,50,h,0,ribs?"#4c3936":"#35383c");
+  for(let row=8;row<h;row+=19) {
+    const nick=(row*13+index*7)%38;
+    box(4,row,50,2,0,"#19171b");
+    box(6+nick,row+3,12,1,0,"#98705970");
+    disk(7,row+6,1.5,"#947b6b");disk(50,row+6,1.5,"#947b6b");
+  }
+  // Jagged blackout fabric, exposed bars and bent wire stay inside the collider.
+  shape([[8,0],[36,0],[36,h*.27],[28,h*.34],[38,h*.42],[24,h*.58],[14,h*.49],[20,h*.26],[9,h*.32]],"#17151b");
+  for(const rail of [4,51]) {
+    box(rail,0,4,h,0,"#73534a");
+    box(rail+2,0,2,h,0,"#291f24");
+  }
+  ctx.strokeStyle="#a99a87";ctx.lineWidth=.9;
+  for(let row=12;row<h-10;row+=10) {
+    ctx.beginPath();ctx.moveTo(3,row);ctx.lineTo(12,row+4);ctx.lineTo(5,row+7);ctx.lineTo(2,row+3);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(48,row+2);ctx.lineTo(55,row+6);ctx.lineTo(49,row+9);ctx.stroke();
+  }
+  box(0,edge,PIPE_WIDTH,13,1,"#b28b4e");
+  for(let offset=-12;offset<PIPE_WIDTH;offset+=16) {
+    shape([[offset,edge],[offset+7,edge],[offset+17,edge+13],[offset+10,edge+13]],"#281e24");
+  }
+  for(let i=0;i<10;i++){
+    const left=(i*23+index*7)%55, top=edge+(i*7)%12;
+    box(left,top,3+i%3,1,0,i%2?"#774838":"#d7b196");
+  }
+  const center=isTop?edge-27:edge+39;
+  if(h>71) {
+    disk(29,center,22,"#0c0e14");
+    disk(29,center,20,"#351f25");
+    cat(29+Math.sin(clock*4+index)*2,center,.78,index%2?"#978291":"#849570",true);
+    for(const bar of [12,45]) box(bar,center-21,2,42,0,"#5e5150");
+  } else {
+    disk(22,center,2.2,"#d9ff5d");disk(33,center,2.2,"#d9ff5d");
+  }
+  if(h>105){
+    const placard=center+(isTop?-42:24);
+    ctx.save();ctx.translate(29,placard);ctx.rotate(index%2 ? .09 : -.08);
+    box(-23,0,46,17,1,"#b6a488");
+    box(-23,0,46,3,0,"#854137");
+    label(posters[index%posters.length],0,12,7,"#25191e","center",true);
+    disk(-20,4,1,"#32252a");disk(20,4,1,"#32252a");
+    ctx.restore();
+  }
+  const lit=Math.sin(clock*6+index)>.1;
+  disk(5,edge+6,3,lit?"#ff6e56":"#562e30");
+  disk(53,edge+6,3,lit?"#ff6e56":"#562e30");
+  ctx.restore();
+}
+function drawAtmosphere() {
+  const vignette=ctx.createRadialGradient(198,270,70,198,270,326);
+  vignette.addColorStop(0,"#130e1800");
+  vignette.addColorStop(.7,"#100a1759");
+  vignette.addColorStop(1,"#07070def");
+  ctx.fillStyle=vignette;ctx.fillRect(0,0,W,550);
+  for(let i=0;i<44;i++){
+    const x=(i*79+Math.floor(clock*9)*13)%400, y=(i*i*31)%550;
+    box(x,y,1+i%4,1,0,i%3?"#d0c5a518":"#07080d4c");
+  }
+}
+function drawAmbush(pipe) {
+  const x=pipe.x+PIPE_WIDTH/2;
+  const edge=pipe.side===1 ? pipe.top : pipe.top+pipe.gap;
+  const reach=ambushLength(pipe);
+  const distracted=elapsed<decoyUntil;
+  const y=edge+pipe.side*(reach ? reach-14 : -15);
+  const eye=distracted?"#d8e786":"#ff695d";
+  disk(x,y,22,distracted?"#d8e7861a":"#ff433643");
+  if(reach>0) {
+    shape([[x-20,edge],[x-22,y],[x-10,y+pipe.side*13],[x+16,y+pipe.side*10],[x+21,edge]],"#343038");
+    for(const dx of [-20,17]){
+      shape([[x+dx-5,edge],[x+dx-3,y+pipe.side*9],[x+dx+6,y+pipe.side*12],[x+dx+7,edge]],"#716859");
+      shape([[x+dx-2,y+pipe.side*9],[x+dx+3,y+pipe.side*15],[x+dx+6,y+pipe.side*8]],"#dbcda1");
+    }
+    cat(x,y,.82,"#82755c",true);
+  } else {
+    disk(x-7,y,3,eye);disk(x+6,y-1,3,eye);
+    label(distracted?"♪":"!",x,edge+pipe.side*17,13,eye,"center",true);
+  }
+}
+function drawPipes() {
+  for (const pipe of pipes) {
+    const bottom=pipe.top+pipe.gap;
+    barricade(pipe.x,0,pipe.top,true,pipe.index);
+    barricade(pipe.x,bottom,H-GROUND_H-bottom,false,pipe.index+2);
+    if(pipe.ambush) drawAmbush(pipe);
+    if(!pipe.collected) {
+      const x=pipe.x+PIPE_WIDTH/2, y=pipe.top+pipe.gap/2+(pipe.canOffset||0);
+      disk(x,y,16,"#dcff8040");
+      box(x-10,y-8,20,16,4,"#13282b");
+      box(x-8,y-6,16,12,3,"#d8ff86");
+      shape([[x-5,y],[x-1,y-3],[x+4,y-1],[x+6,y-3],[x+6,y+3],[x+4,y+1],[x-1,y+3]],"#214b49");
+    }
+  }
+}
+function drawBird() {
+  for(const p of sparks) {
+    ctx.globalAlpha=Math.min(1,p.life*2);disk(p.x,p.y,2.7,p.color);
+  }
+  ctx.globalAlpha=1;
+  ctx.save(); ctx.translate(bird.x,bird.y);
+  ctx.rotate(Math.max(-.4,Math.min(.55,bird.vy/650)));
+  if(recovery) {
+    disk(0,0,24,"#c2ff8555");
+    ctx.strokeStyle="#d8ff86";ctx.lineWidth=2;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.arc(0,0,24,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+  }
+  drawCroqueta();
+  ctx.restore();
+}
+function drawCroqueta() {
+  // A patchwork rescue pilot. The scarf and tail react to the jetpack's lift.
+  const lift=Math.max(-3,Math.min(4,bird.vy/60));
+  const waving=Math.sin(elapsed*17)*2;
+  const worried=recovery>0 || pipes.some(pipe=>pipe.ambush && ambushLength(pipe)>8 && Math.abs(pipe.x-bird.x)<77);
+  const blink=!worried && (elapsed+.8)%3.2>3.06;
+  ctx.lineCap="round";
+  ctx.lineWidth=6;ctx.strokeStyle="#231821";
+  ctx.beginPath();ctx.moveTo(-8,7);ctx.quadraticCurveTo(-28,16,-27,-1+waving+lift);ctx.stroke();
+  ctx.lineWidth=3.5;ctx.strokeStyle="#e69a72";
+  ctx.beginPath();ctx.moveTo(-8,7);ctx.quadraticCurveTo(-28,16,-27,-1+waving+lift);ctx.stroke();
+  shape([[-23,5],[-9,4],[-15,18-lift],[-18,11],[-22,15+waving]],"#ffb474");
+  box(-23,-6,13,15,4,"#16232d");
+  box(-21,-5,9,11,3,"#63868a");
+  box(-20,-3,2,6,1,"#bfd9d2");
+  box(-21,2,8,3,1,"#d77b5e");
+  shape([[-8,5],[-28,4+waving],[-25,10+lift],[-9,10]],"#ab3f59");
+  box(-9,4,22,11,6,"#422632");
+  box(-7,5,18,8,4,"#e4a080");
+  shape([[-14,-4],[-14,-16],[-5,-11],[7,-11],[14,-17],[16,-4]],"#231821");
+  shape([[-12,-5],[-12,-13],[-6,-9]],"#ed91a1");
+  shape([[9,-8],[13,-14],[14,-5]],"#ed91a1");
+  box(-15,-10,32,22,10,"#231821");
+  box(-13,-9,28,19,8,"#f7c19a");
+  shape([[-12,-7],[-8,-9],[-2,-9],[-4,-1],[-9,4],[-13,2]],"#af583e");
+  box(-3,-10,15,5,2,"#384f53");
+  disk(10,-7,3.7,"#768e88");disk(10,-7,2,"#bce2d0");
+  if(blink) {
+    box(-8,-1,5,1.6,1,"#452d36");box(5,-1,5,1.6,1,"#452d36");
+  } else {
+    for(const x of [-5,8]){
+      disk(x,-.5,worried?4.5:3.7,"#ffead1");
+      disk(x+1,-.3,worried?1.7:2.6,"#271b24");disk(x+1.6,-1.2,1,"#ffffff");
+    }
+  }
+  box(-10,3,4,2,1,"#e28b86");box(9,3,4,2,1,"#e28b86");
+  shape([[-1,3],[3,3],[1,5]],"#893c56");
+  box(worried?-.5:-1,6,worried?3:5,worried?3:1.2,1,"#73374a");
+  box(8,8,7,4,2,"#ffe2bf");
+  box(-8,8,16,3,1,"#b74765");
+  disk(-4,11,2,"#e8bd72");
+}
+function drawUI() {
+  if(clock<flashUntil) {
+    ctx.fillStyle="#ff385333";ctx.fillRect(0,0,W,H-GROUND_H);
+    ctx.strokeStyle="#f2445ea3";ctx.lineWidth=8;ctx.strokeRect(4,4,W-8,H-GROUND_H-8);
+  }
+  box(12,11,376,49,12,"#171326ef");
+  label("GATES",25,30,9,"#f8b9b8","left",true);
+  label(score,25,50,20,"#fff3d9","left");
+  label("TUNA",152,30,9,"#d8ff86","center",true);
+  label(cans,152,50,20,"#d8ff86");
+  label("DECOYS",240,30,9,"#d8ff86","center",true);
+  label(elapsed<decoyUntil?"POP":decoys,240,50,16,"#d8ff86");
+  label("LIVES",375,30,9,"#f8b9b8","right",true);
+  for(let i=0;i<START_LIVES;i++) cat(328+i*20,44,.39,i<lives?"#ffab65":"#62516a");
+  ctx.fillStyle="#171326";ctx.fillRect(0,H-GROUND_H,W,GROUND_H);
+  ctx.fillStyle="#f2b762";ctx.fillRect(0,H-GROUND_H,W,3);
+  label(districts[Math.min(2,Math.floor(score/7))],14,579,11,"#ffc38b","left",true);
+  label("BEST "+best,386,579,11,"#d8ff86","right",true);
+  if(state==="playing") {
+    if(elapsed<messageUntil) {
+      box(29,492,342,37,12,"#181425ef");
+      label(message,200,516,12,"#fff3d9","center",true);
+    }
+    return;
+  }
+  ctx.fillStyle="#100c20a6";ctx.fillRect(0,61,W,489);
+  box(23,144,354,289,3,"#816756");
+  box(25,146,350,285,2,"#111017");
+  for(const x of [33,367]) for(const y of [154,423]) disk(x,y,2,"#927967");
+  for(let i=0;i<28;i++) box(29+i*12,147,6,3,0,i%2?"#8e463f":"#4b292c");
+  if(state!=="paused") {
+    cat(64,436,.87,"#95b675",true);
+    cat(338,431,1,"#a381a8",true);
+    cat(301,448,.75,"#8fa663",true);
+  }
+  disk(200,184,32,"#ab332529");
+  if(state==="over") cat(200,184,1.42,"#847761",true);
+  else {
+    ctx.save();ctx.translate(200,184);ctx.scale(1.62,1.62);drawCroqueta();ctx.restore();
+  }
+  label(state==="start"?"EMERGENCY BROADCAST":state==="over"?"CASUALTY REPORT":"BROADCAST ON HOLD",200,227,10,"#d8ff86","center",true);
+  label(state==="start"?"MEOWPOCALYPSE":state==="over"?"CASUALTY CONFIRMED":"TACTICAL NAP",200,267,28);
+  if(state==="start"){
+    label("DAY 9  /  DO NOT MEOW BACK",200,296,15);
+    label("Croqueta can hot-wire a jetpack. Sort of.",200,318,15,"#ffb692");
+    label("3 cans = decoy  ·  5 in a row = extra life",200,345,12,"#e5c7df");
+  } else if(state==="over") {
+    label(score+" gates  ·  "+cans+" cans  ·  best "+best,200,300,16);
+    label(obituaries[cause],200,329,13,"#ffb692");
+  } else {
+    label("Croqueta is busy ignoring the apocalypse.",200,311,15,"#ffb692");
+  }
+  box(61,366,278,44,3,"#b8c584");
+  label(state==="start"?"▶  LEAVE THE SHELTER":state==="over"?"↻  TRY AGAIN":"▶  RESUME FLIGHT",200,393,15,"#22172e");
+}
+
+// === AI PROMPT ZONE: GAME LOOP ===
+// Fixed steps make the same inputs play the same at 30, 60 and 144Hz.
+// Clamp long frames and pause on focus loss so a tab switch cannot cost a life.
+function loop(timestamp) {
+  if (lastTime !== null && state === "playing") {
+    accumulator += Math.min(0.05, Math.max(0, (timestamp - lastTime) / 1000));
+    while (accumulator + 1e-9 >= STEP && state === "playing") {
+      recovery = Math.max(0, recovery - STEP);
+      elapsed += STEP;
+      if(elapsed>=nextGroan) {
+        nextGroan=elapsed+7;
+        sound([[84,63,.68],[161,91,.44]],"triangle",.055);
+      }
+      updateSparks(STEP);
+      updateBird(STEP);
+      if (state === "playing") updatePipes(STEP);
+      accumulator = Math.max(0, accumulator - STEP);
+    }
+  }
+  lastTime = timestamp;
+  clock = timestamp / 1000;
+  const pauseLabel = state === "paused" ? "P · Resume" : "P · Pause";
+  if (pauseButton.textContent !== pauseLabel) pauseButton.textContent = pauseLabel;
+  const decoyLabel="F · Decoy ×"+decoys;
+  if(decoyButton.textContent!==decoyLabel) decoyButton.textContent=decoyLabel;
+  drawBackground(); drawAtmosphere(); drawPipes(); drawBird(); drawUI();
+  requestAnimationFrame(loop);
+}
+addEventListener("keydown", event => {
+  if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+  if (event.target.closest?.("a, button, input, textarea, select, [contenteditable]")) return;
+  const isFlap = event.code === "Space" || event.code === "ArrowUp";
+  if (!isFlap && event.code !== "KeyP" && event.code !== "KeyF") return;
+  event.preventDefault();
+  if (event.repeat) return;
+  if (event.code==="KeyF") useDecoy();
+  else if (isFlap || state === "paused") flap();
+  else pause();
+});
+canvas.addEventListener("pointerdown", event => {
+  if (event.button !== 0) return;
+  event.preventDefault();
+  canvas.focus({ preventScroll:true });
+  flap();
+});
+const soundButton=document.getElementById("sound");
+soundButton.addEventListener("click", async () => {
+  if(soundOn) {
+    soundOn=false;
+    audio.suspend().catch(() => {});
+  } else {
+    try {
+      audio ??= new (window.AudioContext || window.webkitAudioContext)();
+      await audio.resume();
+      soundOn=audio.state==="running";
+      sound([[139,88,.35],[110,75,.42]],"triangle",.07);
+    } catch { return; }
+  }
+  soundButton.textContent=soundOn?"Sound: on":"Sound: off";
+  soundButton.setAttribute("aria-pressed",String(soundOn));
+  canvas.focus({preventScroll:true});
+});
+const decoyButton=document.getElementById("decoy");
+decoyButton.addEventListener("click",()=>{
+  useDecoy();
+  canvas.focus({preventScroll:true});
+});
+const pauseButton=document.getElementById("pause");
+function togglePause() {
+  if (state==="paused") flap();
+  else pause();
+}
+pauseButton.addEventListener("click", () => {
+  togglePause();
+  canvas.focus({preventScroll:true});
+});
+addEventListener("blur", pause);
+document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
+reset();
+if (ctx) requestAnimationFrame(loop);
+else {
+  canvas.hidden = true;
+  statusEl.classList.remove("sr-only");
+  statusEl.textContent = "This browser cannot draw the game.";
+}
+</script>
+</body>
+</html>

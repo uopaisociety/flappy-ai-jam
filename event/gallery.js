@@ -1,6 +1,6 @@
 import {
   awardsFor, isGeminiShare, loadEvent, loadManifest, loadPublishedGame,
-  publicGameUrl, publishedGamePath, standaloneGameDocument,
+  publicGameUrl, publishedGamePath, repository, standaloneGameDocument,
 } from "./state.js";
 const curated = new Map([
   ["baseline", { path: "index.html", controls: "Press Space, the up arrow or tap to flap. You have three lives. Press P to pause." }],
@@ -99,12 +99,14 @@ function validBuild(build) {
   if (!build || typeof build.id !== "string" || !handlePattern.test(build.id)
     || typeof build.title !== "string" || !build.title
     || typeof build.builder !== "string" || !build.builder
-    || typeof build.github !== "string" || !handlePattern.test(build.github)) return false;
+    || (build.github !== undefined && (typeof build.github !== "string" || !handlePattern.test(build.github)))) return false;
   const expectedKind = build.id === "baseline" ? "baseline" : curated.has(build.id) ? "reference" : "submission";
-  const expectedId = build.assisted === true ? "entry--" + build.issue : build.github.toLowerCase();
-  return build.kind === expectedKind && (expectedKind !== "submission" ||
-    (build.id === expectedId && Boolean(publishedGamePath(build) || publicGameUrl(build.url)) &&
-      Number.isSafeInteger(build.issue) && build.issue > 0));
+  if (build.kind !== expectedKind) return false;
+  if (expectedKind !== "submission") return Boolean(build.github);
+  if (build.issue === undefined) return Boolean(publishedGamePath(build));
+  const expectedId = build.assisted === true ? "entry--" + build.issue : build.github?.toLowerCase();
+  return build.id === expectedId && Boolean(publishedGamePath(build) || publicGameUrl(build.url))
+    && Number.isSafeInteger(build.issue) && build.issue > 0;
 }
 
 function card(build) {
@@ -115,7 +117,7 @@ function card(build) {
     badges.append(element("span", award, "badge winner"));
   }
   const byline = element("p", build.builder, "byline");
-  if (build.assisted !== true) {
+  if (build.github && build.assisted !== true) {
     const github = element("a", "@" + build.github);
     github.href = "https://github.com/" + build.github;
     byline.append(github);
@@ -207,11 +209,27 @@ async function launchBuild(build) {
   active = build;
   history.replaceState(null, "", directLink(build.id));
   byId("player-title").textContent = build.title;
-  byId("player-builder").textContent = build.assisted === true ? build.builder : build.builder + " · @" + build.github;
+  byId("player-builder").textContent = build.github && build.assisted !== true ? build.builder + " · @" + build.github : build.builder;
   byId("copy-status").textContent = "";
   byId("share-url").hidden = true;
   const known = curated.get(build.id);
   const source = known ? "" : publishedGamePath(build);
+  const download = byId("download-source");
+  download.hidden = !source;
+  if (source) {
+    download.href = source;
+    download.download = build.id.replace(/^email--/, "") + ".html";
+  } else {
+    download.removeAttribute("href");
+  }
+  const issue = byId("submission-issue");
+  issue.hidden = !Number.isSafeInteger(build.issue) || build.issue < 1;
+  if (!issue.hidden) {
+    issue.href = repository + "/issues/" + build.issue;
+    issue.textContent = "Submission issue #" + build.issue;
+  } else {
+    issue.removeAttribute("href");
+  }
   const gameUrl = known?.path ?? publicGameUrl(build.url);
   const gemini = gameUrl && isGeminiShare(new URL(gameUrl, location.href));
   const external = !source && gemini;
@@ -220,15 +238,16 @@ async function launchBuild(build) {
   if (gameUrl) openGame.href = gameUrl;
   else openGame.removeAttribute("href");
   openGame.textContent = source ? "Open original link ↗︎" : "Open game in new tab";
-  byId("player-controls").textContent = known?.controls ?? (source
-    ? "Play the team's submitted HTML here."
+  const controls = byId("player-controls");
+  controls.textContent = known?.controls ?? (source
+    ? build.description ?? "Play the submitted game below."
     : "If the preview is blocked or the controls do not respond, open the game in a new tab.");
   frameMessage.hidden = false;
   frameMessage.textContent = external ? "This game opens in Gemini. Use the button above to play it." : "Loading game…";
   frameBox.classList.toggle("external-preview", Boolean(external));
   if (!dialog.open) dialog.showModal();
   if (external) {
-    byId("player-controls").textContent = "Open the link in your browser. If Gemini asks you to sign in or the preview is unavailable, try a different game.";
+    controls.textContent = "Open the link in your browser. If Gemini asks you to sign in or the preview is unavailable, try a different game.";
     openGame.focus();
     return;
   }

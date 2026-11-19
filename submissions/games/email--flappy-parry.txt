@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<!--
+  FLAPPY AI JAM · UoP AI Society · The 30-Minute AI Game Jam
+  A complete game in ONE file. No installs, libraries or external assets.
+  HOW TO USE IT IN THE JAM:
+    1. Copy this WHOLE file (Ctrl/Cmd + A, then Ctrl/Cmd + C).
+    2. Paste it into Gemini (Canvas) and ask for changes.
+    3. Always ask Gemini for the FULL file back, then preview or save it.
+  "AI PROMPT ZONE" comments mark each part. Change anything. Make it weird.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Flappy Combat · UoP AI Society</title>
+<style>
+  :root { --ink:#021825; --navy:#073B5C; --cream:#F7F5F0; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--ink); color:var(--cream); color-scheme:dark;
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+  body { display:flex; flex-direction:column; overflow:hidden; }
+  header, footer { display:flex; align-items:center; padding:10px 16px; flex:none; }
+  header { justify-content:space-between; border-bottom:1px solid rgba(247,245,240,.14); }
+  .brand { font-size:13px; font-weight:650; letter-spacing:.14em; text-transform:uppercase; white-space:nowrap; }
+  .society { color:var(--cream); padding:3px; line-height:0; }
+  .society svg { width:36px; height:24px; }
+  .society:focus-visible { outline:2px solid var(--cream); outline-offset:2px; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  main { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:12px; }
+  canvas { background:var(--cream); display:block; touch-action:none; border-radius:16px;
+    border:1px solid rgba(247,245,240,.28); box-shadow:0 18px 50px rgba(0,0,0,.45); }
+  footer { justify-content:center; border-top:1px solid rgba(247,245,240,.14);
+    font:11px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; letter-spacing:.16em; opacity:.72; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Flappy AI Jam</div>
+  <a class="society" href="https://github.com/uopaisociety" target="_blank" rel="noopener noreferrer" aria-label="University of Portsmouth AI Society on GitHub (new tab)">
+    <svg viewBox="172 248 692 450" aria-hidden="true">
+      <g transform="translate(-22 0) translate(-575.84993366 -793.24494091) scale(4.2459962354)" fill="currentColor">
+        <g transform="translate(600 314) scale(1.2) translate(-600 -314)">
+          <g fill-rule="evenodd" transform="translate(175.41909833 172.66980773) scale(0.4500968704)">
+    <path transform="translate(169.0000000 187.6722702) scale(0.250000000)" d="M0.000 774.000C0.000 772.900 0.450 772.000 1.000 772.000C1.550 772.000 2.000 771.580 2.000 771.067C2.000 770.017 16.468 743.247 24.466 729.500C27.346 724.550 31.967 716.225 34.736 711.000C39.758 701.522 62.605 659.871 73.665 640.032L79.500 629.564 89.000 624.212C94.225 621.269 102.325 616.800 107.000 614.280C111.675 611.761 119.824 607.096 125.110 603.914C130.395 600.732 144.570 593.097 156.610 586.947C168.649 580.797 181.650 574.073 185.500 572.006C189.350 569.938 199.475 564.998 208.000 561.028C216.525 557.058 228.000 551.671 233.500 549.058C241.499 545.256 259.082 537.876 276.500 531.008C277.600 530.574 282.550 528.603 287.500 526.628C308.326 518.317 342.288 507.568 374.500 499.092C389.435 495.162 430.782 488.326 454.500 485.865C473.781 483.865 525.349 484.167 544.000 486.390C584.388 491.203 625.526 501.580 656.260 514.707C658.328 515.590 660.269 516.064 660.573 515.760C661.263 515.070 644.321 481.129 616.269 427.000C604.440 404.175 587.779 372.000 579.244 355.500C570.709 339.000 558.000 314.475 551.002 301.000C544.005 287.525 533.417 267.050 527.473 255.500C515.537 232.307 514.811 231.000 513.859 231.000C513.061 231.000 497.706 257.899 489.027 274.500C485.577 281.100 482.407 286.950 481.982 287.500C481.558 288.050 479.068 292.550 476.450 297.500C473.832 302.450 470.014 309.425 467.965 313.000C465.917 316.575 461.868 324.000 458.968 329.500C456.068 335.000 452.936 340.625 452.009 342.000C451.082 343.375 447.482 349.900 444.009 356.500C440.537 363.100 437.127 369.400 436.431 370.500C435.736 371.600 432.277 377.900 428.745 384.500C425.213 391.100 418.362 403.475 413.522 412.000C408.681 420.525 403.828 429.075 402.737 431.000C401.645 432.925 398.951 437.988 396.750 442.250C393.437 448.664 392.332 450.000 390.339 450.000C383.805 450.000 319.694 469.921 290.008 481.175C277.718 485.834 252.825 495.660 248.500 497.560C227.528 506.770 219.582 510.193 214.976 512.001C211.964 513.183 193.975 522.066 175.000 531.741C156.025 541.416 135.209 552.028 128.742 555.325C122.276 558.621 116.753 561.087 116.471 560.804C115.910 560.244 128.820 535.481 138.003 519.500C141.164 514.000 145.804 505.400 148.315 500.388C150.827 495.377 155.303 487.052 158.263 481.888C166.686 467.195 177.000 448.342 177.000 447.640C177.000 447.290 179.984 441.715 183.630 435.252C187.277 428.788 194.749 415.175 200.235 405.000C205.721 394.825 214.597 378.625 219.961 369.000C229.695 351.532 245.917 321.754 257.550 300.000C267.038 282.257 278.327 261.979 281.489 257.000C283.061 254.525 285.659 249.608 287.263 246.074C288.867 242.540 295.237 230.615 301.418 219.574C307.600 208.533 315.199 194.718 318.305 188.873C321.411 183.029 325.988 174.803 328.476 170.595C330.964 166.386 333.000 162.771 333.000 162.561C333.000 162.351 334.738 159.101 336.862 155.340C338.986 151.578 342.509 145.125 344.690 141.000C346.871 136.875 351.586 128.325 355.167 122.000C358.749 115.675 363.617 106.900 365.985 102.500C375.669 84.510 383.821 69.670 391.529 56.000C393.855 51.875 398.140 44.000 401.052 38.500C403.963 33.000 407.227 26.925 408.304 25.000C409.382 23.075 412.498 17.450 415.229 12.500C417.960 7.550 420.715 2.952 421.350 2.282C422.238 1.348 445.153 0.966 520.003 0.640C573.626 0.406 619.577 0.504 622.115 0.858L626.730 1.500 633.508 14.500C637.237 21.650 644.454 35.600 649.547 45.500C654.640 55.400 662.018 69.575 665.943 77.000C669.868 84.425 675.507 95.545 678.473 101.711C681.440 107.878 685.673 116.015 687.880 119.794C690.087 123.573 697.932 138.553 705.314 153.083C712.695 167.612 725.614 192.775 734.022 209.000C759.949 259.032 835.624 408.383 848.281 434.500C851.480 441.100 855.200 448.525 856.550 451.000C857.899 453.475 863.565 464.725 869.140 476.000C874.716 487.275 885.199 508.425 892.435 523.000C899.671 537.575 906.969 552.425 908.652 556.000C910.335 559.575 915.155 569.333 919.362 577.685L927.011 592.871 926.755 683.185L926.500 773.500 913.500 773.394C889.946 773.203 873.490 770.381 840.500 760.878C802.349 749.887 762.481 728.857 700.254 686.900C654.728 656.203 615.213 631.599 598.500 623.541C557.837 603.937 545.446 598.832 520.500 591.409C502.185 585.958 483.230 581.714 464.000 578.756C451.555 576.842 445.461 576.525 421.000 576.521C390.766 576.515 385.141 577.031 361.251 581.998C348.953 584.556 345.000 586.028 345.000 588.051C345.000 588.494 343.484 591.476 341.632 594.678C336.401 603.720 316.820 637.703 312.348 645.500C310.140 649.350 304.433 659.176 299.667 667.337C294.900 675.497 291.000 682.354 291.000 682.574C291.000 682.795 288.130 687.818 284.623 693.738C281.115 699.657 273.088 713.513 266.784 724.528C260.481 735.543 251.130 751.631 246.004 760.278L236.685 776.000 118.343 776.000L0.000 776.000 0.000 774.000ZM972.250 772.338C971.253 771.935 971.000 693.914 971.000 386.917L971.000 2.000 1085.500 2.000L1200.000 2.000 1200.000 387.500L1200.000 773.000 1086.750 772.921C1024.463 772.878 972.938 772.615 972.250 772.338Z"/>
+          </g>
+        </g>
+      </g>
+    </svg>
+  </a>
+  <span id="status" class="sr-only" role="status">Ready to play</span>
+</header>
+<main><canvas id="game" width="400" height="600"></canvas></main>
+<footer>SPACE / UP / CLICK · F: PARRY</footer>
+<script>
+// === FLAPPY COMBAT: CONFIG ===
+const W = 400, H = 600;
+const GRAVITY = 0.45, FLAP_STRENGTH = -7.5;
+const PIPE_GAP = 160, PIPE_WIDTH = 64, PIPE_SPEED = 2.6, PIPE_SPACING = 220, GROUND_H = 70;
+const COLORS = { navy:"#073B5C", cream:"#F7F5F0", bird:"#FFC93C", beak:"#FF7A00", pipe:"#0E5A8A", ground:"#C9B79C" };
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const statusEl = document.getElementById("status");
+let state = "start", bird, pipes, score, frame, overAt = 0, best = 0;
+let health = 100, enemies = [], attacks = [], particles = [];
+let lastEnemySpawn = 0, nextAttackAt = 0, parryUntil = 0, parryReadyAt = 0;
+let parryFlashUntil = 0, parryStartedAt = 0, message = "", messageUntil = 0;
+const MAX_ENEMIES = 6, ENEMY_SPAWN_MS = 4200, ATTACK_INTERVAL_MS = 6000;
+const SPECIES = [
+  { name:"Razor", kind:"melee", color:"#C44747", accent:"#7D2424" },
+  { name:"Gunner", kind:"ranged", color:"#4776B8", accent:"#24466F" },
+  { name:"Stinger", kind:"melee", color:"#8A58A8", accent:"#51316A" },
+  { name:"Bomber", kind:"ranged", color:"#398C72", accent:"#205C49" }
+];
+try { best = Number(localStorage.getItem("flappyAiJamBest")) || 0; } catch (e) {}
+
+function resize() {
+  const chrome = document.querySelector("header").offsetHeight + document.querySelector("footer").offsetHeight + 24;
+  const scale = Math.max(0.2, Math.min((innerWidth - 24) / W, (innerHeight - chrome) / H));
+  canvas.style.width = Math.floor(W * scale) + "px";
+  canvas.style.height = Math.floor(H * scale) + "px";
+}
+addEventListener("resize", resize);
+resize();
+
+function reset() {
+  bird = { x:100, y:H / 2, vy:0, r:16 };
+  pipes = []; score = 0; frame = 0; health = 100;
+  enemies = []; attacks = []; particles = [];
+  lastEnemySpawn = performance.now(); nextAttackAt = performance.now() + ATTACK_INTERVAL_MS;
+  parryUntil = 0; parryReadyAt = 0; parryFlashUntil = 0; parryStartedAt = 0;
+  message = ""; messageUntil = 0;
+}
+function flap() {
+  if (state === "over") {
+    if (performance.now() - overAt < 300) return;
+    reset();
+  }
+  state = "playing";
+  bird.vy = FLAP_STRENGTH;
+}
+function tryParry() {
+  if (state !== "playing") return;
+  const now = performance.now();
+  if (now < parryReadyAt) {
+    message = "PARRY RECHARGING"; messageUntil = now + 500;
+    return;
+  }
+  parryUntil = now + 1000; // 1-second parry window
+  parryFlashUntil = now + 140;
+}
+function updateBird() {
+  bird.vy += GRAVITY;
+  bird.y += bird.vy;
+  if (bird.y - bird.r < 0) { bird.y = bird.r; bird.vy = 0; }
+  if (bird.y + bird.r > H - GROUND_H) { bird.y = H - GROUND_H - bird.r; bird.vy = 0; }
+}
+function updatePipes() {
+  const last = pipes[pipes.length - 1];
+  if (!last || last.x < W - PIPE_SPACING) {
+    pipes.push({ x:W, top:60 + Math.random() * (H - GROUND_H - PIPE_GAP - 120), passed:false });
+  }
+  for (const p of pipes) {
+    p.x -= PIPE_SPEED;
+    const hitX = bird.x + bird.r > p.x && bird.x - bird.r < p.x + PIPE_WIDTH;
+    const hitY = bird.y - bird.r < p.top || bird.y + bird.r > p.top + PIPE_GAP;
+    if (hitX && hitY && !p.hit) { p.hit = true; damagePlayer(); }
+    if (!p.passed && p.x + PIPE_WIDTH < bird.x) { p.passed = true; score++; }
+  }
+  pipes = pipes.filter(p => p.x + PIPE_WIDTH > -10);
+}
+function spawnEnemy(now) {
+  // Spawn one coordinated six-enemy wave once the player reaches 10 points.
+  if (score < 10 || enemies.length > 0 || now - lastEnemySpawn < ENEMY_SPAWN_MS) return;
+  const topXs = [185, 255, 325];
+  const bottomXs = [185, 255, 325];
+  for (let i = 0; i < 6; i++) {
+    const species = SPECIES[Math.floor(Math.random() * SPECIES.length)];
+    const fromTop = i < 3;
+    const targetX = (fromTop ? topXs[i] : bottomXs[i - 3]);
+    const targetY = fromTop ? 95 + Math.random() * 55 : 390 + Math.random() * 55;
+    enemies.push({
+      x: targetX + (Math.random() - 0.5) * 30,
+      y: fromTop ? -40 - i * 12 : H + 40 + (i - 3) * 12,
+      targetX, targetY, species, hp:3, maxHp:3,
+      born:now, alpha:1, phase:"enter", attackAt:0, fadeAt:0,
+      seed:Math.random() * Math.PI * 2
+    });
+  }
+  lastEnemySpawn = now;
+}
+function activeAttackCount() {
+  const now = performance.now();
+  return attacks.filter(a => !a.done && now < a.impactAt + 250).length;
+}
+function launchAttacks(now) {
+  if (score < 10 || now < nextAttackAt) return;
+  const candidates = enemies.filter(e => e.phase === "ready" && !e.attackAt);
+  if (!candidates.length) {
+    nextAttackAt = now + 500;
+    return;
+  }
+  const enemy = candidates[Math.floor(Math.random() * candidates.length)];
+  enemy.attackAt = now;
+  const ranged = enemy.species.kind === "ranged";
+  const windup = ranged ? 1000 : 500;
+  const travel = ranged ? 500 : 1000;
+  attacks.push({
+    enemy, kind:enemy.species.kind, startAt:now,
+    windupAt:now + windup, impactAt:now + windup + travel,
+    targetX:bird.x, targetY:bird.y,
+    done:false, reflected:false, fromX:enemy.x, fromY:enemy.y
+  });
+  nextAttackAt = now + ATTACK_INTERVAL_MS;
+}
+function damagePlayer() {
+  if (state !== "playing") return;
+  health = Math.max(0, health - 20);
+  message = "-20 HEALTH"; messageUntil = performance.now() + 650;
+  if (health <= 0) gameOver();
+}
+function hitEnemy(enemy) {
+  if (!enemy || enemy.phase === "fading") return;
+  enemy.hp--;
+  for (let i=0;i<8;i++) particles.push({x:enemy.x,y:enemy.y,vx:(Math.random()-.5)*4,vy:(Math.random()-.5)*4,life:24});
+  if (enemy.hp <= 0) { enemy.phase = "fading"; enemy.fadeAt = performance.now(); }
+  else { message = "PARRY HIT!"; messageUntil = performance.now() + 500; }
+}
+function getAttackPosition(a, now) {
+  const duration = Math.max(1, a.impactAt - a.windupAt);
+  const t = Math.max(0, Math.min(1, (now - a.windupAt) / duration));
+  return {
+    x: a.fromX + (a.targetX - a.fromX) * t,
+    y: a.fromY + (a.targetY - a.fromY) * t
+  };
+}
+function updateCombat(now) {
+  spawnEnemy(now);
+  for (const e of enemies) {
+    if (e.phase === "enter") {
+      e.x += (e.targetX - e.x) * 0.035;
+      e.y += (e.targetY - e.y) * 0.035;
+      if (Math.abs(e.x-e.targetX) < 5 && Math.abs(e.y-e.targetY) < 5) e.phase = "ready";
+    } else if (e.phase === "ready") {
+      e.y += Math.sin(now/420 + e.seed) * 0.35;
+    } else if (e.phase === "fading") {
+      e.alpha = Math.max(0, 1 - (now-e.fadeAt)/500);
+    }
+  }
+  launchAttacks(now);
+  for (const a of attacks) {
+    if (a.done || a.reflected || now < a.windupAt) continue;
+    const pos = getAttackPosition(a, now);
+    const contactRadius = a.kind === "ranged" ? bird.r + 7 : bird.r + 13;
+    if (Math.hypot(bird.x - pos.x, bird.y - pos.y) <= contactRadius) {
+      a.done = true;
+      damagePlayer();
+    } else if (now >= a.impactAt) {
+      // The projectile has completed its travel and missed the bird.
+      a.done = true;
+    }
+  }
+  attacks = attacks.filter(a => !a.done || now < a.impactAt + 180);
+  enemies = enemies.filter(e => e.phase !== "fading" || e.alpha > 0);
+  particles = particles.filter(p => p.life-- > 0);
+  for (const p of particles) { p.x += p.vx; p.y += p.vy; p.vy += .12; }
+  if (now > parryUntil && parryUntil && parryUntil < now) {
+    // A parry attempt with no attack crossing its active window is a failed parry.
+    if (!parryUntil._checked) {}
+  }
+}
+// Check parry against an attack during its exact 50ms active window.
+function resolveParry(now) {
+  if (!parryUntil || now < parryStartedAt || now > parryUntil) return;
+  for (const a of attacks) {
+    if (a.done || a.reflected || now < a.windupAt || now > a.impactAt) continue;
+    const pos = getAttackPosition(a, now);
+    const contactRadius = a.kind === "ranged" ? bird.r + 7 : bird.r + 13;
+    if (Math.hypot(bird.x - pos.x, bird.y - pos.y) <= contactRadius) {
+      a.reflected = true;
+      a.done = true;
+      hitEnemy(a.enemy);
+      parryReadyAt = now;
+      parryUntil = 0;
+      parryAttemptPending = false;
+      message = "PERFECT PARRY!";
+      messageUntil = now + 700;
+      return;
+    }
+  }
+}
+let parryAttemptPending = false;
+function updateParry(now) {
+  if (parryAttemptPending && parryUntil && now > parryUntil) {
+    const wasSuccessful = parryReadyAt === now || parryReadyAt > parryUntil - 100;
+    if (!wasSuccessful) {
+      parryReadyAt = now + 4500;
+      message = "PARRY MISSED"; messageUntil = now + 650;
+    }
+    parryAttemptPending = false;
+    parryUntil = 0;
+  }
+}
+function drawBackground() {
+  ctx.fillStyle = COLORS.cream; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "rgba(7,59,92,0.08)";
+  for (let i = 0; i < 4; i++) {
+    const cx = ((i * 140 - frame * 0.4) % (W + 120) + W + 120) % (W + 120) - 60;
+    ctx.beginPath(); ctx.arc(cx, 90 + i * 45, 30, 0, Math.PI * 2); ctx.arc(cx + 30, 85 + i * 45, 22, 0, Math.PI * 2); ctx.fill();
+  }
+}
+function drawPipes() {
+  for (const p of pipes) {
+    ctx.fillStyle = COLORS.pipe;
+    ctx.fillRect(p.x, 0, PIPE_WIDTH, p.top);
+    ctx.fillRect(p.x, p.top + PIPE_GAP, PIPE_WIDTH, H - GROUND_H - p.top - PIPE_GAP);
+    ctx.fillStyle = COLORS.navy;
+    ctx.fillRect(p.x - 4, p.top - 20, PIPE_WIDTH + 8, 20);
+    ctx.fillRect(p.x - 4, p.top + PIPE_GAP, PIPE_WIDTH + 8, 20);
+  }
+}
+function drawGround() {
+  ctx.fillStyle = COLORS.ground; ctx.fillRect(0, H - GROUND_H, W, GROUND_H);
+  ctx.fillStyle = COLORS.navy; ctx.fillRect(0, H - GROUND_H, W, 4);
+}
+function drawBird() {
+  ctx.save(); ctx.translate(bird.x, bird.y);
+  ctx.rotate(Math.max(-0.5, Math.min(1.2, bird.vy * 0.08)));
+  ctx.fillStyle = COLORS.bird; ctx.beginPath(); ctx.arc(0, 0, bird.r, 0, Math.PI * 2); ctx.fill();
+  // Feather/wing used for the parry animation.
+  ctx.save(); ctx.rotate(parryFlashUntil > performance.now() ? -0.9 : 0.15);
+  ctx.fillStyle = "#F2A900"; ctx.beginPath(); ctx.ellipse(-5, 5, 10, 4, -0.4, 0, Math.PI*2); ctx.fill(); ctx.restore();
+  ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(6, -5, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = COLORS.navy; ctx.beginPath(); ctx.arc(8, -5, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = COLORS.beak; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(24, 4); ctx.lineTo(12, 8); ctx.fill();
+  ctx.restore();
+}
+function drawEnemies(now) {
+  for (const e of enemies) {
+    const s = e.species;
+    ctx.save(); ctx.globalAlpha = e.alpha;
+    ctx.translate(e.x,e.y);
+    ctx.fillStyle = s.color; ctx.beginPath(); ctx.ellipse(0,0,20,13,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = s.accent;
+    ctx.beginPath(); ctx.moveTo(-10,-7); ctx.lineTo(-22,-20); ctx.lineTo(-17,-3); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-10,7); ctx.lineTo(-22,20); ctx.lineTo(-17,3); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(9,-4,4,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = "#172B3A"; ctx.beginPath(); ctx.arc(10,-4,2,0,Math.PI*2); ctx.fill();
+    if (s.kind === "ranged") {
+      ctx.fillStyle = "#333"; ctx.fillRect(9,5,20,7); ctx.fillRect(23,3,7,11);
+    } else {
+      ctx.strokeStyle = "#D8DCE2"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(12,8); ctx.lineTo(27,20); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(24,15); ctx.lineTo(30,22); ctx.stroke();
+    }
+    ctx.fillStyle = "#263746"; ctx.fillRect(-18,-25,36,5);
+    ctx.fillStyle = "#67B96B"; ctx.fillRect(-18,-25,36*(e.hp/3),5);
+    ctx.restore();
+  }
+}
+function drawAttacks(now) {
+  for (const a of attacks) {
+    if (a.done && !a.reflected) continue;
+    const e = a.enemy;
+    if (a.reflected) {
+      ctx.strokeStyle = "#F2A900"; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(bird.x+10,bird.y); ctx.lineTo(e.x,e.y); ctx.stroke();
+      continue;
+    }
+    if (now < a.startAt) continue;
+    if (now < a.windupAt) {
+      ctx.strokeStyle = a.kind === "ranged" ? "#B56B27" : "#9C3C3C";
+      ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x,e.y,25,0,Math.PI*2); ctx.stroke();
+      ctx.fillStyle = COLORS.navy; ctx.font = "10px system-ui"; ctx.textAlign = "center";
+      ctx.fillText(a.kind === "ranged" ? "AIMING" : "SLASH!",e.x,e.y-31);
+    } else if (now <= a.impactAt) {
+      const pos = getAttackPosition(a, now);
+      const x = pos.x, y = pos.y;
+      if (a.kind === "ranged") {
+        ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#E28A35"; ctx.beginPath(); ctx.arc(x-2,y-2,2,0,Math.PI*2); ctx.fill();
+      } else {
+        ctx.strokeStyle = "#B7C2CC"; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(x-12,y+12); ctx.lineTo(x+12,y-12); ctx.stroke();
+      }
+    }
+  }
+  for (const p of particles) { ctx.fillStyle = "#F2A900"; ctx.fillRect(p.x,p.y,4,4); }
+}
+function drawText(text, y, size) {
+  ctx.fillStyle = COLORS.navy; ctx.font = "bold " + size + "px system-ui, sans-serif";
+  ctx.textAlign = "center"; ctx.fillText(text, W / 2, y);
+}
+function drawBars() {
+  const x=20, w=150, h=12;
+  // Parry bar: bright when ready, dull while the 4.5s lockout is active.
+  const now=performance.now(), remaining=Math.max(0,parryReadyAt-now);
+  ctx.fillStyle="#25394A"; ctx.fillRect(x,18,w,h);
+  ctx.fillStyle=remaining>0?"#8B9298":"#36A6A0"; ctx.fillRect(x,18,w*(remaining>0?remaining/4500:1),h);
+  ctx.strokeStyle=COLORS.navy; ctx.strokeRect(x,18,w,h);
+  ctx.fillStyle=COLORS.navy; ctx.font="bold 10px system-ui"; ctx.textAlign="left";
+  ctx.fillText(remaining>0?"PARRY  "+(remaining/1000).toFixed(1)+"s":"PARRY READY",x,13);
+  ctx.fillStyle="#25394A"; ctx.fillRect(x,45,w,h);
+  ctx.fillStyle="#D65B54"; ctx.fillRect(x,45,w*(health/100),h);
+  ctx.strokeStyle=COLORS.navy; ctx.strokeRect(x,45,w,h);
+  ctx.fillStyle=COLORS.navy; ctx.fillText("HEALTH  "+health+"/100",x,40);
+}
+function drawUI() {
+  if (state === "playing") {
+    drawText(score, 95, 48); drawBars();
+    ctx.fillStyle=COLORS.navy; ctx.font="11px system-ui"; ctx.textAlign="right";
+    ctx.fillText("ENEMIES "+enemies.length+"/6",W-16,24);
+    if (message && performance.now()<messageUntil) drawText(message,H-95,16);
+  }
+  if (state === "start") {
+    drawText("FLAPPY COMBAT", H / 2 - 105, 34);
+    drawText("SPACE / CLICK: FLY", H / 2 - 45, 17);
+    drawText("F: PARRY ATTACKS", H / 2 - 15, 17);
+    drawText("Reach 10 points to face predators", H / 2 + 35, 14);
+    drawText("Best: " + best, H / 2 + 75, 18);
+  }
+  if (state === "over") {
+    ctx.fillStyle = COLORS.cream; ctx.fillRect(40,H/2-110,W-80,200);
+    ctx.strokeStyle=COLORS.navy; ctx.lineWidth=4; ctx.strokeRect(40,H/2-110,W-80,200);
+    drawText("GAME OVER",H/2-60,36);
+    drawText("Score: "+score+"   Best: "+best,H/2-10,20);
+    drawText("Tap / Space to restart",H/2+40,16);
+  }
+}
+function gameOver() {
+  if (state !== "playing") return;
+  state = "over"; overAt = performance.now();
+  if (score > best) { best=score; try { localStorage.setItem("flappyAiJamBest",best); } catch(e) {} }
+}
+function loop() {
+  frame++;
+  const now=performance.now();
+  const label=state==="playing"?"Playing":state==="over"?"Game over":"Ready to play";
+  if(statusEl.textContent!==label) statusEl.textContent=label;
+  if(state==="playing") {
+    updateBird(); updatePipes();
+    if(state==="playing") { resolveParry(now); updateCombat(now); updateParry(now); }
+  } else if(state==="start") bird.y=H/2+Math.sin(frame/15)*10;
+  drawBackground(); drawPipes(); drawGround(); drawEnemies(now); drawAttacks(now); drawBird(); drawUI();
+  requestAnimationFrame(loop);
+}
+addEventListener("keydown", e => {
+  if(e.defaultPrevented) return;
+  if(e.code==="Space"||e.code==="ArrowUp") { e.preventDefault(); flap(); }
+  if(e.code==="KeyF"&&!e.repeat) {
+    e.preventDefault();
+    if(state==="playing" && performance.now()>=parryReadyAt) {
+      parryStartedAt=performance.now(); parryUntil=parryStartedAt+1000; parryAttemptPending=true; parryReadyAt=0;
+    }
+  }
+});
+canvas.addEventListener("click",flap);
+reset();
+loop();
+</script>
+</body>
+</html>

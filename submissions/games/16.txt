@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<!--
+  FLAPPY AI JAM · University of Portsmouth AI Society
+  This whole file is the starter. Copy it into Gemini Canvas or open it in a browser.
+  Ask for one change, play a round, and keep the last working version.
+
+  FOR AI CODING AGENTS
+  Keep the game in this one HTML file with inline CSS and JavaScript.
+  Keep Space, Arrow Up, mouse and touch working, along with pause, restart and resizing.
+  Use Canvas shapes and inline styles. Avoid external images, libraries, fonts or packages.
+  Keep the labelled AI PROMPT ZONE comments and edit the working Canvas in place.
+  If you return code as text, return the complete file from <!DOCTYPE html> to </html>.
+  Keep best-score storage optional. Wrap all localStorage reads and writes in try/catch
+  so the game works inside sandboxed previews even when storage is unavailable.
+  Physics use seconds in a fixed-step loop. Never tie movement to screen refresh.
+  The default is a three-life game with a gradual difficulty ramp. Keep each gap reachable.
+  The labelled zones below show where to change artwork, physics, obstacles and scoring.
+  After editing, check the first launch, all three lives, restart and a phone-size view.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Flappy AI Jam · UoP AI Society</title>
+<style>
+  :root { --ink:#040308; --navy:#F8FAFC; --cream:#090710; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--ink); color:var(--cream); color-scheme:dark;
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+  body { height:100svh; display:flex; flex-direction:column; overflow:hidden; }
+  header, footer { display:flex; align-items:center; padding:10px 16px; flex:none; }
+  header { justify-content:space-between; border-bottom:1px solid rgba(251,191,36,.2); }
+  .brand { font-size:13px; font-weight:650; letter-spacing:.14em; text-transform:uppercase; white-space:nowrap; color:#FDE68A; }
+  .society { color:#FDE68A; padding:3px; line-height:0; }
+  .society svg { width:36px; height:24px; }
+  .society:focus-visible { outline:2px solid #FDE68A; outline-offset:2px; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  main { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:12px; }
+  canvas { background:var(--cream); display:block; touch-action:none; border-radius:16px;
+    outline-offset:4px; border:1px solid rgba(251,191,36,.34); box-shadow:0 18px 50px rgba(0,0,0,.75); }
+  canvas:focus-visible { outline:2px solid #FBBF24; }
+  footer { gap:12px; flex-wrap:wrap; text-align:center; justify-content:center; border-top:1px solid rgba(251,191,36,.2);
+    font:11px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; letter-spacing:.16em; opacity:.8; color:#FDE68A; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Flappy AI Jam · Tesseract</div>
+  <a class="society" href="https://github.com/uopaisociety" target="_blank" rel="noopener noreferrer" aria-label="University of Portsmouth AI Society on GitHub (new tab)">
+    <svg viewBox="172 248 692 450" aria-hidden="true">
+      <g transform="translate(-22 0) translate(-575.84993366 -793.24494091) scale(4.2459962354)" fill="currentColor">
+        <g transform="translate(600 314) scale(1.2) translate(-600 -314)">
+          <g fill-rule="evenodd" transform="translate(175.41909833 172.66980773) scale(0.4500968704)">
+    <path transform="translate(169.0000000 187.6722702) scale(0.250000000)" d="M0.000 774.000C0.000 772.900 0.450 772.000 1.000 772.000C1.550 772.000 2.000 771.580 2.000 771.067C2.000 770.017 16.468 743.247 24.466 729.500C27.346 724.550 31.967 716.225 34.736 711.000C39.758 701.522 62.605 659.871 73.665 640.032L79.500 629.564 89.000 624.212C94.225 621.269 102.325 616.800 107.000 614.280C111.675 611.761 119.824 607.096 125.110 603.914C130.395 600.732 144.570 593.097 156.610 586.947C168.649 580.797 181.650 574.073 185.500 572.006C189.350 569.938 199.475 564.998 208.000 561.028C216.525 557.058 228.000 551.671 233.500 549.058C241.499 545.256 259.082 537.876 276.500 531.008C277.600 530.574 282.550 528.603 287.500 526.628C308.326 518.317 342.288 507.568 374.500 499.092C389.435 495.162 430.782 488.326 454.500 485.865C473.781 483.865 525.349 484.167 544.000 486.390C584.388 491.203 625.526 501.580 656.260 514.707C658.328 515.590 660.269 516.064 660.573 515.760C661.263 515.070 644.321 481.129 616.269 427.000C604.440 404.175 587.779 372.000 579.244 355.500C570.709 339.000 558.000 314.475 551.002 301.000C544.005 287.525 533.417 267.050 527.473 255.500C515.537 232.307 514.811 231.000 513.859 231.000C513.061 231.000 497.706 257.899 489.027 274.500C485.577 281.100 482.407 286.950 481.982 287.500C481.558 288.050 479.068 292.550 476.450 297.500C473.832 302.450 470.014 309.425 467.965 313.000C465.917 316.575 461.868 324.000 458.968 329.500C456.068 335.000 452.936 340.625 452.009 342.000C451.082 343.375 447.482 349.900 444.009 356.500C440.537 363.100 437.127 369.400 436.431 370.500C435.736 371.600 432.277 377.900 428.745 384.500C425.213 391.100 418.362 403.475 413.522 412.000C408.681 420.525 403.828 429.075 402.737 431.000C401.645 432.925 398.951 437.988 396.750 442.250C393.437 448.664 392.332 450.000 390.339 450.000C383.805 450.000 319.694 469.921 290.008 481.175C277.718 485.834 252.825 495.660 248.500 497.560C227.528 506.770 219.582 510.193 214.976 512.001C211.964 513.183 193.975 522.066 175.000 531.741C156.025 541.416 135.209 552.028 128.742 555.325C122.276 558.621 116.753 561.087 116.471 560.804C115.910 560.244 128.820 535.481 138.003 519.500C141.164 514.000 145.804 505.400 148.315 500.388C150.827 495.377 155.303 487.052 158.263 481.888C166.686 467.195 177.000 448.342 177.000 447.640C177.000 447.290 179.984 441.715 183.630 435.252C187.277 428.788 194.749 415.175 200.235 405.000C205.721 394.825 214.597 378.625 219.961 369.000C229.695 351.532 245.917 321.754 257.550 300.000C267.038 282.257 278.327 261.979 281.489 257.000C283.061 254.525 285.659 249.608 287.263 246.074C288.867 242.540 295.237 230.615 301.418 219.574C307.600 208.533 315.199 194.718 318.305 188.873C321.411 183.029 325.988 174.803 328.476 170.595C330.964 166.386 333.000 162.771 333.000 162.561C333.000 162.351 334.738 159.101 336.862 155.340C338.986 151.578 342.509 145.125 344.690 141.000C346.871 136.875 351.586 128.325 355.167 122.000C358.749 115.675 363.617 106.900 365.985 102.500C375.669 84.510 383.821 69.670 391.529 56.000C393.855 51.875 398.140 44.000 401.052 38.500C403.963 33.000 407.227 26.925 408.304 25.000C409.382 23.075 412.498 17.450 415.229 12.500C417.960 7.550 420.715 2.952 421.350 2.282C422.238 1.348 445.153 0.966 520.003 0.640C573.626 0.406 619.577 0.504 622.115 0.858L626.730 1.500 633.508 14.500C637.237 21.650 644.454 35.600 649.547 45.500C654.640 55.400 662.018 69.575 665.943 77.000C669.868 84.425 675.507 95.545 678.473 101.711C681.440 107.878 685.673 116.015 687.880 119.794C690.087 123.573 697.932 138.553 705.314 153.083C712.695 167.612 725.614 192.775 734.022 209.000C759.949 259.032 835.624 408.383 848.281 434.500C851.480 441.100 855.200 448.525 856.550 451.000C857.899 453.475 863.565 464.725 869.140 476.000C874.716 487.275 885.199 508.425 892.435 523.000C899.671 537.575 906.969 552.425 908.652 556.000C910.335 559.575 915.155 569.333 919.362 577.685L927.011 592.871 926.755 683.185L926.500 773.500 913.500 773.394C889.946 773.203 873.490 770.381 840.500 760.878C802.349 749.887 762.481 728.857 700.254 686.900C654.728 656.203 615.213 631.599 598.500 623.541C557.837 603.937 545.446 598.832 520.500 591.409C502.185 585.958 483.230 581.714 464.000 578.756C451.555 576.842 445.461 576.525 421.000 576.521C390.766 576.515 385.141 577.031 361.251 581.998C348.953 584.556 345.000 586.028 345.000 588.051C345.000 588.494 343.484 591.476 341.632 594.678C336.401 603.720 316.820 637.703 312.348 645.500C310.140 649.350 304.433 659.176 299.667 667.337C294.900 675.497 291.000 682.354 291.000 682.574C291.000 682.795 288.130 687.818 284.623 693.738C281.115 699.657 273.088 713.513 266.784 724.528C260.481 735.543 251.130 751.631 246.004 760.278L236.685 776.000 118.343 776.000L0.000 776.000 0.000 774.000ZM972.250 772.338C971.253 771.935 971.000 693.914 971.000 386.917L971.000 2.000 1085.500 2.000L1200.000 2.000 1200.000 387.500L1200.000 773.000 1086.750 772.921C1024.463 772.878 972.938 772.615 972.250 772.338Z"/>
+          </g>
+        </g>
+      </g>
+    </svg>
+  </a>
+  <span id="status" class="sr-only" role="status">Ready to play. Three lives.</span>
+</header>
+<main><canvas id="game" width="400" height="600" tabindex="0" role="img" aria-label="Flappy Astronaut game. Space, up arrow or tap to flap. Space resets gravity and spawns debris. Shift or down arrow to boost jump. E to eject for plus 10 score. P to pause." aria-describedby="controls">Your browser needs Canvas 2D to play this game.</canvas></main>
+<footer id="controls">SPACE (JETTISON) / ↑ / TAP · SHIFT / ↓ BOOST · E EJECT (+10) · P PAUSE</footer>
+<script>
+"use strict";
+
+// === AI PROMPT ZONE: CONFIG ===
+// Positions are pixels, speed is pixels/second, gravity is pixels/second².
+// Start with colours or one mechanic. The first gates teach the rhythm. Speed and gap difficulty then ramp over a minute.
+const W = 400, H = 600;
+const GRAVITY = 880, MAX_HOLE_GRAVITY = 1340, BLACK_HOLE_RAMP_SECONDS = 75;
+const FLAP_STRENGTH = -285, MAX_FALL_SPEED = 400;
+const BOOST_VELOCITY = -520, BOOST_GRAVITY = 380, BOOST_LIFT_SECONDS = 0.45;
+const BOOST_SHIELD_SECONDS = 0.55, BOOST_COOLDOWN = 0.85, START_BOOSTS = 2;
+const ORB_EFFECT_SECONDS = 10, GHOST_SPEED_MULT = 1.45, HEAVY_GRAVITY_MULT = 1.6, HEAVY_FALL_MULT = 1.35;
+const LOSE_WEIGHT_MULT = 0.78, MIN_GRAVITY_FACTOR = 0.35, DEBRIS_WEIGHT_ADD = 0.28, MAX_GRAVITY_FACTOR = 2.2;
+const JETTISON_COOLDOWN = 1.6, DEBRIS_PER_JETTISON = 3, EJECT_BONUS = 10;
+const EJECT_BTN = { x: W - 102, y: 12, w: 90, h: 28 };
+const DOUBLE_GAP_CHANCE = 0.45, DOUBLE_GAP_DIVIDER = 58, ORB_RADIUS = 13;
+const WORMHOLE_CHANCE = 0.32, WORMHOLE_RADIUS = 20, WORMHOLE_FORWARD_GATES = 3, WORMHOLE_BACK_GATES = 2;
+const MOVE_PIPE_SCORE = 30, PIPE_MOVE_AMP = 42, PIPE_MOVE_SPEED = 2.1;
+const PIPE_GAP = 205, MIN_PIPE_GAP = 145, PIPE_WIDTH = 58, PIPE_SPACING = 260;
+const PIPE_SPEED = 140, MAX_PIPE_SPEED = 220, RAMP_DELAY = 8, RAMP_SECONDS = 60;
+const GROUND_H = 50, START_LIVES = 3, RECOVERY_SECONDS = 1.2, STEP = 1 / 120;
+const COLORS = {
+  navy:"#F8FAFC", cream:"#090710", card:"#120E1D", suit:"#F8FAFC", visor:"#F59E0B",
+  boost:"#22C55E", orb:"#A855F7", ghost:"#38BDF8", heavy:"#F43F5E", light:"#10B981",
+  malfunction:"#E11D48", eject:"#DC2626", wormhole:"#06B6D4", pipe:"#452710", cap:"#F59E0B",
+  beam:"rgba(251, 191, 36, 0.22)", ground:"#171326"
+};
+const BOOK_PALETTE = ["#B45309", "#92400E", "#D97706", "#78350F", "#F59E0B", "#9A3412"];
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const statusEl = document.getElementById("status");
+let state = "start", bird, pipes, wormholes, debris, score, lives, boosts, boostCooldown, boostLift, boostShield;
+let ghostTimer, postGhostShield, heavyTimer, malfunctionTimer, blockedInput, lastInputMode;
+let gravityFactor, gravityElapsed, jettisonCooldown, ejectedRun;
+let noticeTimer, noticeText, noticeColor, recovery, elapsed, nextCenter;
+let overAt = 0, best = 0, lastTime = null, accumulator = 0;
+try {
+  const stored = Number(localStorage.getItem("flappyAiJamBest"));
+  if (Number.isSafeInteger(stored) && stored > 0) best = stored;
+} catch { /* The game also works when browser storage is blocked. */ }
+
+function resize() {
+  const space = document.querySelector("main");
+  const scale = Math.max(0.01, Math.min((space.clientWidth - 24) / W, (space.clientHeight - 24) / H));
+  canvas.style.width = Math.floor(W * scale) + "px";
+  canvas.style.height = Math.floor(H * scale) + "px";
+}
+addEventListener("resize", resize);
+resize();
+
+function reset() {
+  bird = { x:100, y:285, vy:0, r:15 };
+  pipes = [];
+  wormholes = [];
+  debris = [];
+  score = elapsed = gravityElapsed = recovery = boostCooldown = boostLift = boostShield = 0;
+  ghostTimer = heavyTimer = malfunctionTimer = jettisonCooldown = noticeTimer = 0;
+  postGhostShield = false;
+  ejectedRun = false;
+  blockedInput = null;
+  lastInputMode = "keyboard";
+  gravityFactor = 1;
+  noticeText = "";
+  noticeColor = COLORS.wormhole;
+  lives = START_LIVES;
+  boosts = START_BOOSTS;
+  nextCenter = bird.y;
+}
+
+function showNotice(text, color, seconds = 2.4) {
+  noticeText = text;
+  noticeColor = color;
+  noticeTimer = seconds;
+}
+
+function getHoleProximity() {
+  return Math.min(1, Math.max(0, gravityElapsed / BLACK_HOLE_RAMP_SECONDS));
+}
+
+function getBaseGravity() {
+  const pull = getHoleProximity();
+  const holeGravity = GRAVITY + (MAX_HOLE_GRAVITY - GRAVITY) * pull;
+  return holeGravity * gravityFactor;
+}
+
+function jettisonWeight() {
+  gravityFactor = 1;
+  gravityElapsed = 0;
+  heavyTimer = 0;
+  const playableH = H - GROUND_H;
+  for (let i = 0; i < DEBRIS_PER_JETTISON; i++) {
+    const spreadX = W + 45 + i * 95 + Math.random() * 35;
+    const debY = Math.max(46, Math.min(playableH - 46, bird.y + (i - 1) * 78 + (Math.random() * 44 - 22)));
+    debris.push({
+      x: spreadX,
+      y: debY,
+      r: 12,
+      vy: (Math.random() < 0.5 ? -1 : 1) * (24 + Math.random() * 26),
+      rot: Math.random() * Math.PI * 2,
+      spin: (Math.random() - 0.5) * 3.5,
+      hit: false
+    });
+  }
+  showNotice("JETTISONED · GRAVITY RESET", COLORS.light, 2.2);
+  statusEl.textContent = "Weight jettisoned! Gravity reset, space debris ahead.";
+}
+
+function ejectPod() {
+  if (state !== "playing") return;
+  score += EJECT_BONUS;
+  if (score > best) {
+    best = score;
+    try { localStorage.setItem("flappyAiJamBest", String(best)); } catch { /* Optional. */ }
+  }
+  ejectedRun = true;
+  lives = 0;
+  state = "over";
+  overAt = performance.now();
+  statusEl.textContent = "Ejected! +" + EJECT_BONUS + " bonus awarded. Final score " + score + ". Tap or press Space to play again.";
+}
+
+// === AI PROMPT ZONE: PHYSICS & INPUT ===
+// Each press is one flap. Ignore a held key's repeat events.
+// Controller malfunction forces switching between keyboard and tap/click.
+// Pressing Space while playing also jettisons weight and spawns debris.
+function flap(inputMode = "keyboard", isSpacebar = false) {
+  if (!ctx || document.hidden) return;
+  const freshStart = state !== "playing";
+  if (state === "paused") {
+    state = "playing";
+  } else if (state === "over") {
+    if (performance.now() - overAt < 350) return;
+    reset();
+    state = "playing";
+    bird.vy = FLAP_STRENGTH;
+  } else {
+    if (state === "playing" && malfunctionTimer > 0 && blockedInput === inputMode) {
+      statusEl.textContent = blockedInput === "keyboard"
+        ? "Controller malfunction! Tap the screen to flap."
+        : "Controller malfunction! Press Space or Up arrow to flap.";
+      return;
+    }
+    state = "playing";
+    bird.vy = FLAP_STRENGTH;
+    if (!freshStart && isSpacebar && jettisonCooldown <= 0) {
+      jettisonCooldown = JETTISON_COOLDOWN;
+      jettisonWeight();
+    }
+  }
+  lastInputMode = inputMode;
+  if (freshStart) {
+    lastTime = performance.now();
+    accumulator = 0;
+    statusEl.textContent = "Playing. " + lives + " lives, " + boosts + " boosts. Keep thrusting.";
+  }
+}
+function boostJump() {
+  if (!ctx || document.hidden || state !== "playing") return;
+  if (boosts <= 0 || boostCooldown > 0) return;
+  boosts--;
+  boostCooldown = BOOST_COOLDOWN;
+  boostLift = BOOST_LIFT_SECONDS;
+  boostShield = Math.max(boostShield, BOOST_SHIELD_SECONDS);
+  bird.vy = BOOST_VELOCITY;
+  statusEl.textContent = "Boost jump! " + boosts + (boosts === 1 ? " boost left." : " boosts left.");
+}
+function pause() {
+  if (state !== "playing") return;
+  state = "paused";
+  statusEl.textContent = "Paused. Tap or press Space to resume.";
+  lastTime = null;
+  accumulator = 0;
+}
+function updateBird(dt) {
+  const baseGravity = getBaseGravity();
+  let activeGravity = boostLift > 0 ? Math.max(BOOST_GRAVITY, baseGravity * 0.45) : baseGravity;
+  let maxFall = MAX_FALL_SPEED * Math.max(0.75, Math.min(1.5, gravityFactor)) + getHoleProximity() * 85;
+  if (heavyTimer > 0) {
+    activeGravity *= HEAVY_GRAVITY_MULT;
+    maxFall *= HEAVY_FALL_MULT;
+  }
+  bird.vy = Math.min(maxFall, bird.vy + activeGravity * dt);
+  bird.y += bird.vy * dt;
+  // The ceiling is forgiving. The floor uses the same life/recovery rule as pipes.
+  if (bird.y < bird.r) {
+    bird.y = bird.r;
+    bird.vy = Math.max(0, bird.vy);
+  }
+  if (bird.y + bird.r > H - GROUND_H) {
+    bird.y = H - GROUND_H - bird.r;
+    bird.vy = 0;
+    loseLife();
+  }
+}
+
+// === AI PROMPT ZONE: PIPES / LEVEL ===
+// The first two gaps are centered. Later gaps move farther as the run progresses.
+// Some pipes split into two gaps with a mystery boost orb inside one of them.
+// Wormholes occasionally spawn between pipes at the top or bottom, warping forward or back.
+// When Ghost Speed ends, a safety shield stays active until aligned with a pillar gap.
+// Pipes spawned at score 30+ move vertically within reachable bounds.
+function createPipeAt(spawnX, difficulty) {
+  const gap = PIPE_GAP + (MIN_PIPE_GAP - PIPE_GAP) * difficulty;
+  const drift = 55 + 30 * difficulty;
+  if (score > 0) nextCenter = Math.max(gap / 2 + 50,
+    Math.min(H - GROUND_H - gap / 2 - 50, nextCenter + (Math.random() * 2 - 1) * drift));
+  const playableH = H - GROUND_H;
+  const subGap = Math.max(118, gap * 0.84);
+  const minNeeded = subGap * 2 + DOUBLE_GAP_DIVIDER + 76;
+  const canMove = score >= MOVE_PIPE_SCORE;
+  let gaps, orb = null, minShift = 0, maxShift = 0;
+  if (score >= 2 && playableH >= minNeeded && Math.random() < DOUBLE_GAP_CHANCE) {
+    const top1 = 38 + Math.random() * Math.max(10, playableH - minNeeded);
+    const top2 = top1 + subGap + DOUBLE_GAP_DIVIDER;
+    const orbInTop = Math.random() < 0.5;
+    const orbY = orbInTop ? top1 + subGap / 2 : top2 + subGap / 2;
+    gaps = [
+      { top: top1, size: subGap },
+      { top: top2, size: subGap }
+    ];
+    orb = { y: orbY, r: ORB_RADIUS, collected: false };
+    minShift = -(top1 - 24);
+    maxShift = playableH - (top2 + subGap) - 24;
+  } else {
+    const top = nextCenter - gap / 2;
+    gaps = [{ top, size: gap }];
+    minShift = -(top - 24);
+    maxShift = playableH - (top + gap) - 24;
+  }
+  const allowedAmp = canMove ? Math.min(PIPE_MOVE_AMP, Math.max(0, Math.min(-minShift, maxShift))) : 0;
+  return {
+    x: spawnX,
+    gaps,
+    orb,
+    seed: Math.floor(Math.random() * 100),
+    baseOffset: 0,
+    moveAmp: allowedAmp,
+    moveSpeed: PIPE_MOVE_SPEED,
+    movePhase: Math.random() * Math.PI * 2,
+    passed: false
+  };
+}
+function triggerOrbBoost() {
+  const roll = Math.random();
+  if (roll < 0.25) {
+    ghostTimer = ORB_EFFECT_SECONDS;
+    postGhostShield = false;
+    heavyTimer = 0;
+    showNotice("GHOST SPEED · 10s", COLORS.ghost, 2.2);
+    statusEl.textContent = "Ghost speed boost! Phase through matrix pillars for 10 seconds.";
+  } else if (roll < 0.5) {
+    gravityFactor = Math.max(MIN_GRAVITY_FACTOR, +(gravityFactor * LOSE_WEIGHT_MULT).toFixed(3));
+    showNotice("LOSE WEIGHT · GRAVITY " + Math.round(gravityFactor * 100) + "%", COLORS.light, 2.6);
+    statusEl.textContent = "Suit lightened! Gravity pull permanently reduced to " + Math.round(gravityFactor * 100) + "%.";
+  } else if (roll < 0.75) {
+    heavyTimer = ORB_EFFECT_SECONDS;
+    ghostTimer = 0;
+    showNotice("HEAVY GRAVITY · 10s", COLORS.heavy, 2.2);
+    statusEl.textContent = "Heavy gravity! Gravity increased for 10 seconds.";
+  } else {
+    malfunctionTimer = ORB_EFFECT_SECONDS;
+    blockedInput = lastInputMode;
+    const switchMsg = blockedInput === "keyboard" ? "SWITCH TO TAP!" : "SWITCH TO SPACEBAR!";
+    showNotice("MALFUNCTION · " + switchMsg, COLORS.malfunction, 2.8);
+    statusEl.textContent = "Controller malfunction for 10 seconds! " + switchMsg;
+  }
+}
+function triggerWormholeWarp(difficulty) {
+  const warpForward = Math.random() < 0.5;
+  const gates = warpForward ? WORMHOLE_FORWARD_GATES : WORMHOLE_BACK_GATES;
+  const deltaX = (warpForward ? -1 : 1) * gates * PIPE_SPACING;
+  for (const p of pipes) p.x += deltaX;
+  for (const w of wormholes) w.x += deltaX;
+  for (const d of debris) d.x += deltaX;
+
+  if (warpForward) {
+    for (const p of pipes) {
+      if (!p.passed && p.x + PIPE_WIDTH < bird.x - bird.r) {
+        p.passed = true;
+        score++;
+      }
+    }
+    if (score > best) {
+      best = score;
+      try { localStorage.setItem("flappyAiJamBest", String(best)); } catch { /* Optional. */ }
+    }
+    while (!pipes.length || pipes[pipes.length - 1].x <= W - PIPE_SPACING) {
+      const nextX = pipes.length ? pipes[pipes.length - 1].x + PIPE_SPACING : W + 80;
+      pipes.push(createPipeAt(nextX, difficulty));
+    }
+    showNotice("WARP FORWARD  +" + gates + " GATES", "#0284C7", 2.4);
+    statusEl.textContent = "Wormhole warp! Shot ahead " + gates + " pillars.";
+  } else {
+    pipes = pipes.filter(p => p.x <= W + PIPE_SPACING * 2);
+    let firstX = pipes.length ? pipes[0].x : W + 120;
+    while (firstX - PIPE_SPACING > bird.x + 120) {
+      firstX -= PIPE_SPACING;
+      pipes.unshift(createPipeAt(firstX, difficulty));
+    }
+    showNotice("WARP BACKWARD  -" + gates + " GATES", "#D97706", 2.4);
+    statusEl.textContent = "Wormhole rewind! Sent back " + gates + " pillars.";
+  }
+
+  boostShield = Math.max(boostShield, 1.15);
+  const upcoming = pipes.find(item => item.x + PIPE_WIDTH >= bird.x - bird.r);
+  if (upcoming && upcoming.gaps.length) {
+    const targetGap = upcoming.gaps[0];
+    bird.y = targetGap.top + targetGap.size / 2;
+    bird.vy = Math.min(0, bird.vy);
+  }
+}
+function applyPipeVerticalOffset(pipe, deltaY) {
+  for (const g of pipe.gaps) g.top += deltaY;
+  if (pipe.orb) pipe.orb.y += deltaY;
+}
+function isSafelyAlignedWithPillar() {
+  const target = pipes.find(p => p.x + PIPE_WIDTH >= bird.x - bird.r);
+  if (!target) return true;
+  return target.gaps.some(g => bird.y - bird.r >= g.top + 4 && bird.y + bird.r <= g.top + g.size - 4);
+}
+function updatePipes(dt) {
+  const difficulty = Math.min(1, Math.max(0, (elapsed - RAMP_DELAY) / RAMP_SECONDS));
+  const baseSpeed = PIPE_SPEED + (MAX_PIPE_SPEED - PIPE_SPEED) * difficulty;
+  const speed = baseSpeed * (ghostTimer > 0 ? GHOST_SPEED_MULT : 1);
+  const last = pipes[pipes.length - 1];
+  if (!last || last.x <= W - PIPE_SPACING) {
+    const spawnX = last ? W : W + 100;
+    const newPipe = createPipeAt(spawnX, difficulty);
+    pipes.push(newPipe);
+    if (last && score >= 2 && Math.random() < WORMHOLE_CHANCE) {
+      const midX = (last.x + PIPE_WIDTH + spawnX) / 2;
+      const atTop = Math.random() < 0.5;
+      const playableH = H - GROUND_H;
+      const wy = atTop ? 48 : playableH - 48;
+      wormholes.push({
+        x: midX,
+        y: wy,
+        r: WORMHOLE_RADIUS,
+        atTop,
+        used: false,
+        spin: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  // Drop the post-ghost shield once the astronaut is safely aligned with a pillar gap
+  if (postGhostShield && isSafelyAlignedWithPillar()) {
+    postGhostShield = false;
+    statusEl.textContent = "Aligned with matrix gap. Re-entry shield disengaged.";
+  }
+
+  const phasing = recovery > 0 || boostShield > 0 || ghostTimer > 0 || postGhostShield;
+  for (const w of wormholes) {
+    w.x -= speed * dt;
+    w.spin += dt * 4.5;
+    if (!w.used) {
+      const dx = bird.x - w.x;
+      const dy = bird.y - w.y;
+      const hitDist = bird.r + w.r - 2;
+      if (dx * dx + dy * dy <= hitDist * hitDist) {
+        w.used = true;
+        triggerWormholeWarp(difficulty);
+        break;
+      }
+    }
+  }
+  wormholes = wormholes.filter(w => !w.used && w.x + w.r + 12 > 0);
+
+  const playableH = H - GROUND_H;
+  for (const d of debris) {
+    d.x -= speed * 1.12 * dt;
+    d.y += d.vy * dt;
+    d.rot += d.spin * dt;
+    if (d.y < 28 || d.y > playableH - 28) d.vy *= -1;
+    if (!d.hit) {
+      const dx = bird.x - d.x;
+      const dy = bird.y - d.y;
+      const hitDist = bird.r + d.r - 2;
+      if (dx * dx + dy * dy <= hitDist * hitDist) {
+        d.hit = true;
+        gravityFactor = Math.min(MAX_GRAVITY_FACTOR, +(gravityFactor + DEBRIS_WEIGHT_ADD).toFixed(3));
+        showNotice("DEBRIS HIT · WEIGHT +" + Math.round(DEBRIS_WEIGHT_ADD * 100) + "%", "#EA580C", 2.0);
+        statusEl.textContent = "Hit jettisoned debris! Gravity pull increased to " + Math.round(gravityFactor * 100) + "%.";
+      }
+    }
+  }
+  debris = debris.filter(d => !d.hit && d.x + d.r + 10 > 0);
+
+  for (const pipe of pipes) {
+    pipe.x -= speed * dt;
+    if (pipe.moveAmp > 0) {
+      const nextOffset = Math.sin(elapsed * pipe.moveSpeed + pipe.movePhase) * pipe.moveAmp;
+      applyPipeVerticalOffset(pipe, nextOffset - pipe.baseOffset);
+      pipe.baseOffset = nextOffset;
+    }
+    if (pipe.orb && !pipe.orb.collected) {
+      const orbX = pipe.x + PIPE_WIDTH / 2;
+      const dx = bird.x - orbX;
+      const dy = bird.y - pipe.orb.y;
+      const hitDist = bird.r + pipe.orb.r;
+      if (dx * dx + dy * dy <= hitDist * hitDist) {
+        pipe.orb.collected = true;
+        triggerOrbBoost();
+      }
+    }
+    const overlapsX = bird.x + bird.r - 3 > pipe.x && bird.x - bird.r + 3 < pipe.x + PIPE_WIDTH;
+    const insideAnyGap = pipe.gaps.some(g => bird.y - bird.r + 3 >= g.top && bird.y + bird.r - 3 <= g.top + g.size);
+    if (!phasing && overlapsX && !insideAnyGap) {
+      loseLife(pipe);
+      if (state === "over") return;
+    }
+    if (!pipe.passed && pipe.x + PIPE_WIDTH < bird.x - bird.r) {
+      pipe.passed = true;
+      score++;
+      if (score > best) {
+        best = score;
+        try { localStorage.setItem("flappyAiJamBest", String(best)); } catch { /* Optional. */ }
+      }
+    }
+  }
+  pipes = pipes.filter(pipe => pipe.x + PIPE_WIDTH > 0);
+}
+
+// === AI PROMPT ZONE: SCORE & GAME OVER ===
+// One contact costs one life. Recovery prevents overlapping obstacles taking all lives.
+// Return immediately when the last life is lost. Never score after game over.
+function loseLife(pipe) {
+  if (recovery || state !== "playing") return;
+  lives--;
+  if (!lives) {
+    state = "over";
+    overAt = performance.now();
+    statusEl.textContent = "Flight finished. Score " + score + ". Tap or press Space to try again.";
+    return;
+  }
+  recovery = RECOVERY_SECONDS;
+  const next = pipe || pipes.find(item => item.x + PIPE_WIDTH >= bird.x - bird.r);
+  if (next && next.gaps.length) {
+    let bestGap = next.gaps[0];
+    for (const g of next.gaps) {
+      if (Math.abs(bird.y - (g.top + g.size / 2)) < Math.abs(bird.y - (bestGap.top + bestGap.size / 2))) {
+        bestGap = g;
+      }
+    }
+    bird.y = bestGap.top + bestGap.size / 2;
+  } else {
+    bird.y = 285;
+  }
+  bird.vy = 0;
+  statusEl.textContent = lives + (lives === 1 ? " life left." : " lives left.") + " Keep thrusting.";
+}
+
+// === AI PROMPT ZONE: GRAPHICS ===
+// Draw with shapes. Keep controls and the score legible over any new artwork.
+function drawBackground() {
+  const playableH = H - GROUND_H;
+  const cx = W / 2;
+  const cy = playableH / 2;
+  ctx.fillStyle = COLORS.cream;
+  ctx.fillRect(0, 0, W, H);
+
+  // Interconnecting 4D tesseract matrix lines radiating from the center
+  const pull = getHoleProximity();
+  const scrollShift = (elapsed * 32) % 44;
+  ctx.save();
+  ctx.strokeStyle = "rgba(245, 158, 11, " + (0.14 + pull * 0.14).toFixed(2) + ")";
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 16; i++) {
+    const angle = (i / 16) * Math.PI * 2 + elapsed * 0.04;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(angle) * 28, cy + Math.sin(angle) * 28);
+    ctx.lineTo(cx + Math.cos(angle) * 380, cy + Math.sin(angle) * 380);
+    ctx.stroke();
+  }
+  for (let r = 44 - scrollShift; r < 340; r += 44) {
+    if (r <= 12) continue;
+    ctx.strokeStyle = "rgba(251, 191, 36, " + Math.max(0.04, 0.24 - r / 1500).toFixed(2) + ")";
+    ctx.strokeRect(cx - r, cy - r * 1.18, r * 2, r * 2.36);
+  }
+  ctx.restore();
+
+  // Centered Gargantua black hole slowly approaching as gravity increases
+  const coreR = 26 + pull * 54;
+  ctx.save();
+  ctx.translate(cx, cy);
+  const glowGrad = ctx.createRadialGradient(0, 0, coreR * 0.75, 0, 0, coreR * 2.7);
+  glowGrad.addColorStop(0, "rgba(4, 3, 8, 0.96)");
+  glowGrad.addColorStop(0.42, "rgba(245, 158, 11, " + (0.3 + pull * 0.28).toFixed(2) + ")");
+  glowGrad.addColorStop(0.74, "rgba(180, 83, 9, " + (0.16 + pull * 0.2).toFixed(2) + ")");
+  glowGrad.addColorStop(1, "rgba(9, 7, 16, 0)");
+  ctx.fillStyle = glowGrad;
+  ctx.beginPath();
+  ctx.arc(0, 0, coreR * 2.7, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Upper and lower lensed accretion halo
+  ctx.strokeStyle = "rgba(253, 224, 71, " + (0.45 + pull * 0.35).toFixed(2) + ")";
+  ctx.lineWidth = 2.5 + pull * 2.5;
+  ctx.beginPath();
+  ctx.arc(0, 0, coreR * 1.18, Math.PI * 1.08, Math.PI * 1.92);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 0, coreR * 1.18, Math.PI * 0.08, Math.PI * 0.92);
+  ctx.stroke();
+
+  // Equatorial accretion disk
+  ctx.save();
+  ctx.rotate(-0.18);
+  ctx.strokeStyle = "rgba(251, 146, 60, " + (0.55 + pull * 0.35).toFixed(2) + ")";
+  ctx.lineWidth = 4.5 + pull * 4.5;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, coreR * 2.25, coreR * 0.42, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = "rgba(254, 240, 138, " + (0.45 + pull * 0.3).toFixed(2) + ")";
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, coreR * 1.85, coreR * 0.3, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // Event horizon core
+  ctx.fillStyle = "#020104";
+  ctx.beginPath();
+  ctx.arc(0, 0, coreR, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(253, 186, 116, 0.85)";
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.arc(0, 0, coreR + 1, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+function drawWormholes() {
+  for (const w of wormholes) {
+    ctx.save();
+    ctx.translate(w.x, w.y);
+    const halo = ctx.createRadialGradient(0, 0, 4, 0, 0, w.r + 12);
+    halo.addColorStop(0, "rgba(6, 182, 212, 0.7)");
+    halo.addColorStop(0.55, "rgba(56, 189, 248, 0.28)");
+    halo.addColorStop(1, "rgba(6, 182, 212, 0)");
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(0, 0, w.r + 12, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.rotate(w.spin);
+    ctx.strokeStyle = "#67E8F9";
+    ctx.lineWidth = 2.2;
+    ctx.setLineDash([7, 5]);
+    ctx.beginPath();
+    ctx.arc(0, 0, w.r, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.rotate(-w.spin * 1.8);
+    ctx.strokeStyle = "#FDE047";
+    ctx.lineWidth = 1.8;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.arc(0, 0, w.r * 0.66, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = "#04131E";
+    ctx.beginPath();
+    ctx.arc(0, 0, w.r * 0.42, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#A5F3FC";
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+function drawDebris() {
+  for (const d of debris) {
+    ctx.save();
+    ctx.translate(d.x, d.y);
+    ctx.rotate(d.rot);
+    // Jettisoned ballast tank / metallic debris chunk
+    ctx.fillStyle = "#94A3B8";
+    ctx.strokeStyle = "#F97316";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-d.r, -d.r * 0.55);
+    ctx.lineTo(d.r * 0.4, -d.r * 0.95);
+    ctx.lineTo(d.r, d.r * 0.2);
+    ctx.lineTo(d.r * 0.2, d.r * 0.9);
+    ctx.lineTo(-d.r * 0.85, d.r * 0.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#EA580C";
+    ctx.fillRect(-4, -3, 8, 6);
+    ctx.restore();
+  }
+}
+function drawTesseractColumn(x, y, w, h, seed, capTop, capBottom) {
+  if (h <= 0) return;
+  ctx.fillStyle = "#231409";
+  ctx.fillRect(x, y, w, h);
+
+  const shelfStep = 26;
+  const firstShelf = Math.ceil(y / shelfStep) * shelfStep;
+  for (let sy = firstShelf; sy < y + h - 6; sy += shelfStep) {
+    const rowIdx = Math.floor(sy / shelfStep) + seed;
+    const bookH = Math.min(16, y + h - sy - 4);
+    if (bookH > 4) {
+      for (let bx = x + 6; bx < x + w - 10; bx += 9) {
+        const colIdx = (rowIdx + Math.floor(bx)) % BOOK_PALETTE.length;
+        ctx.fillStyle = BOOK_PALETTE[colIdx];
+        ctx.fillRect(bx, sy + 3, 6, bookH);
+      }
+    }
+    ctx.fillStyle = "rgba(251, 191, 36, 0.48)";
+    ctx.fillRect(x + 3, sy, w - 6, 2);
+  }
+
+  ctx.strokeStyle = "#F59E0B";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+  ctx.strokeStyle = "rgba(254, 240, 138, 0.55)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x + 5, y);
+  ctx.lineTo(x + 5, y + h);
+  ctx.moveTo(x + w - 5, y);
+  ctx.lineTo(x + w - 5, y + h);
+  ctx.stroke();
+
+  ctx.fillStyle = COLORS.cap;
+  const capH = Math.min(12, h);
+  if (capTop) ctx.fillRect(x - 2, y, w + 4, capH);
+  if (capBottom) ctx.fillRect(x - 2, y + h - capH, w + 4, capH);
+}
+function drawPipes() {
+  const playableH = H - GROUND_H;
+  for (const pipe of pipes) {
+    const sorted = pipe.gaps;
+    for (const g of sorted) {
+      ctx.fillStyle = COLORS.beam;
+      ctx.fillRect(pipe.x + 8, g.top, PIPE_WIDTH - 16, g.size);
+      ctx.strokeStyle = "rgba(251, 191, 36, 0.35)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(pipe.x + 14, g.top);
+      ctx.lineTo(pipe.x + 14, g.top + g.size);
+      ctx.moveTo(pipe.x + PIPE_WIDTH - 14, g.top);
+      ctx.lineTo(pipe.x + PIPE_WIDTH - 14, g.top + g.size);
+      ctx.stroke();
+    }
+    let cursorY = 0;
+    for (let i = 0; i <= sorted.length; i++) {
+      const segBottom = i < sorted.length ? sorted[i].top : playableH;
+      const segH = segBottom - cursorY;
+      drawTesseractColumn(pipe.x, cursorY, PIPE_WIDTH, segH, pipe.seed + i * 7, i > 0, i < sorted.length);
+      if (i < sorted.length) cursorY = sorted[i].top + sorted[i].size;
+    }
+    if (pipe.orb && !pipe.orb.collected) {
+      const ox = pipe.x + PIPE_WIDTH / 2;
+      const oy = pipe.orb.y;
+      const pulse = Math.sin(elapsed * 7) * 2.5;
+      ctx.save();
+      ctx.fillStyle = "rgba(168, 85, 247, 0.28)";
+      ctx.beginPath();
+      ctx.arc(ox, oy, pipe.orb.r + 5 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = COLORS.orb;
+      ctx.beginPath();
+      ctx.arc(ox, oy, pipe.orb.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 14px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("?", ox, oy + 0.5);
+      ctx.restore();
+    }
+  }
+}
+function drawBird() {
+  ctx.save();
+  ctx.translate(bird.x, bird.y);
+  if (ghostTimer > 0) {
+    ctx.globalAlpha = 0.58;
+    ctx.strokeStyle = COLORS.ghost;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, bird.r + 9, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (postGhostShield) {
+    ctx.save();
+    ctx.fillStyle = "rgba(56, 189, 248, 0.16)";
+    ctx.beginPath();
+    ctx.arc(0, 0, bird.r + 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#7DD3FC";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, bird.r + 11, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  } else if (heavyTimer > 0) {
+    ctx.strokeStyle = COLORS.heavy;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, bird.r + 9, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  if (boostLift > 0 || boostShield > 0) {
+    ctx.save();
+    ctx.strokeStyle = COLORS.boost;
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.arc(0, 0, bird.r + 13, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(-6, bird.r + 18);
+    ctx.lineTo(0, bird.r + 11);
+    ctx.lineTo(6, bird.r + 18);
+    ctx.stroke();
+    ctx.restore();
+  }
+  ctx.rotate(Math.max(-0.42, Math.min(0.75, bird.vy / 520)));
+  if (recovery) {
+    ctx.strokeStyle = "#FDE68A";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(0, 0, bird.r + 8, 0, Math.PI * 2); ctx.stroke();
+  }
+
+  // Jetpack thruster flame when rising or boosting
+  if (bird.vy < -40 || boostLift > 0) {
+    const flameLen = boostLift > 0 ? 18 : 11;
+    ctx.fillStyle = boostLift > 0 ? "#4ADE80" : "#38BDF8";
+    ctx.beginPath();
+    ctx.moveTo(-13, 6);
+    ctx.lineTo(-18, 6 + flameLen);
+    ctx.lineTo(-9, 6);
+    ctx.fill();
+  }
+
+  // PLSS life-support backpack
+  ctx.fillStyle = "#CBD5E1";
+  ctx.strokeStyle = "#475569";
+  ctx.lineWidth = 1.5;
+  ctx.fillRect(-17, -9, 7, 17);
+  ctx.strokeRect(-17, -9, 7, 17);
+
+  // Spacesuit torso & boots
+  ctx.fillStyle = ghostTimer > 0 ? "#BAE6FD" : COLORS.suit;
+  ctx.beginPath();
+  ctx.roundRect(-10, 2, 17, 11, 4);
+  ctx.fill();
+  ctx.fillStyle = "#64748B";
+  ctx.fillRect(-9, 11, 6, 4);
+  ctx.fillRect(0, 11, 6, 4);
+
+  // Spacesuit helmet & golden reflective visor
+  ctx.fillStyle = ghostTimer > 0 ? "#E0F2FE" : COLORS.suit;
+  ctx.beginPath();
+  ctx.arc(1, -5, 11, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#94A3B8";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle = ghostTimer > 0 ? "#0284C7" : COLORS.visor;
+  ctx.beginPath();
+  ctx.ellipse(4, -5, 7.5, 6.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Visor highlight glare
+  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+  ctx.beginPath();
+  ctx.ellipse(2, -7.5, 3.2, 1.6, -0.35, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Suit chest control pack
+  ctx.fillStyle = "#F59E0B";
+  ctx.fillRect(-3, 5, 5, 4);
+  ctx.restore();
+}
+function drawText(text, y, size, color = COLORS.navy) {
+  ctx.fillStyle = color;
+  ctx.font = "bold " + size + "px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(String(text), W / 2, y);
+}
+function drawEjectButton() {
+  if (state !== "playing") return;
+  ctx.save();
+  ctx.fillStyle = COLORS.eject;
+  ctx.beginPath();
+  ctx.roundRect(EJECT_BTN.x, EJECT_BTN.y, EJECT_BTN.w, EJECT_BTN.h, 7);
+  ctx.fill();
+  ctx.strokeStyle = "#FCA5A5";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 11px ui-monospace, monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("EJECT +10 [E]", EJECT_BTN.x + EJECT_BTN.w / 2, EJECT_BTN.y + EJECT_BTN.h / 2 + 0.5);
+  ctx.restore();
+}
+function drawUI() {
+  drawText(score, 58, 38, "#FEF3C7");
+  if (state === "playing") {
+    drawEjectButton();
+    const netPullPct = Math.round((getBaseGravity() / GRAVITY) * 100);
+    ctx.fillStyle = "rgba(253, 230, 138, 0.85)";
+    ctx.font = "600 11px ui-monospace, monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("GRAVITY PULL " + netPullPct + "%", W / 2, 74);
+  }
+  let bannerY = 84;
+  if (state === "playing" && malfunctionTimer > 0) {
+    const warn = blockedInput === "keyboard"
+      ? "MALFUNCTION: TAP SCREEN (" + malfunctionTimer.toFixed(1) + "s)"
+      : "MALFUNCTION: USE SPACEBAR (" + malfunctionTimer.toFixed(1) + "s)";
+    ctx.fillStyle = COLORS.malfunction;
+    ctx.fillRect(W / 2 - 126, bannerY, 252, 22);
+    drawText(warn, bannerY + 15, 11, "#fff");
+    bannerY += 26;
+  }
+  if (state === "playing" && (ghostTimer > 0 || postGhostShield || heavyTimer > 0)) {
+    let label, bg;
+    if (ghostTimer > 0) {
+      label = "GHOST SPEED  " + ghostTimer.toFixed(1) + "s";
+      bg = COLORS.ghost;
+    } else if (postGhostShield) {
+      label = "ALIGNMENT SHIELD ACTIVE";
+      bg = "#0284C7";
+    } else {
+      label = "HEAVY GRAVITY  " + heavyTimer.toFixed(1) + "s";
+      bg = COLORS.heavy;
+    }
+    ctx.fillStyle = bg;
+    ctx.fillRect(W / 2 - 112, bannerY, 224, 22);
+    drawText(label, bannerY + 15, 12, "#fff");
+    bannerY += 26;
+  }
+  if (state === "playing" && noticeTimer > 0) {
+    ctx.fillStyle = noticeColor;
+    ctx.fillRect(W / 2 - 122, bannerY, 244, 22);
+    drawText(noticeText, bannerY + 15, 11, "#fff");
+  }
+  ctx.fillStyle = COLORS.ground;
+  ctx.fillRect(0, H - GROUND_H, W, GROUND_H);
+  ctx.strokeStyle = "rgba(251, 191, 36, 0.45)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(0, H - GROUND_H);
+  ctx.lineTo(W, H - GROUND_H);
+  ctx.stroke();
+  drawText("Lives " + lives + " / " + START_LIVES + "  ·  Boosts " + boosts + "  ·  Best " + best, H - 18, 14, "#FDE68A");
+  if (state === "playing") return;
+  ctx.fillStyle = COLORS.card;
+  ctx.fillRect(24, 175, W - 48, 205);
+  ctx.strokeStyle = COLORS.cap; ctx.lineWidth = 2;
+  ctx.strokeRect(24, 175, W - 48, 205);
+  if (state === "start") {
+    drawText("THE TESSERACT", 220, 30, "#FDE68A");
+    drawText("Black hole pull ramps gravity", 262, 16);
+    drawText("Space resets pull · E ejects (+10)", 296, 15);
+    drawText("↑ / Tap flap · Shift / ↓ boost", 330, 15);
+    drawText("Three lives · Score 30+ shifts matrix", 360, 14);
+  } else if (state === "paused") {
+    drawText("PAUSED", 235, 32, "#FDE68A");
+    drawText("Tap or press Space to resume", 305, 18);
+  } else {
+    drawText(ejectedRun ? "EJECTED (+10 BONUS)" : "LOST IN TIME", 225, 28, "#FDE68A");
+    drawText("Score " + score + "   ·   Best " + best, 275, 22);
+    drawText("Tap or press Space to try again", 330, 18);
+  }
+}
+
+// === AI PROMPT ZONE: GAME LOOP ===
+// Fixed steps make the same inputs play the same at 30, 60 and 144Hz.
+// Clamp long frames and pause on focus loss so a tab switch cannot cost a life.
+function loop(timestamp) {
+  if (lastTime !== null && state === "playing") {
+    accumulator += Math.min(0.05, Math.max(0, (timestamp - lastTime) / 1000));
+    while (accumulator + 1e-9 >= STEP && state === "playing") {
+      recovery = Math.max(0, recovery - STEP);
+      boostCooldown = Math.max(0, boostCooldown - STEP);
+      boostLift = Math.max(0, boostLift - STEP);
+      boostShield = Math.max(0, boostShield - STEP);
+      jettisonCooldown = Math.max(0, jettisonCooldown - STEP);
+      if (ghostTimer > 0) {
+        ghostTimer = Math.max(0, ghostTimer - STEP);
+        if (ghostTimer === 0 && !isSafelyAlignedWithPillar()) {
+          postGhostShield = true;
+          statusEl.textContent = "Ghost speed ended. Alignment shield active until safe.";
+        }
+      }
+      heavyTimer = Math.max(0, heavyTimer - STEP);
+      if (malfunctionTimer > 0) {
+        malfunctionTimer = Math.max(0, malfunctionTimer - STEP);
+        if (malfunctionTimer === 0) {
+          blockedInput = null;
+          statusEl.textContent = "Controls recalibrated.";
+        }
+      }
+      noticeTimer = Math.max(0, noticeTimer - STEP);
+      elapsed += STEP;
+      gravityElapsed += STEP;
+      updateBird(STEP);
+      if (state === "playing") updatePipes(STEP);
+      accumulator = Math.max(0, accumulator - STEP);
+    }
+  }
+  lastTime = timestamp;
+  drawBackground(); drawWormholes(); drawDebris(); drawPipes(); drawBird(); drawUI();
+  requestAnimationFrame(loop);
+}
+addEventListener("keydown", event => {
+  if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+  if (event.target.closest?.("a, button, input, textarea, select, [contenteditable]")) return;
+  const isSpace = event.code === "Space";
+  const isFlap = isSpace || event.code === "ArrowUp";
+  const isBoost = event.code === "ShiftLeft" || event.code === "ShiftRight" || event.code === "ArrowDown";
+  const isEject = event.code === "KeyE";
+  if (!isFlap && !isBoost && !isEject && event.code !== "KeyP") return;
+  event.preventDefault();
+  if (event.repeat) return;
+  if (isEject) ejectPod();
+  else if (isBoost) boostJump();
+  else if (isFlap || state === "paused") flap("keyboard", isSpace);
+  else pause();
+});
+canvas.addEventListener("pointerdown", event => {
+  if (event.button !== 0) return;
+  event.preventDefault();
+  canvas.focus({ preventScroll:true });
+  if (state === "playing") {
+    const rect = canvas.getBoundingClientRect();
+    const cx = (event.clientX - rect.left) * (W / rect.width);
+    const cy = (event.clientY - rect.top) * (H / rect.height);
+    if (cx >= EJECT_BTN.x - 6 && cx <= EJECT_BTN.x + EJECT_BTN.w + 6 &&
+        cy >= EJECT_BTN.y - 6 && cy <= EJECT_BTN.y + EJECT_BTN.h + 6) {
+      ejectPod();
+      return;
+    }
+  }
+  flap("pointer", false);
+});
+addEventListener("blur", pause);
+document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
+reset();
+if (ctx) requestAnimationFrame(loop);
+else {
+  canvas.hidden = true;
+  statusEl.classList.remove("sr-only");
+  statusEl.textContent = "This browser cannot draw the game. Try another browser.";
+}
+</script>
+</body>
+</html>

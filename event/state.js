@@ -49,13 +49,21 @@ export function isGeminiShare(url) {
     || (url.hostname === "g.co" && url.pathname.startsWith("/gemini/share/"));
 }
 
+const emailedBuildId = /^email--[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/;
+
 export function publishedGamePath(build) {
-  return build.html === true && Number.isSafeInteger(build.issue) && build.issue > 0
-    ? `submissions/games/${build.issue}.txt` : "";
+  if (build.html !== true) return "";
+  if (Number.isSafeInteger(build.issue) && build.issue > 0) {
+    return `submissions/games/${build.issue}.txt`;
+  }
+  return emailedBuildId.test(build.id) ? `submissions/games/${build.id}.txt` : "";
 }
 
 export async function loadPublishedGame(path) {
-  if (!/^submissions\/games\/[1-9][0-9]*\.txt$/.test(path)) throw new Error("Invalid game path");
+  const file = /^submissions\/games\/([a-z0-9-]+)\.txt$/.exec(path)?.[1];
+  if (!file || !(/^[1-9][0-9]*$/.test(file) || emailedBuildId.test(file))) {
+    throw new Error("Invalid game path");
+  }
   const response = await fetch(path, { cache: "no-cache" });
   if (!response.ok) throw new Error("Game file unavailable");
   return response.text();

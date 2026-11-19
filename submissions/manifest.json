@@ -40,6 +40,49 @@
       "track": "creative-mutation",
       "description": "Meet the boss straight away. Dash through waves that get tougher as you go. Three lives per round.",
       "prompt": "Add a Shift or on-screen dash that gives a short shield. Show a slow, clearly signalled boss wave at the start, then alternate gates and boss waves. Use three lives with brief recovery between hits, make each wave tougher, and end the demo round after 90 seconds."
+    },
+    {
+      "id": "megarrito",
+      "kind": "submission",
+      "title": "The Tesseract",
+      "builder": "Megan",
+      "description": "Pilot an astronaut through a shifting bookshelf matrix as a black hole pulls you in.",
+      "html": true,
+      "github": "megarrito",
+      "issue": 16
+    },
+    {
+      "id": "email--stationary-bird",
+      "kind": "submission",
+      "title": "Flappy Bird (Stationary Bird)",
+      "builder": "Neerav Durve",
+      "description": "The bird stays in place while the course moves. Fly through gusts and graze red pillar tips for bonus points.",
+      "html": true,
+      "github": "ndurve06"
+    },
+    {
+      "id": "email--miaucalipsis",
+      "kind": "submission",
+      "title": "Miaucalipsis · The Last Tuna",
+      "builder": "Aurora Velasco",
+      "description": "Guide Croqueta through zombie-cat barricades, collect tuna cans and use them as decoys.",
+      "html": true
+    },
+    {
+      "id": "email--flap-battle",
+      "kind": "submission",
+      "title": "Flap Battle",
+      "builder": "Harrison Pinto",
+      "description": "Race head to head with W/S and the arrow keys. The downloaded HTML also includes an optional camera mode.",
+      "html": true
+    },
+    {
+      "id": "email--flappy-parry",
+      "kind": "submission",
+      "title": "Flappy Parry, the Warrior",
+      "builder": "Ryan Evans",
+      "description": "Dodge obstacles and parry attacks with F.",
+      "html": true
     }
   ]
 }
