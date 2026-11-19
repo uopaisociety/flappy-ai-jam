@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<!--
+  FLAPPY AI JAM · University of Portsmouth AI Society
+  This whole file is the starter. Copy it into Gemini Canvas or open it in a browser.
+  Ask for one change, play a round, and keep the last working version.
+
+  FOR AI CODING AGENTS
+  Keep the game in this one HTML file with inline CSS and JavaScript.
+  Keep Space, Arrow Up, mouse and touch working, along with pause, restart and resizing.
+  Use Canvas shapes and inline styles. Avoid external images, libraries, fonts or packages.
+  Keep the labelled AI PROMPT ZONE comments and edit the working Canvas in place.
+  If you return code as text, return the complete file from <!DOCTYPE html> to </html>.
+  Keep best-score storage optional. Wrap all localStorage reads and writes in try/catch
+  so the game works inside sandboxed previews even when storage is unavailable.
+  Physics use seconds in a fixed-step loop. Never tie movement to screen refresh.
+  The default is a three-life game with a gradual difficulty ramp. Keep each gap reachable.
+  The labelled zones below show where to change artwork, physics, obstacles and scoring.
+  After editing, check the first launch, all three lives, restart and a phone-size view.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Flappy AI Jam · UoP AI Society</title>
+<style>
+  :root { --ink:#021825; --navy:#073B5C; --cream:#F7F5F0; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--ink); color:var(--cream); color-scheme:dark;
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+  body { height:100svh; display:flex; flex-direction:column; overflow:hidden; }
+  header, footer { display:flex; align-items:center; padding:10px 16px; flex:none; }
+  header { justify-content:space-between; border-bottom:1px solid rgba(247,245,240,.14); }
+  .brand { font-size:13px; font-weight:650; letter-spacing:.14em; text-transform:uppercase; white-space:nowrap; }
+  .society { color:var(--cream); padding:3px; line-height:0; }
+  .society svg { width:36px; height:24px; }
+  .society:focus-visible { outline:2px solid var(--cream); outline-offset:2px; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  main { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:12px; }
+  canvas { background:var(--cream); display:block; touch-action:none; border-radius:16px;
+    outline-offset:4px; border:1px solid rgba(247,245,240,.28); box-shadow:0 18px 50px rgba(0,0,0,.45); }
+  canvas:focus-visible { outline:2px solid var(--cream); }
+  footer { gap:12px; flex-wrap:wrap; text-align:center; justify-content:center; border-top:1px solid rgba(247,245,240,.14);
+    font:11px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; letter-spacing:.16em; opacity:.72; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Flappy AI Jam</div>
+  <a class="society" href="https://github.com/uopaisociety" target="_blank" rel="noopener noreferrer" aria-label="University of Portsmouth AI Society on GitHub (new tab)">
+    <svg viewBox="172 248 692 450" aria-hidden="true">
+      <g transform="translate(-22 0) translate(-575.84993366 -793.24494091) scale(4.2459962354)" fill="currentColor">
+        <g transform="translate(600 314) scale(1.2) translate(-600 -314)">
+          <g fill-rule="evenodd" transform="translate(175.41909833 172.66980773) scale(0.4500968704)">
+    <path transform="translate(169.0000000 187.6722702) scale(0.250000000)" d="M0.000 774.000C0.000 772.900 0.450 772.000 1.000 772.000C1.550 772.000 2.000 771.580 2.000 771.067C2.000 770.017 16.468 743.247 24.466 729.500C27.346 724.550 31.967 716.225 34.736 711.000C39.758 701.522 62.605 659.871 73.665 640.032L79.500 629.564 89.000 624.212C94.225 621.269 102.325 616.800 107.000 614.280C111.675 611.761 119.824 607.096 125.110 603.914C130.395 600.732 144.570 593.097 156.610 586.947C168.649 580.797 181.650 574.073 185.500 572.006C189.350 569.938 199.475 564.998 208.000 561.028C216.525 557.058 228.000 551.671 233.500 549.058C241.499 545.256 259.082 537.876 276.500 531.008C277.600 530.574 282.550 528.603 287.500 526.628C308.326 518.317 342.288 507.568 374.500 499.092C389.435 495.162 430.782 488.326 454.500 485.865C473.781 483.865 525.349 484.167 544.000 486.390C584.388 491.203 625.526 501.580 656.260 514.707C658.328 515.590 660.269 516.064 660.573 515.760C661.263 515.070 644.321 481.129 616.269 427.000C604.440 404.175 587.779 372.000 579.244 355.500C570.709 339.000 558.000 314.475 551.002 301.000C544.005 287.525 533.417 267.050 527.473 255.500C515.537 232.307 514.811 231.000 513.859 231.000C513.061 231.000 497.706 257.899 489.027 274.500C485.577 281.100 482.407 286.950 481.982 287.500C481.558 288.050 479.068 292.550 476.450 297.500C473.832 302.450 470.014 309.425 467.965 313.000C465.917 316.575 461.868 324.000 458.968 329.500C456.068 335.000 452.936 340.625 452.009 342.000C451.082 343.375 447.482 349.900 444.009 356.500C440.537 363.100 437.127 369.400 436.431 370.500C435.736 371.600 432.277 377.900 428.745 384.500C425.213 391.100 418.362 403.475 413.522 412.000C408.681 420.525 403.828 429.075 402.737 431.000C401.645 432.925 398.951 437.988 396.750 442.250C393.437 448.664 392.332 450.000 390.339 450.000C383.805 450.000 319.694 469.921 290.008 481.175C277.718 485.834 252.825 495.660 248.500 497.560C227.528 506.770 219.582 510.193 214.976 512.001C211.964 513.183 193.975 522.066 175.000 531.741C156.025 541.416 135.209 552.028 128.742 555.325C122.276 558.621 116.753 561.087 116.471 560.804C115.910 560.244 128.820 535.481 138.003 519.500C141.164 514.000 145.804 505.400 148.315 500.388C150.827 495.377 155.303 487.052 158.263 481.888C166.686 467.195 177.000 448.342 177.000 447.640C177.000 447.290 179.984 441.715 183.630 435.252C187.277 428.788 194.749 415.175 200.235 405.000C205.721 394.825 214.597 378.625 219.961 369.000C229.695 351.532 245.917 321.754 257.550 300.000C267.038 282.257 278.327 261.979 281.489 257.000C283.061 254.525 285.659 249.608 287.263 246.074C288.867 242.540 295.237 230.615 301.418 219.574C307.600 208.533 315.199 194.718 318.305 188.873C321.411 183.029 325.988 174.803 328.476 170.595C330.964 166.386 333.000 162.771 333.000 162.561C333.000 162.351 334.738 159.101 336.862 155.340C338.986 151.578 342.509 145.125 344.690 141.000C346.871 136.875 351.586 128.325 355.167 122.000C358.749 115.675 363.617 106.900 365.985 102.500C375.669 84.510 383.821 69.670 391.529 56.000C393.855 51.875 398.140 44.000 401.052 38.500C403.963 33.000 407.227 26.925 408.304 25.000C409.382 23.075 412.498 17.450 415.229 12.500C417.960 7.550 420.715 2.952 421.350 2.282C422.238 1.348 445.153 0.966 520.003 0.640C573.626 0.406 619.577 0.504 622.115 0.858L626.730 1.500 633.508 14.500C637.237 21.650 644.454 35.600 649.547 45.500C654.640 55.400 662.018 69.575 665.943 77.000C669.868 84.425 675.507 95.545 678.473 101.711C681.440 107.878 685.673 116.015 687.880 119.794C690.087 123.573 697.932 138.553 705.314 153.083C712.695 167.612 725.614 192.775 734.022 209.000C759.949 259.032 835.624 408.383 848.281 434.500C851.480 441.100 855.200 448.525 856.550 451.000C857.899 453.475 863.565 464.725 869.140 476.000C874.716 487.275 885.199 508.425 892.435 523.000C899.671 537.575 906.969 552.425 908.652 556.000C910.335 559.575 915.155 569.333 919.362 577.685L927.011 592.871 926.755 683.185L926.500 773.500 913.500 773.394C889.946 773.203 873.490 770.381 840.500 760.878C802.349 749.887 762.481 728.857 700.254 686.900C654.728 656.203 615.213 631.599 598.500 623.541C557.837 603.937 545.446 598.832 520.500 591.409C502.185 585.958 483.230 581.714 464.000 578.756C451.555 576.842 445.461 576.525 421.000 576.521C390.766 576.515 385.141 577.031 361.251 581.998C348.953 584.556 345.000 586.028 345.000 588.051C345.000 588.494 343.484 591.476 341.632 594.678C336.401 603.720 316.820 637.703 312.348 645.500C310.140 649.350 304.433 659.176 299.667 667.337C294.900 675.497 291.000 682.354 291.000 682.574C291.000 682.795 288.130 687.818 284.623 693.738C281.115 699.657 273.088 713.513 266.784 724.528C260.481 735.543 251.130 751.631 246.004 760.278L236.685 776.000 118.343 776.000L0.000 776.000 0.000 774.000ZM972.250 772.338C971.253 771.935 971.000 693.914 971.000 386.917L971.000 2.000 1085.500 2.000L1200.000 2.000 1200.000 387.500L1200.000 773.000 1086.750 772.921C1024.463 772.878 972.938 772.615 972.250 772.338Z"/>
+          </g>
+        </g>
+      </g>
+    </svg>
+  </a>
+  <span id="status" class="sr-only" role="status">Ready to play. Three lives.</span>
+</header>
+<main><canvas id="game" width="400" height="600" tabindex="0" role="img" aria-label="Flappy shooter game. Space, up arrow or tap to flap. The bird fires automatically. P to pause." aria-describedby="controls">Your browser needs Canvas 2D to play this game.</canvas></main>
+<footer id="controls">SPACE / ↑ / TAP TO FLAP · AUTO-FIRE · P TO PAUSE</footer>
+<script>
+"use strict";
+
+// === AI PROMPT ZONE: CONFIG ===
+// Positions are pixels, speed is pixels/second, gravity is pixels/second², timers are seconds.
+// Start with colours or one mechanic. The first drones hold fire so players learn to flap and aim.
+// Enemy speed, spawn rate and fire rate then ramp over a minute.
+const W = 400, H = 600;
+const GRAVITY = 880, FLAP_STRENGTH = -285, MAX_FALL_SPEED = 400;
+const PLAYER_FIRE_EVERY = 0.25, PLAYER_SHOT_SPEED = 520, PLAYER_SHOT_R = 4;
+const ENEMY_SPEED = 85, MAX_ENEMY_SPEED = 150, SPAWN_EVERY = 1.9, MIN_SPAWN_EVERY = 0.8;
+const ENEMY_FIRE_EVERY = 2.6, MIN_ENEMY_FIRE_EVERY = 1.3, ENEMY_SHOT_SPEED = 190, MAX_ENEMY_SHOT_SPEED = 270;
+const ENEMY_SHOT_R = 5, MAX_AIM_ANGLE = 0.45, SAFE_ENEMIES = 2;
+// Purple armoured drones: 2 HP, fire a 3-shot fan (angle between shots in radians), shoot a bit less often.
+const TOUGH_HP = 2, TOUGH_POINTS = 3, TOUGH_SPREAD = 0.28, TOUGH_FIRE_SLOWER = 1.3;
+// Boss drone: arrives every BOSS_EVERY points, pauses normal spawns, fires a BOSS_FAN-shot fan.
+// Each later boss has BOSS_HP_GROWTH more HP. Always drops a power-up.
+const BOSS_EVERY = 20, BOSS_HP = 30, BOSS_HP_GROWTH = 10, BOSS_POINTS = 15, BOSS_R = 38;
+const BOSS_FAN = 4, BOSS_SPREAD = 0.34, BOSS_FIRE_EVERY = 1.7, MIN_BOSS_FIRE_EVERY = 1.1;
+// The boss takes at most one hit per volley (a triple shot counts once) and at most one hit
+// per BOSS_HIT_COOLDOWN seconds, so triple shot and rapid fire only help a little against it.
+const BOSS_HIT_COOLDOWN = 0.2;
+// Boss wall attack: a column of bullets with one gap, like a pipe. The gap centre lands within
+// BOSS_WALL_REACH pixels of the bird. BOSS_WALL_PAUSE stretches the wait before the next attack.
+const BOSS_WALL_GAP = 120, BOSS_WALL_SPACING = 24, BOSS_WALL_SPEED = 170, BOSS_WALL_REACH = 140, BOSS_WALL_PAUSE = 1.3;
+// After each attack the boss switches attack with BOSS_SWITCH_CHANCE, rising by BOSS_SWITCH_RAMP
+// each time it repeats the same attack, and resetting when it switches.
+const BOSS_SWITCH_CHANCE = 0.3, BOSS_SWITCH_RAMP = 0.25;
+// Power-ups drop from destroyed drones. Seconds is how long a timed power-up lasts.
+const DROP_CHANCE = 0.1, TOUGH_DROP_CHANCE = 0.5, DROP_RAMP = 0.05, PICKUP_R = 12, PICKUP_SPEED = 90;
+// Weapons drop from drones like power-ups and are kept until another weapon is collected.
+// every = seconds between volleys, count/spread = shots per volley fanned evenly over ±spread radians,
+// jitter = random extra angle per shot, range = seconds a shot lives, homing = turn rate (radians/second).
+// triple = the volley used while TRIPLE SHOT is active. RAPID FIRE multiplies every by RAPID_FIRE_MULT.
+// Against the boss a whole volley does bossDmg once, and the boss then ignores hits for 80% of the
+// weapon's normal fire delay (at least BOSS_HIT_COOLDOWN), so power-ups only help a little there.
+const RAPID_FIRE_MULT = 0.45;
+const WEAPONS = {
+  blaster:    { label:"BLASTER", every:PLAYER_FIRE_EVERY, speed:PLAYER_SHOT_SPEED, r:PLAYER_SHOT_R, dmg:1, bossDmg:1, range:2,
+                count:1, spread:0, jitter:0, triple:{ count:3, spread:0.18, jitter:0 } },
+  shotgun:    { label:"SHOTGUN", every:0.65, speed:460, r:3, dmg:1, bossDmg:3, range:0.55,
+                count:6, spread:0.3, jitter:0.04, triple:{ count:18, spread:0.55, jitter:0.12 } },
+  machinegun: { label:"MACHINE GUN", every:0.08, speed:560, r:3, dmg:1, bossDmg:1, range:2,
+                count:1, spread:0, jitter:0.12, triple:{ count:3, spread:0.22, jitter:0.3 } },
+  rocket:     { label:"ROCKETS", every:0.7, speed:300, r:5, dmg:3, bossDmg:3, range:3, homing:5,
+                count:1, spread:0, jitter:0, triple:{ count:3, spread:0.4, jitter:0 } }
+};
+const POWERUPS = {
+  rapid:  { label:"RAPID FIRE",  icon:"R", color:"#FF7A00", weight:3, seconds:8 },
+  spread: { label:"TRIPLE SHOT", icon:"3", color:"#2E9E6A", weight:3, seconds:8 },
+  shield: { label:"SHIELD",      icon:"S", color:"#2F80ED", weight:2, seconds:6 },
+  life:   { label:"EXTRA LIFE",  icon:"+", color:"#E5484D", weight:1 },
+  shotgun:    { label:"SHOTGUN",     icon:"SG", color:"#8A5A2B", weight:1, weapon:true },
+  machinegun: { label:"MACHINE GUN", icon:"MG", color:"#4A5560", weight:1, weapon:true },
+  rocket:     { label:"ROCKETS",     icon:"RK", color:"#C2185B", weight:1, weapon:true }
+};
+const RAMP_DELAY = 8, RAMP_SECONDS = 60;
+const GROUND_H = 50, START_LIVES = 3, RECOVERY_SECONDS = 1.2, STEP = 1 / 120;
+const COLORS = { navy:"#073B5C", cream:"#F7F5F0", bird:"#FFC93C", beak:"#FF7A00", ground:"#C9B79C",
+  enemy:"#0E5A8A", enemyTough:"#3B2A63", eye:"#E5484D", enemyShot:"#E5484D", playerShot:"#FF7A00" };
+const BEST_KEY = "flappyAiJamShooterBest";
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const statusEl = document.getElementById("status");
+let state = "start", bird, enemies, shots, enemyShots, particles, score, lives, recovery, elapsed;
+let pickups, power, banner, nextBossAt = BOSS_EVERY, bossCount = 0, dryKills = 0;
+let spawnTimer = 0, fireTimer = 0, spawned = 0, volley = 0, weapon = "blaster";
+let overAt = 0, best = 0, lastTime = null, accumulator = 0;
+try {
+  const stored = Number(localStorage.getItem(BEST_KEY));
+  if (Number.isSafeInteger(stored) && stored > 0) best = stored;
+} catch { /* The game also works when browser storage is blocked. */ }
+
+function resize() {
+  const space = document.querySelector("main");
+  const scale = Math.max(0.01, Math.min((space.clientWidth - 24) / W, (space.clientHeight - 24) / H));
+  canvas.style.width = Math.floor(W * scale) + "px";
+  canvas.style.height = Math.floor(H * scale) + "px";
+}
+addEventListener("resize", resize);
+resize();
+
+function reset() {
+  bird = { x:90, y:285, vy:0, r:15 };
+  enemies = []; shots = []; enemyShots = []; particles = []; pickups = [];
+  power = { rapid:0, spread:0, shield:0 };
+  banner = null;
+  weapon = "blaster";
+  nextBossAt = BOSS_EVERY;
+  bossCount = 0;
+  dryKills = 0;
+  score = elapsed = recovery = fireTimer = spawned = 0;
+  spawnTimer = 1.2;
+  lives = START_LIVES;
+}
+
+// === AI PROMPT ZONE: PHYSICS & INPUT ===
+// Each press is one flap. Ignore a held key's repeat events.
+// A resume input leaves the current position intact. A restart creates a new run.
+// The bird fires automatically to the right on a steady timer.
+function flap() {
+  if (!ctx || document.hidden) return;
+  const freshStart = state !== "playing";
+  if (state === "paused") {
+    state = "playing";
+  } else {
+    if (state === "over") {
+      if (performance.now() - overAt < 350) return;
+      reset();
+    }
+    state = "playing";
+    bird.vy = FLAP_STRENGTH;
+  }
+  if (freshStart) {
+    lastTime = performance.now();
+    accumulator = 0;
+    statusEl.textContent = "Playing. " + lives + " lives. Flap to dodge, you fire automatically.";
+  }
+}
+function pause() {
+  if (state !== "playing") return;
+  state = "paused";
+  statusEl.textContent = "Paused. Tap or press Space to resume.";
+  lastTime = null;
+  accumulator = 0;
+}
+function updateBird(dt) {
+  bird.vy = Math.min(MAX_FALL_SPEED, bird.vy + GRAVITY * dt);
+  bird.y += bird.vy * dt;
+  fireTimer -= dt;
+  if (fireTimer <= 0) {
+    const w = WEAPONS[weapon], pattern = power.spread ? w.triple : w;
+    fireTimer += w.every * (power.rapid ? RAPID_FIRE_MULT : 1);
+    volley++;
+    for (let i = 0; i < pattern.count; i++) {
+      const even = pattern.count > 1 ? (i / (pattern.count - 1)) * 2 - 1 : 0;
+      const a = even * pattern.spread + (Math.random() * 2 - 1) * pattern.jitter;
+      shots.push({ volley, x:bird.x + bird.r + 6, y:bird.y + 2, vx:Math.cos(a) * w.speed, vy:Math.sin(a) * w.speed,
+        r:w.r, dmg:w.dmg, bossDmg:w.bossDmg, bossCooldown:w.every * 0.8, life:w.range, homing:w.homing || 0, kind:weapon });
+    }
+  }
+  // The ceiling is forgiving. The floor uses the same life/recovery rule as enemy hits,
+  // except a shielded bird bounces off it.
+  if (bird.y < bird.r) {
+    bird.y = bird.r;
+    bird.vy = Math.max(0, bird.vy);
+  }
+  if (bird.y + bird.r > H - GROUND_H) {
+    bird.y = H - GROUND_H - bird.r;
+    if (power.shield) {
+      bird.vy = FLAP_STRENGTH * 0.8;
+    } else {
+      bird.vy = 0;
+      loseLife(true);
+    }
+  }
+}
+
+// === AI PROMPT ZONE: PIPES / LEVEL ===
+// Pipes are replaced by enemy drones that fly in from the right and shoot at the bird.
+// The first SAFE_ENEMIES drones hold fire. Later drones arrive faster, fire more often and can be armoured.
+// Armoured (purple) drones take TOUGH_HP hits and fire a 3-shot fan.
+// Enemy shots aim at the bird but are capped to a shallow angle, and drones only fire with
+// room to react, so every shot can be dodged by flapping.
+function lerp(a, b, t) { return a + (b - a) * t; }
+function hits(a, b, dist) { const dx = a.x - b.x, dy = a.y - b.y; return dx * dx + dy * dy < dist * dist; }
+function spawnEnemy(difficulty) {
+  const tough = spawned >= 6 && Math.random() < 0.1 + 0.3 * difficulty;
+  const r = tough ? 20 : 15;
+  const top = 40 + r, bottom = H - GROUND_H - 40 - r;
+  const safe = spawned < SAFE_ENEMIES;
+  const baseY = safe ? 285 - spawned * 60 : top + Math.random() * (bottom - top);
+  enemies.push({ x:W + r + 10, y:baseY, baseY, r, tough, hp:tough ? TOUGH_HP : 1, points:tough ? TOUGH_POINTS : 1,
+    speed:lerp(ENEMY_SPEED, MAX_ENEMY_SPEED, difficulty) * (0.9 + Math.random() * 0.2),
+    amp:safe ? 8 : 10 + Math.random() * 25, phase:Math.random() * Math.PI * 2, age:0, flash:0,
+    fireTimer:safe ? Infinity : 0.6 + Math.random() * 0.8 });
+  spawned++;
+}
+function spawnBoss() {
+  const hp = BOSS_HP + BOSS_HP_GROWTH * bossCount++;
+  enemies.push({ x:W + BOSS_R + 10, y:275, baseY:275, r:BOSS_R, boss:true, tough:true, hp, maxHp:hp,
+    points:BOSS_POINTS, speed:60, amp:140, phase:0, age:0, flash:0, fireTimer:1.5, lastVolley:-1, hitCooldown:0,
+    attack:"fan", switchChance:BOSS_SWITCH_CHANCE });
+  nextBossAt = Infinity;
+  banner = { text:"BOSS INCOMING!", color:COLORS.eye, t:1.5 };
+  statusEl.textContent = "Boss drone incoming.";
+}
+// Homing rockets turn toward the nearest drone ahead of them, limited by their turn rate.
+function steerRocket(s, dt) {
+  let target = null, bestD = Infinity;
+  for (const e of enemies) {
+    if (e.hp <= 0 || e.x < s.x - 10) continue;
+    const d = (e.x - s.x) ** 2 + (e.y - s.y) ** 2;
+    if (d < bestD) { bestD = d; target = e; }
+  }
+  if (!target) return;
+  const speed = Math.hypot(s.vx, s.vy), current = Math.atan2(s.vy, s.vx);
+  let diff = Math.atan2(target.y - s.y, target.x - s.x) - current;
+  diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+  const a = current + Math.max(-s.homing * dt, Math.min(s.homing * dt, diff));
+  s.vx = Math.cos(a) * speed;
+  s.vy = Math.sin(a) * speed;
+}
+function fireWall(e) {
+  const floor = H - GROUND_H;
+  const center = Math.max(BOSS_WALL_GAP / 2 + 20, Math.min(floor - BOSS_WALL_GAP / 2 - 20,
+    bird.y + (Math.random() * 2 - 1) * BOSS_WALL_REACH));
+  for (let y = ENEMY_SHOT_R; y < floor; y += BOSS_WALL_SPACING) {
+    if (Math.abs(y - center) < BOSS_WALL_GAP / 2) continue;
+    enemyShots.push({ x:e.x - e.r, y, vx:-BOSS_WALL_SPEED, vy:0 });
+  }
+  e.fireTimer *= BOSS_WALL_PAUSE;
+}
+function nextBossAttack(e) {
+  if (Math.random() < e.switchChance) {
+    e.attack = e.attack === "fan" ? "wall" : "fan";
+    e.switchChance = BOSS_SWITCH_CHANCE;
+  } else {
+    e.switchChance = Math.min(1, e.switchChance + BOSS_SWITCH_RAMP);
+  }
+}
+function updateEnemies(dt) {
+  const difficulty = Math.min(1, Math.max(0, (elapsed - RAMP_DELAY) / RAMP_SECONDS));
+  const bossAlive = enemies.some(e => e.boss);
+  if (!bossAlive && score >= nextBossAt) spawnBoss();
+  if (!bossAlive) spawnTimer -= dt;
+  if (spawnTimer <= 0) {
+    spawnEnemy(difficulty);
+    spawnTimer = lerp(SPAWN_EVERY, MIN_SPAWN_EVERY, difficulty) * (0.85 + Math.random() * 0.3);
+  }
+  const shotSpeed = lerp(ENEMY_SHOT_SPEED, MAX_ENEMY_SHOT_SPEED, difficulty);
+  for (const e of enemies) {
+    e.age += dt;
+    e.flash = Math.max(0, e.flash - dt);
+    if (e.boss) {
+      e.hitCooldown = Math.max(0, e.hitCooldown - dt);
+      // The boss flies in, then holds near the right edge and sweeps up and down.
+      e.x = Math.max(W - 70, e.x - e.speed * dt);
+      e.y = e.baseY + Math.sin(e.age * 1.1) * e.amp;
+    } else {
+      e.x -= e.speed * dt;
+      e.y = e.baseY + Math.sin(e.age * 2.2 + e.phase) * e.amp;
+    }
+    e.fireTimer -= dt;
+    if (e.fireTimer <= 0) {
+      e.fireTimer = e.boss ? lerp(BOSS_FIRE_EVERY, MIN_BOSS_FIRE_EVERY, difficulty)
+        : lerp(ENEMY_FIRE_EVERY, MIN_ENEMY_FIRE_EVERY, difficulty)
+          * (e.tough ? TOUGH_FIRE_SLOWER : 1) * (0.8 + Math.random() * 0.4);
+      if (e.boss && e.attack === "wall" && e.x < W - e.r) {
+        fireWall(e);
+      } else if (e.x < W - e.r && e.x - bird.x > 110) {
+        const aim = Math.atan2(bird.y - e.y, e.x - bird.x);
+        const angle = Math.max(-MAX_AIM_ANGLE, Math.min(MAX_AIM_ANGLE, aim));
+        const fan = e.boss ? Array.from({ length:BOSS_FAN }, (_, i) => (i - (BOSS_FAN - 1) / 2) * BOSS_SPREAD)
+          : e.tough ? [-TOUGH_SPREAD, 0, TOUGH_SPREAD] : [0];
+        for (const f of fan) {
+          enemyShots.push({ x:e.x - e.r, y:e.y,
+            vx:-Math.cos(angle + f) * shotSpeed, vy:Math.sin(angle + f) * shotSpeed });
+        }
+      }
+      if (e.boss) nextBossAttack(e);
+    }
+    if (e.hp > 0 && hits(e, bird, e.r + bird.r - 4)) {
+      if (e.boss) {
+        // Ramming the boss never kills it. Without a shield it costs a life.
+        if (!power.shield && !recovery) {
+          loseLife(false);
+          if (state === "over") return;
+        }
+      } else if (power.shield) {
+        e.hp = 0;
+        killEnemy(e);
+      } else if (!recovery) {
+        e.hp = 0;
+        burst(e.x, e.y, e.tough ? COLORS.enemyTough : COLORS.enemy, 10);
+        loseLife(false);
+        if (state === "over") return;
+      }
+    }
+  }
+  for (const s of shots) {
+    s.life -= dt;
+    if (s.homing) steerRocket(s, dt);
+    s.x += s.vx * dt;
+    s.y += s.vy * dt;
+    for (const e of enemies) {
+      if (s.done || e.hp <= 0 || !hits(s, e, e.r + s.r)) continue;
+      s.done = true;
+      if (e.boss) {
+        // Extra shots from the same volley, or inside the cooldown, are absorbed with no damage.
+        if (s.volley === e.lastVolley || e.hitCooldown > 0) continue;
+        e.lastVolley = s.volley;
+        e.hitCooldown = Math.max(BOSS_HIT_COOLDOWN, s.bossCooldown);
+      }
+      e.hp -= e.boss ? s.bossDmg : s.dmg;
+      e.flash = 0.08;
+      if (e.hp <= 0) killEnemy(e);
+    }
+  }
+  for (const b of enemyShots) {
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    if (!hits(b, bird, bird.r - 3 + ENEMY_SHOT_R)) continue;
+    if (power.shield) {
+      b.done = true;
+      burst(b.x, b.y, POWERUPS.shield.color, 4);
+    } else if (!recovery) {
+      b.done = true;
+      loseLife(false);
+      if (state === "over") return;
+    }
+  }
+  shots = shots.filter(s => !s.done && s.life > 0 && s.x > -10 && s.x < W + 10 && s.y > -10 && s.y < H - GROUND_H);
+  enemies = enemies.filter(e => e.hp > 0 && e.x > -e.r - 10);
+  enemyShots = enemyShots.filter(b => !b.done && b.x > -10 && b.y > -10 && b.y < H - GROUND_H);
+}
+function killEnemy(e) {
+  addScore(e.points);
+  burst(e.x, e.y, e.tough ? COLORS.enemyTough : COLORS.enemy, e.boss ? 50 : e.tough ? 18 : 10);
+  maybeDropPowerup(e);
+  if (e.boss) {
+    nextBossAt = score + BOSS_EVERY;
+    spawnTimer = 1.5;
+    banner = { text:"BOSS DOWN! +" + e.points, color:COLORS.navy, t:1.5 };
+    statusEl.textContent = "Boss destroyed. Score " + score + ".";
+  }
+}
+
+// === AI PROMPT ZONE: POWER-UPS ===
+// Destroyed drones sometimes drop a power-up (armoured drones more often). Fly into it to collect it.
+// The drop chance starts at DROP_CHANCE (TOUGH_DROP_CHANCE for armoured drones) and rises by DROP_RAMP
+// for every kill without a drop, then resets when something drops. Bosses always drop.
+// Timed power-ups refresh to full when collected again. Add a new one to POWERUPS in CONFIG,
+// then handle it in collectPowerup and wherever it changes play (firing, hits, drawing).
+function maybeDropPowerup(e) {
+  if (state !== "playing") return;
+  const base = e.boss ? 1 : e.tough ? TOUGH_DROP_CHANCE : DROP_CHANCE;
+  if (Math.random() >= base + DROP_RAMP * dryKills) {
+    dryKills++;
+    return;
+  }
+  dryKills = 0;
+  const options = Object.keys(POWERUPS).filter(k => (k !== "life" || lives < START_LIVES) && k !== weapon);
+  let roll = Math.random() * options.reduce((total, k) => total + POWERUPS[k].weight, 0);
+  const type = options.find(k => (roll -= POWERUPS[k].weight) < 0) || options[0];
+  const y = Math.max(30, Math.min(H - GROUND_H - 30, e.y));
+  pickups.push({ type, x:e.x, y, baseY:y, age:0 });
+}
+function collectPowerup(p) {
+  const def = POWERUPS[p.type];
+  if (p.type === "life") lives = Math.min(START_LIVES, lives + 1);
+  else if (def.weapon) weapon = p.type;
+  else power[p.type] = def.seconds;
+  banner = { text:def.label + "!", color:def.color, t:1.2 };
+  burst(p.x, p.y, def.color, 10);
+  statusEl.textContent = def.label + ". " + lives + (lives === 1 ? " life." : " lives.");
+}
+function updatePowerups(dt) {
+  for (const k in power) power[k] = Math.max(0, power[k] - dt);
+  if (banner && (banner.t -= dt) <= 0) banner = null;
+  for (const p of pickups) {
+    p.age += dt;
+    p.x -= PICKUP_SPEED * dt;
+    p.y = p.baseY + Math.sin(p.age * 4) * 6;
+    if (hits(p, bird, PICKUP_R + bird.r)) {
+      p.done = true;
+      collectPowerup(p);
+    }
+  }
+  pickups = pickups.filter(p => !p.done && p.x > -PICKUP_R);
+}
+function burst(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2, sp = 60 + Math.random() * 140;
+    particles.push({ x, y, vx:Math.cos(a) * sp, vy:Math.sin(a) * sp, life:0.45, max:0.45, color });
+  }
+}
+function updateParticles(dt) {
+  for (const p of particles) {
+    p.life -= dt;
+    p.vy += 300 * dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+  }
+  particles = particles.filter(p => p.life > 0);
+}
+
+// === AI PROMPT ZONE: SCORE & GAME OVER ===
+// Each drone destroyed earns its points (1, armoured drones TOUGH_POINTS). One hit costs one life.
+// Recovery clears incoming fire and prevents one volley taking all lives.
+// Return immediately when the last life is lost. Never score after game over.
+function addScore(points) {
+  if (state !== "playing") return;
+  score += points;
+  if (score > best) {
+    best = score;
+    try { localStorage.setItem(BEST_KEY, String(best)); } catch { /* Optional. */ }
+  }
+}
+function loseLife(fromFloor) {
+  if (recovery || state !== "playing") return;
+  lives--;
+  burst(bird.x, bird.y, COLORS.bird, 12);
+  if (!lives) {
+    state = "over";
+    overAt = performance.now();
+    statusEl.textContent = "Flight finished. Score " + score + ". Tap or press Space to try again.";
+    return;
+  }
+  recovery = RECOVERY_SECONDS;
+  enemyShots = [];
+  if (fromFloor) bird.y = 285;
+  bird.vy = 0;
+  statusEl.textContent = lives + (lives === 1 ? " life left." : " lives left.") + " Keep flapping.";
+}
+
+// === AI PROMPT ZONE: GRAPHICS ===
+// Draw with shapes. Keep controls and the score legible over any new artwork.
+function drawBackground() {
+  ctx.fillStyle = COLORS.cream;
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "rgba(7,59,92,0.08)";
+  for (let i = 0; i < 4; i++) {
+    const x = ((i * 140 - elapsed * 40) % (W + 120) + W + 120) % (W + 120) - 60;
+    ctx.beginPath();
+    ctx.arc(x, 80 + i * 45, 30, 0, Math.PI * 2);
+    ctx.arc(x + 30, 75 + i * 45, 22, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+function drawEnemies() {
+  for (const e of enemies) {
+    ctx.save();
+    ctx.translate(e.x, e.y);
+    const wing = Math.sin(e.age * 18) * 5;
+    ctx.fillStyle = e.flash ? "#fff" : e.tough ? COLORS.enemyTough : COLORS.enemy;
+    ctx.beginPath(); ctx.moveTo(-4, -e.r + 4); ctx.lineTo(8, -e.r - 8 - wing); ctx.lineTo(12, -e.r + 6); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-4, e.r - 4); ctx.lineTo(8, e.r + 8 + wing); ctx.lineTo(12, e.r - 6); ctx.fill();
+    ctx.beginPath(); ctx.arc(0, 0, e.r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = COLORS.cream;
+    ctx.beginPath(); ctx.arc(-e.r * 0.35, -2, e.r * 0.4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = COLORS.eye;
+    ctx.beginPath(); ctx.arc(-e.r * 0.45, -2, e.r * 0.22, 0, Math.PI * 2); ctx.fill();
+    if (e.tough && !e.boss) {
+      ctx.fillStyle = COLORS.cream;
+      for (let i = 0; i < e.hp; i++) ctx.fillRect(-9 + i * 7, e.r * 0.45, 5, 4);
+    }
+    ctx.restore();
+  }
+}
+function drawShots() {
+  for (const s of shots) {
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    ctx.rotate(Math.atan2(s.vy, s.vx));
+    if (s.kind === "rocket") {
+      ctx.fillStyle = COLORS.navy; ctx.fillRect(-12, -3, 12, 6);
+      ctx.fillStyle = COLORS.playerShot;
+      ctx.beginPath(); ctx.moveTo(0, -3); ctx.lineTo(6, 0); ctx.lineTo(0, 3); ctx.fill();
+      ctx.fillStyle = COLORS.bird; ctx.fillRect(-17, -2, 5, 4);
+    } else {
+      ctx.fillStyle = COLORS.playerShot;
+      ctx.fillRect(-s.r * 2.5, -1.5, s.r * 2.5, 3);
+      ctx.beginPath(); ctx.arc(0, 0, s.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+  ctx.strokeStyle = COLORS.navy;
+  ctx.lineWidth = 1.5;
+  for (const b of enemyShots) {
+    ctx.fillStyle = COLORS.enemyShot;
+    ctx.beginPath(); ctx.arc(b.x, b.y, ENEMY_SHOT_R, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+}
+function drawIcon(def, x, y, r) {
+  // Weapons are square icons, timed power-ups are round.
+  ctx.fillStyle = def.color;
+  ctx.beginPath();
+  if (def.weapon) ctx.rect(x - r, y - r, r * 2, r * 2);
+  else ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = COLORS.cream; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = COLORS.cream;
+  ctx.font = "bold " + Math.round(r * (def.icon.length > 1 ? 0.95 : 1.3)) + "px system-ui, sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(def.icon, x, y + 1);
+  ctx.textBaseline = "alphabetic";
+}
+function drawPickups() {
+  for (const p of pickups) {
+    const def = POWERUPS[p.type];
+    ctx.strokeStyle = def.color;
+    ctx.globalAlpha = 0.35 + 0.25 * Math.sin(p.age * 8);
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(p.x, p.y, PICKUP_R + 5, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = 1;
+    drawIcon(def, p.x, p.y, PICKUP_R);
+  }
+}
+function drawParticles() {
+  for (const p of particles) {
+    ctx.globalAlpha = Math.max(0, p.life / p.max);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+  }
+  ctx.globalAlpha = 1;
+}
+function drawBird() {
+  ctx.save();
+  ctx.translate(bird.x, bird.y);
+  // The shield blinks during its last 1.5 seconds.
+  if (power.shield && (power.shield > 1.5 || Math.floor(power.shield * 8) % 2)) {
+    ctx.fillStyle = "rgba(47,128,237,0.15)";
+    ctx.strokeStyle = POWERUPS.shield.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, 0, bird.r + 10, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+  ctx.rotate(Math.max(-0.4, Math.min(0.8, bird.vy / 500)));
+  if (recovery) {
+    ctx.strokeStyle = COLORS.navy;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(0, 0, bird.r + 7, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.fillStyle = COLORS.bird;
+  ctx.beginPath(); ctx.arc(0, 0, bird.r, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.beginPath(); ctx.arc(6, -5, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = COLORS.navy;
+  ctx.beginPath(); ctx.arc(8, -5, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = COLORS.beak;
+  ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(24, 4); ctx.lineTo(12, 8); ctx.fill();
+  ctx.restore();
+}
+function drawText(text, y, size, color) {
+  ctx.fillStyle = color || COLORS.navy;
+  ctx.font = "bold " + size + "px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(String(text), W / 2, y);
+}
+function drawUI() {
+  drawText(score, 58, 38);
+  if (weapon !== "blaster") {
+    drawIcon(POWERUPS[weapon], W - 22, 22, 9);
+    ctx.fillStyle = COLORS.navy;
+    ctx.font = "bold 11px system-ui, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText(WEAPONS[weapon].label, W - 38, 26);
+  }
+  let row = 0;
+  for (const k of ["rapid", "spread", "shield"]) {
+    if (!power[k]) continue;
+    const def = POWERUPS[k], y = 22 + row++ * 24;
+    drawIcon(def, 22, y, 9);
+    ctx.fillStyle = "rgba(7,59,92,0.15)";
+    ctx.fillRect(36, y - 3, 56, 6);
+    ctx.fillStyle = def.color;
+    ctx.fillRect(36, y - 3, 56 * power[k] / def.seconds, 6);
+  }
+  const boss = enemies.find(e => e.boss);
+  if (boss) {
+    ctx.fillStyle = "rgba(7,59,92,0.15)";
+    ctx.fillRect(110, 72, 180, 8);
+    ctx.fillStyle = COLORS.eye;
+    ctx.fillRect(110, 72, 180 * Math.max(0, boss.hp) / boss.maxHp, 8);
+  }
+  if (banner) {
+    ctx.globalAlpha = Math.min(1, banner.t * 2);
+    drawText(banner.text, 100, 20, banner.color);
+    ctx.globalAlpha = 1;
+  }
+  ctx.fillStyle = COLORS.ground;
+  ctx.fillRect(0, H - GROUND_H, W, GROUND_H);
+  ctx.fillStyle = "rgba(7,59,92,0.18)";
+  for (let i = 0; i < 11; i++) {
+    const x = ((i * 40 - elapsed * 90) % 440 + 440) % 440 - 40;
+    ctx.fillRect(x, H - GROUND_H, 20, 4);
+  }
+  drawText("Lives " + lives + " / " + START_LIVES + "   ·   Best " + best, H - 18, 16);
+  if (state === "playing") return;
+  ctx.fillStyle = COLORS.cream;
+  ctx.fillRect(24, 175, W - 48, 205);
+  ctx.strokeStyle = COLORS.navy; ctx.lineWidth = 2;
+  ctx.strokeRect(24, 175, W - 48, 205);
+  if (state === "start") {
+    drawText("FLAPPY AI JAM", 225, 32);
+    drawText("Flap to dodge. You fire automatically.", 268, 16);
+    drawText("Shoot the drones before they shoot you.", 295, 16);
+    drawText("Tap or press Space to start", 335, 18);
+    drawText("Grab power-ups. It gets harder as you go.", 362, 14);
+  } else if (state === "paused") {
+    drawText("PAUSED", 235, 32);
+    drawText("Tap or press Space to resume", 305, 18);
+  } else {
+    drawText("FLIGHT OVER", 225, 32);
+    drawText("Score " + score + "   ·   Best " + best, 275, 22);
+    drawText("Tap or press Space to try again", 330, 18);
+  }
+}
+
+// === AI PROMPT ZONE: GAME LOOP ===
+// Fixed steps make the same inputs play the same at 30, 60 and 144Hz.
+// Clamp long frames and pause on focus loss so a tab switch cannot cost a life.
+function loop(timestamp) {
+  if (lastTime !== null && state === "playing") {
+    accumulator += Math.min(0.05, Math.max(0, (timestamp - lastTime) / 1000));
+    while (accumulator + 1e-9 >= STEP && state === "playing") {
+      recovery = Math.max(0, recovery - STEP);
+      elapsed += STEP;
+      updateBird(STEP);
+      if (state === "playing") updateEnemies(STEP);
+      if (state === "playing") updatePowerups(STEP);
+      updateParticles(STEP);
+      accumulator = Math.max(0, accumulator - STEP);
+    }
+  }
+  lastTime = timestamp;
+  drawBackground(); drawPickups(); drawEnemies(); drawShots(); drawBird(); drawParticles(); drawUI();
+  requestAnimationFrame(loop);
+}
+addEventListener("keydown", event => {
+  if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+  if (event.target.closest?.("a, button, input, textarea, select, [contenteditable]")) return;
+  const isFlap = event.code === "Space" || event.code === "ArrowUp";
+  if (!isFlap && event.code !== "KeyP") return;
+  event.preventDefault();
+  if (event.repeat) return;
+  if (isFlap || state === "paused") flap();
+  else pause();
+});
+canvas.addEventListener("pointerdown", event => {
+  if (event.button !== 0) return;
+  event.preventDefault();
+  canvas.focus({ preventScroll:true });
+  flap();
+});
+addEventListener("blur", pause);
+document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
+reset();
+if (ctx) requestAnimationFrame(loop);
+else {
+  canvas.hidden = true;
+  statusEl.classList.remove("sr-only");
+  statusEl.textContent = "This browser cannot draw the game. Try another browser.";
+}
+</script>
+</body>
+</html>

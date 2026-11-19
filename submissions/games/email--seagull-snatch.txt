@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<!--
+  FLAPPY AI JAM · University of Portsmouth AI Society
+  This whole file is the starter. Copy it into Gemini Canvas or open it in a browser.
+  Ask for one change, play a round, and keep the last working version.
+
+  FOR AI CODING AGENTS
+  Keep the game in this one HTML file with inline CSS and JavaScript.
+  This build flaps with camera movement (Hand or Head mode), plus mouse and touch.
+  Keep those working, along with pause, restart and resizing.
+  Use Canvas shapes and inline styles. Avoid external images, libraries, fonts or packages.
+  Keep the labelled AI PROMPT ZONE comments and edit the working Canvas in place.
+  If you return code as text, return the complete file from <!DOCTYPE html> to </html>.
+  Keep best-score storage optional. Wrap all localStorage reads and writes in try/catch
+  so the game works inside sandboxed previews even when storage is unavailable.
+  Physics use seconds in a fixed-step loop. Never tie movement to screen refresh.
+  The default is a three-life game with a gradual difficulty ramp. Keep each gap reachable.
+  The labelled zones below show where to change artwork, physics, obstacles and scoring.
+  After editing, check the first launch, all three lives, restart and a phone-size view.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Seagull Snatch Camera Flight · Flappy AI Jam</title>
+<style>
+  :root { --ink:#021825; --navy:#073B5C; --cream:#F7F5F0; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--ink); color:var(--cream); color-scheme:dark;
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+  body { height:100svh; display:flex; flex-direction:column; overflow:hidden; }
+  header, footer { display:flex; align-items:center; padding:10px 16px; flex:none; }
+  header { justify-content:space-between; flex-wrap:wrap; gap:8px 12px; border-bottom:1px solid rgba(247,245,240,.14); }
+  .brand { font-size:13px; font-weight:650; letter-spacing:.14em; text-transform:uppercase; white-space:nowrap; }
+  .tools { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+  .tools button, .tools select { font:600 12px/1 system-ui,sans-serif; color:var(--cream); background:transparent;
+    border:1px solid rgba(247,245,240,.4); border-radius:999px; padding:7px 11px; cursor:pointer; white-space:nowrap; }
+  .tools select { padding:6px 8px; background:var(--ink); }
+  .tools button[aria-pressed="true"] { background:var(--cream); color:var(--ink); }
+  .tools button:disabled { opacity:.6; cursor:progress; }
+  .tools button:focus-visible, .tools select:focus-visible { outline:2px solid var(--cream); outline-offset:2px; }
+  .cam-tools { display:contents; }
+  .cam-tools[hidden], .tools [hidden] { display:none; }
+  #demoBtn { border-color:#FFC23C; color:#FFC23C; }
+  #demoBtn[aria-pressed="true"] { background:#FFC23C; color:var(--ink); }
+  .seg { display:inline-flex; }
+  .seg button:first-child { border-radius:999px 0 0 999px; }
+  .seg button:last-child { border-radius:0 999px 999px 0; border-left:0; }
+  .sens { display:inline-flex; align-items:center; gap:6px; font-size:12px; opacity:.85; }
+  .brand { order:1; } .tools { order:2; margin-left:auto; } .society { order:3; }
+  @media (max-width:560px) {
+    .society { order:2; } .tools { order:3; margin-left:0; }
+    footer#controls { letter-spacing:.05em; }
+    .tools { width:100%; flex-wrap:nowrap; gap:6px; }
+    .tools button, .tools select { padding:6px 8px; font-size:11px; }
+    .sens .label { display:none; }
+  }
+  .society { color:var(--cream); padding:3px; line-height:0; }
+  .society svg { width:36px; height:24px; }
+  .society:focus-visible { outline:2px solid var(--cream); outline-offset:2px; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  main { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:12px; }
+  canvas { background:var(--cream); display:block; touch-action:none; border-radius:16px;
+    outline-offset:4px; border:1px solid rgba(247,245,240,.28); box-shadow:0 18px 50px rgba(0,0,0,.45); }
+  canvas:focus-visible { outline:2px solid var(--cream); }
+  footer { gap:12px; flex-wrap:wrap; text-align:center; justify-content:center; border-top:1px solid rgba(247,245,240,.14);
+    font:11px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; letter-spacing:.16em; opacity:.72; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Seagull Snatch</div>
+  <div class="tools">
+  <button id="demoBtn" type="button" aria-pressed="false">▶ Demo (20s)</button>
+  <span class="cam-tools" id="camTools">
+  <button id="camBtn" type="button" aria-pressed="false">📷 Camera off</button>
+  <div class="seg" role="group" aria-label="Tracking mode">
+    <button type="button" data-mode="hand" aria-pressed="true">Hand</button><button type="button" data-mode="head" aria-pressed="false">Head</button>
+  </div>
+  <label class="sens"><span class="label">Sensitivity</span> <select id="sens" aria-label="Sensitivity"><option value="low">Low</option><option value="med" selected>Med</option><option value="high">High</option></select></label>
+  </span>
+  </div>
+  <a class="society" href="https://github.com/uopaisociety" target="_blank" rel="noopener noreferrer" aria-label="University of Portsmouth AI Society on GitHub (new tab)">
+    <svg viewBox="172 248 692 450" aria-hidden="true">
+      <g transform="translate(-22 0) translate(-575.84993366 -793.24494091) scale(4.2459962354)" fill="currentColor">
+        <g transform="translate(600 314) scale(1.2) translate(-600 -314)">
+          <g fill-rule="evenodd" transform="translate(175.41909833 172.66980773) scale(0.4500968704)">
+    <path transform="translate(169.0000000 187.6722702) scale(0.250000000)" d="M0.000 774.000C0.000 772.900 0.450 772.000 1.000 772.000C1.550 772.000 2.000 771.580 2.000 771.067C2.000 770.017 16.468 743.247 24.466 729.500C27.346 724.550 31.967 716.225 34.736 711.000C39.758 701.522 62.605 659.871 73.665 640.032L79.500 629.564 89.000 624.212C94.225 621.269 102.325 616.800 107.000 614.280C111.675 611.761 119.824 607.096 125.110 603.914C130.395 600.732 144.570 593.097 156.610 586.947C168.649 580.797 181.650 574.073 185.500 572.006C189.350 569.938 199.475 564.998 208.000 561.028C216.525 557.058 228.000 551.671 233.500 549.058C241.499 545.256 259.082 537.876 276.500 531.008C277.600 530.574 282.550 528.603 287.500 526.628C308.326 518.317 342.288 507.568 374.500 499.092C389.435 495.162 430.782 488.326 454.500 485.865C473.781 483.865 525.349 484.167 544.000 486.390C584.388 491.203 625.526 501.580 656.260 514.707C658.328 515.590 660.269 516.064 660.573 515.760C661.263 515.070 644.321 481.129 616.269 427.000C604.440 404.175 587.779 372.000 579.244 355.500C570.709 339.000 558.000 314.475 551.002 301.000C544.005 287.525 533.417 267.050 527.473 255.500C515.537 232.307 514.811 231.000 513.859 231.000C513.061 231.000 497.706 257.899 489.027 274.500C485.577 281.100 482.407 286.950 481.982 287.500C481.558 288.050 479.068 292.550 476.450 297.500C473.832 302.450 470.014 309.425 467.965 313.000C465.917 316.575 461.868 324.000 458.968 329.500C456.068 335.000 452.936 340.625 452.009 342.000C451.082 343.375 447.482 349.900 444.009 356.500C440.537 363.100 437.127 369.400 436.431 370.500C435.736 371.600 432.277 377.900 428.745 384.500C425.213 391.100 418.362 403.475 413.522 412.000C408.681 420.525 403.828 429.075 402.737 431.000C401.645 432.925 398.951 437.988 396.750 442.250C393.437 448.664 392.332 450.000 390.339 450.000C383.805 450.000 319.694 469.921 290.008 481.175C277.718 485.834 252.825 495.660 248.500 497.560C227.528 506.770 219.582 510.193 214.976 512.001C211.964 513.183 193.975 522.066 175.000 531.741C156.025 541.416 135.209 552.028 128.742 555.325C122.276 558.621 116.753 561.087 116.471 560.804C115.910 560.244 128.820 535.481 138.003 519.500C141.164 514.000 145.804 505.400 148.315 500.388C150.827 495.377 155.303 487.052 158.263 481.888C166.686 467.195 177.000 448.342 177.000 447.640C177.000 447.290 179.984 441.715 183.630 435.252C187.277 428.788 194.749 415.175 200.235 405.000C205.721 394.825 214.597 378.625 219.961 369.000C229.695 351.532 245.917 321.754 257.550 300.000C267.038 282.257 278.327 261.979 281.489 257.000C283.061 254.525 285.659 249.608 287.263 246.074C288.867 242.540 295.237 230.615 301.418 219.574C307.600 208.533 315.199 194.718 318.305 188.873C321.411 183.029 325.988 174.803 328.476 170.595C330.964 166.386 333.000 162.771 333.000 162.561C333.000 162.351 334.738 159.101 336.862 155.340C338.986 151.578 342.509 145.125 344.690 141.000C346.871 136.875 351.586 128.325 355.167 122.000C358.749 115.675 363.617 106.900 365.985 102.500C375.669 84.510 383.821 69.670 391.529 56.000C393.855 51.875 398.140 44.000 401.052 38.500C403.963 33.000 407.227 26.925 408.304 25.000C409.382 23.075 412.498 17.450 415.229 12.500C417.960 7.550 420.715 2.952 421.350 2.282C422.238 1.348 445.153 0.966 520.003 0.640C573.626 0.406 619.577 0.504 622.115 0.858L626.730 1.500 633.508 14.500C637.237 21.650 644.454 35.600 649.547 45.500C654.640 55.400 662.018 69.575 665.943 77.000C669.868 84.425 675.507 95.545 678.473 101.711C681.440 107.878 685.673 116.015 687.880 119.794C690.087 123.573 697.932 138.553 705.314 153.083C712.695 167.612 725.614 192.775 734.022 209.000C759.949 259.032 835.624 408.383 848.281 434.500C851.480 441.100 855.200 448.525 856.550 451.000C857.899 453.475 863.565 464.725 869.140 476.000C874.716 487.275 885.199 508.425 892.435 523.000C899.671 537.575 906.969 552.425 908.652 556.000C910.335 559.575 915.155 569.333 919.362 577.685L927.011 592.871 926.755 683.185L926.500 773.500 913.500 773.394C889.946 773.203 873.490 770.381 840.500 760.878C802.349 749.887 762.481 728.857 700.254 686.900C654.728 656.203 615.213 631.599 598.500 623.541C557.837 603.937 545.446 598.832 520.500 591.409C502.185 585.958 483.230 581.714 464.000 578.756C451.555 576.842 445.461 576.525 421.000 576.521C390.766 576.515 385.141 577.031 361.251 581.998C348.953 584.556 345.000 586.028 345.000 588.051C345.000 588.494 343.484 591.476 341.632 594.678C336.401 603.720 316.820 637.703 312.348 645.500C310.140 649.350 304.433 659.176 299.667 667.337C294.900 675.497 291.000 682.354 291.000 682.574C291.000 682.795 288.130 687.818 284.623 693.738C281.115 699.657 273.088 713.513 266.784 724.528C260.481 735.543 251.130 751.631 246.004 760.278L236.685 776.000 118.343 776.000L0.000 776.000 0.000 774.000ZM972.250 772.338C971.253 771.935 971.000 693.914 971.000 386.917L971.000 2.000 1085.500 2.000L1200.000 2.000 1200.000 387.500L1200.000 773.000 1086.750 772.921C1024.463 772.878 972.938 772.615 972.250 772.338Z"/>
+          </g>
+        </g>
+      </g>
+    </svg>
+  </a>
+  <span id="status" class="sr-only" role="status">Ready to play. Three lives.</span>
+</header>
+<main><canvas id="game" width="400" height="600" tabindex="0" role="img" aria-label="Seagull Snatch, a Flappy Bird style game. Raise your hand or nod up to the camera, or tap or click, to flap. P to pause. M to mute. C toggles the camera." aria-describedby="controls">Your browser needs Canvas 2D to play this game.</canvas></main>
+<footer id="controls">HAND / HEAD / TAP · C CAM · P PAUSE · M MUTE</footer>
+<script>
+"use strict";
+
+// === AI PROMPT ZONE: CONFIG ===
+// Positions are pixels, speed is pixels/second, gravity is pixels/second².
+// Start with colours or one mechanic. The first gates teach the rhythm. Speed and gap difficulty then ramp over a minute.
+const W = 400, H = 600;
+const GRAVITY = 880, FLAP_STRENGTH = -285, MAX_FALL_SPEED = 400;
+const PIPE_GAP = 205, MIN_PIPE_GAP = 145, PIPE_WIDTH = 58, PIPE_SPACING = 260;
+const PIPE_SPEED = 140, MAX_PIPE_SPEED = 220, RAMP_DELAY = 8, RAMP_SECONDS = 60;
+const GROUND_H = 50, START_LIVES = 3, RECOVERY_SECONDS = 1.2, STEP = 1 / 120;
+// === AI PROMPT ZONE: FEATURES ===
+// Switch each add-on idea on or off. The core game works with all of them off.
+const FEATURES = { gold:true, hearts:true, night:true, sound:true, handCam:true, streak:true, demo:true };
+const TAGLINE = FEATURES.gold && FEATURES.hearts ? "Gold chips +5. Hearts give a life."
+  : FEATURES.gold ? "Gold chips are worth +5." : FEATURES.hearts ? "Hearts give a life." : "Chips are worth +1.";
+
+const CHIP_CHANCE = 0.7;   // Chance that a gap holds a chip worth one bonus point.
+const GOLD_CHANCE = 0.1;   // Share of gaps holding a golden chip worth GOLD_POINTS.
+const HEART_CHANCE = 0.05; // Share of gaps holding a bonus life (from score 3, below MAX_LIVES).
+const GOLD_POINTS = 5, MAX_LIVES = 5, NIGHT_SCORE = 30, STREAK_STEP = 5;
+const COLORS = { navy:"#073B5C", cream:"#F7F5F0", skyTop:"#FF9E6B", skyLow:"#FDE6C4", sun:"#FFD36E",
+  sea:"#2F7FA8", seaDark:"#1D5F82", gull:"#FFFFFF", wing:"#AEB9C4", tip:"#1E2A33", beak:"#FFC23C",
+  stripe:"#D7263D", pipe:"#F7F5F0", ground:"#D9C7A7", pebble:"#B39D7C", chip:"#F2C14E", cone:"#C8102E", tower:"rgba(7,59,92,0.22)" };
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const statusEl = document.getElementById("status");
+let state = "start", bird, pipes, score, chips, lives, recovery, elapsed, nextCenter, night, dusk, popups;
+let streak = 0, bestStreak = 0, callout = null;
+let audio = null, muted = false;
+let overAt = 0, best = 0, lastTime = null, accumulator = 0;
+try {
+  const stored = Number(localStorage.getItem("flappyAiJamBest-seagull-snatch-deluxe"));
+  if (Number.isSafeInteger(stored) && stored > 0) best = stored;
+} catch { /* The game also works when browser storage is blocked. */ }
+
+function resize() {
+  const space = document.querySelector("main");
+  const scale = Math.max(0.01, Math.min((space.clientWidth - 24) / W, (space.clientHeight - 24) / H));
+  canvas.style.width = Math.floor(W * scale) + "px";
+  canvas.style.height = Math.floor(H * scale) + "px";
+}
+addEventListener("resize", resize);
+resize();
+
+function reset() {
+  bird = { x:100, y:285, vy:0, r:15 };
+  pipes = [];
+  score = chips = elapsed = recovery = night = dusk = streak = bestStreak = 0;
+  callout = null;
+  assisted = false;
+  popups = [];
+  lives = START_LIVES;
+  nextCenter = bird.y;
+}
+
+// === AI PROMPT ZONE: SOUND ===
+// Sounds are made with Web Audio oscillators, so there are no files. Any failure stays silent.
+function tone(type, from, to, length, volume) {
+  if (muted || !FEATURES.sound) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === "suspended") audio.resume();
+    const t = audio.currentTime, osc = audio.createOscillator(), gain = audio.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(from, t);
+    osc.frequency.exponentialRampToValueAtTime(to, t + length);
+    gain.gain.setValueAtTime(volume, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + length);
+    osc.connect(gain).connect(audio.destination);
+    osc.start(t); osc.stop(t + length);
+  } catch { /* Sound is optional. */ }
+}
+function squawk() { tone("sawtooth", 950, 520, 0.12, 0.05); tone("square", 700, 400, 0.1, 0.02); }
+const sounds = {
+  chip: () => tone("sine", 880, 1320, 0.12, 0.08),
+  gold: () => { tone("triangle", 660, 1320, 0.25, 0.1); tone("sine", 990, 1980, 0.3, 0.06); },
+  heart: () => tone("sine", 520, 1040, 0.35, 0.1),
+  hit: () => tone("square", 180, 60, 0.25, 0.08),
+  streak: () => { tone("triangle", 523, 784, 0.15, 0.08); tone("triangle", 784, 1568, 0.3, 0.06); },
+};
+function toggleMute() {
+  muted = !muted;
+  statusEl.textContent = muted ? "Sound off." : "Sound on.";
+}
+
+// === AI PROMPT ZONE: PHYSICS & INPUT ===
+// Each press is one flap. Ignore a held key's repeat events.
+// A resume input leaves the current position intact. A restart creates a new run.
+function flap() {
+  if (!ctx || document.hidden) return;
+  const freshStart = state !== "playing";
+  if (state === "paused") {
+    state = "playing";
+  } else {
+    if (state === "over") {
+      if (performance.now() - overAt < 350) return;
+      reset();
+    }
+    state = "playing";
+    bird.vy = FLAP_STRENGTH;
+    squawk();
+  }
+  if (freshStart) {
+    lastTime = performance.now();
+    accumulator = 0;
+    statusEl.textContent = "Playing. " + lives + " lives. Keep flapping.";
+  }
+}
+function pause() {
+  if (state !== "playing") return;
+  if (demo) stopDemo(false);
+  state = "paused";
+  statusEl.textContent = "Paused. Tap, raise your hand or nod up to resume.";
+  lastTime = null;
+  accumulator = 0;
+}
+function updateBird(dt) {
+  bird.vy = Math.min(MAX_FALL_SPEED, bird.vy + GRAVITY * dt);
+  bird.y += bird.vy * dt;
+  // The ceiling is forgiving. The floor uses the same life/recovery rule as pipes.
+  if (bird.y < bird.r) {
+    bird.y = bird.r;
+    bird.vy = Math.max(0, bird.vy);
+  }
+  if (bird.y + bird.r > H - GROUND_H) {
+    bird.y = H - GROUND_H - bird.r;
+    bird.vy = 0;
+    loseLife();
+  }
+}
+
+// === AI PROMPT ZONE: PIPES / LEVEL ===
+// The first two gaps are centered. Later gaps move farther as the run progresses.
+// Store each new gap on its pipe. Existing gaps stay still while the player approaches.
+// Every visible pipe endcap belongs to its collision box.
+function updatePipes(dt) {
+  const difficulty = Math.min(1, Math.max(0, (elapsed - RAMP_DELAY) / RAMP_SECONDS));
+  const speed = PIPE_SPEED + (MAX_PIPE_SPEED - PIPE_SPEED) * difficulty;
+  const last = pipes[pipes.length - 1];
+  if (!last || last.x <= W - PIPE_SPACING) {
+    const gap = PIPE_GAP + (MIN_PIPE_GAP - PIPE_GAP) * difficulty;
+    const drift = 55 + 30 * difficulty;
+    if (score > 0) nextCenter = Math.max(gap / 2 + 50,
+      Math.min(H - GROUND_H - gap / 2 - 50, nextCenter + (Math.random() * 2 - 1) * drift));
+    const roll = Math.random();
+    let item = null;
+    if (demo) item = nextDemoItem();
+    else if (FEATURES.hearts && score >= 3 && lives < MAX_LIVES && roll < HEART_CHANCE) item = "heart";
+    else if (FEATURES.gold && roll < HEART_CHANCE + GOLD_CHANCE) item = "gold";
+    else if (roll < CHIP_CHANCE) item = "chip";
+    pipes.push({ x:last ? W : W + 100, top:nextCenter - gap / 2, gap, passed:false, item });
+  }
+  for (const pipe of pipes) {
+    pipe.x -= speed * dt;
+    const overlaps = bird.x + bird.r - 3 > pipe.x && bird.x - bird.r + 3 < pipe.x + PIPE_WIDTH;
+    const outsideGap = bird.y - bird.r + 3 < pipe.top || bird.y + bird.r - 3 > pipe.top + pipe.gap;
+    if (!recovery && overlaps && outsideGap) {
+      loseLife(pipe);
+      if (state === "over") return;
+    }
+    // A chip sits in the middle of the gap, so grabbing it never needs a harder line.
+    if (pipe.item) {
+      const dx = pipe.x + PIPE_WIDTH / 2 - bird.x, dy = pipe.top + pipe.gap / 2 - bird.y;
+      if (dx * dx + dy * dy < (bird.r + 12) ** 2) collect(pipe);
+    }
+    if (!pipe.passed && pipe.x + PIPE_WIDTH < bird.x - bird.r) {
+      pipe.passed = true;
+      if (pipe.item === "chip" || pipe.item === "gold") breakStreak();
+      addPoint(1);
+    }
+  }
+  pipes = pipes.filter(pipe => pipe.x + PIPE_WIDTH > 0);
+  // Night fades in gently once the score reaches NIGHT_SCORE.
+  const target = FEATURES.night && score >= NIGHT_SCORE ? 1 : 0;
+  night += (target - night) * Math.min(1, dt * 0.8);
+  // The sunset deepens as the score climbs toward NIGHT_SCORE.
+  const duskTarget = FEATURES.night ? Math.min(1, score / NIGHT_SCORE) : 0;
+  dusk += (duskTarget - dusk) * Math.min(1, dt * 0.8);
+  if (callout) { callout.t -= dt; if (callout.t <= 0) callout = null; }
+  for (const pop of popups) { pop.t -= dt; pop.y -= 40 * dt; }
+  popups = popups.filter(pop => pop.t > 0);
+}
+function collect(pipe) {
+  const x = pipe.x + PIPE_WIDTH / 2, y = pipe.top + pipe.gap / 2;
+  if (pipe.item === "heart") {
+    lives = Math.min(MAX_LIVES, lives + 1);
+    popups.push({ x, y, text:"+1 LIFE", t:0.9 });
+    statusEl.textContent = "Bonus life. " + lives + " lives.";
+    sounds.heart();
+  } else {
+    const points = pipe.item === "gold" ? GOLD_POINTS : 1;
+    chips++;
+    addPoint(points);
+    if (FEATURES.streak) {
+      streak++;
+      bestStreak = Math.max(bestStreak, streak);
+      if (streak % STREAK_STEP === 0) {
+        callout = { text:"STREAK ×" + streak, t:1.3 };
+        statusEl.textContent = streak + " chips in a row.";
+        sounds.streak();
+      }
+    }
+    popups.push({ x, y, text:"+" + points, t:0.8 });
+    sounds[pipe.item]();
+  }
+  pipe.item = null;
+}
+
+// === AI PROMPT ZONE: SCORE & GAME OVER ===
+function breakStreak() { streak = 0; }
+function addPoint(points) {
+  score += points;
+  if (score > best && !assisted) {
+    best = score;
+    try { localStorage.setItem("flappyAiJamBest-seagull-snatch-deluxe", String(best)); } catch { /* Optional. */ }
+  }
+}
+// One contact costs one life. Recovery prevents overlapping obstacles taking all lives.
+// Return immediately when the last life is lost. Never score after game over.
+function loseLife(pipe) {
+  if (recovery || state !== "playing") return;
+  lives--;
+  breakStreak();
+  if (!lives && demo) { stopDemo(true); return; }
+  sounds.hit();
+  if (!lives) {
+    state = "over";
+    overAt = performance.now();
+    statusEl.textContent = "Flight finished. Score " + score + ", chips " + chips + ". Tap, raise your hand or nod up to try again.";
+    return;
+  }
+  recovery = RECOVERY_SECONDS;
+  const next = pipe || pipes.find(item => item.x + PIPE_WIDTH >= bird.x - bird.r);
+  bird.y = next ? next.top + next.gap / 2 : 285;
+  bird.vy = 0;
+  statusEl.textContent = lives + (lives === 1 ? " life left." : " lives left.") + " Keep flapping.";
+}
+
+// === AI PROMPT ZONE: GRAPHICS ===
+// Draw with shapes. Keep controls and the score legible over any new artwork.
+function wrapX(x, span) { return ((x % span) + span) % span; }
+function mix(a, b, t) {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const ch = shift => Math.round(((pa >> shift) & 255) + (((pb >> shift) & 255) - ((pa >> shift) & 255)) * t);
+  return "rgb(" + ch(16) + "," + ch(8) + "," + ch(0) + ")";
+}
+function drawBackground() {
+  const sky = ctx.createLinearGradient(0, 0, 0, H - GROUND_H);
+  sky.addColorStop(0, mix(COLORS.skyTop, "#B44C7A", dusk)); sky.addColorStop(1, mix(COLORS.skyLow, "#FFA46B", dusk));
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 1 - night;
+  ctx.fillStyle = mix(COLORS.sun, "#FF6B3D", dusk);
+  ctx.beginPath(); ctx.arc(300, 150 + 150 * dusk, 46 + 8 * dusk, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+  if (night > 0.01) {
+    ctx.fillStyle = "rgba(10,18,48," + (0.82 * night) + ")";
+    ctx.fillRect(0, 0, W, H - GROUND_H);
+    ctx.fillStyle = "rgba(255,255,255," + night + ")";
+    for (let i = 0; i < 40; i++) {
+      const sx = wrapX(i * 97 - elapsed * 4, W), sy = (i * 53) % 320 + 10;
+      const twinkle = 1 + Math.sin(elapsed * 3 + i) * 0.5;
+      ctx.fillRect(sx, sy, twinkle, twinkle);
+    }
+    ctx.globalAlpha = night;
+    ctx.fillStyle = "#F4F1DE";
+    ctx.beginPath(); ctx.arc(300, 120, 30, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(180,175,150,0.6)";
+    ctx.beginPath(); ctx.arc(290, 112, 6, 0, Math.PI * 2); ctx.arc(310, 130, 4, 0, Math.PI * 2); ctx.arc(306, 106, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  // A slow distant sail-shaped tower on the harbour skyline.
+  const tx = wrapX(320 - elapsed * 8, W + 160) - 80, base = H - GROUND_H - 60;
+  ctx.fillStyle = COLORS.tower;
+  ctx.beginPath();
+  ctx.moveTo(tx - 22, base); ctx.quadraticCurveTo(tx - 20, base - 120, tx, base - 210);
+  ctx.lineTo(tx + 4, base - 210); ctx.quadraticCurveTo(tx + 34, base - 110, tx + 26, base);
+  ctx.lineTo(tx + 14, base); ctx.quadraticCurveTo(tx + 18, base - 100, tx + 2, base - 170);
+  ctx.quadraticCurveTo(tx - 8, base - 90, tx - 10, base); ctx.closePath(); ctx.fill();
+  ctx.fillRect(tx, base - 250, 3, 42);
+  ctx.fillStyle = night > 0.5 ? "rgba(200,210,235,0.35)" : "#FFF3E6";
+  for (let i = 0; i < 4; i++) {
+    const x = wrapX(i * 140 - elapsed * 24, W + 120) - 60;
+    ctx.beginPath();
+    ctx.arc(x, 70 + i * 40, 24, 0, Math.PI * 2);
+    ctx.arc(x + 26, 64 + i * 40, 18, 0, Math.PI * 2);
+    ctx.arc(x - 22, 74 + i * 40, 14, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const seaTop = H - GROUND_H - 60;
+  ctx.fillStyle = night > 0.5 ? COLORS.seaDark : mix(COLORS.sea, "#2B5C86", dusk);
+  ctx.fillRect(0, seaTop, W, 60);
+  ctx.strokeStyle = night > 0.5 ? "rgba(200,220,255,0.35)" : COLORS.seaDark; ctx.lineWidth = 2;
+  for (let row = 0; row < 3; row++) {
+    ctx.beginPath();
+    const off = wrapX(elapsed * (30 + row * 15), 40);
+    for (let x = -40 + off; x < W + 40; x += 40) {
+      ctx.moveTo(x, seaTop + 14 + row * 16);
+      ctx.quadraticCurveTo(x + 10, seaTop + 8 + row * 16, x + 20, seaTop + 14 + row * 16);
+    }
+    ctx.stroke();
+  }
+}
+function drawChip(x, y) {
+  ctx.fillStyle = COLORS.chip;
+  for (let i = -2; i <= 2; i++) ctx.fillRect(x + i * 4 - 1.5, y - 14 + Math.abs(i) * 2, 3, 12);
+  ctx.fillStyle = COLORS.cone;
+  ctx.beginPath(); ctx.moveTo(x - 11, y - 4); ctx.lineTo(x + 11, y - 4); ctx.lineTo(x + 5, y + 12); ctx.lineTo(x - 5, y + 12); ctx.fill();
+  ctx.fillStyle = COLORS.cream;
+  ctx.fillRect(x - 7, y + 1, 14, 3);
+}
+function drawGold(x, y) {
+  ctx.fillStyle = "rgba(255,215,0,0.35)";
+  ctx.beginPath(); ctx.arc(x, y, 18 + Math.sin(elapsed * 8) * 3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#FFD700";
+  for (let i = -2; i <= 2; i++) ctx.fillRect(x + i * 4 - 1.5, y - 14 + Math.abs(i) * 2, 3, 12);
+  ctx.fillStyle = "#B8860B";
+  ctx.beginPath(); ctx.moveTo(x - 11, y - 4); ctx.lineTo(x + 11, y - 4); ctx.lineTo(x + 5, y + 12); ctx.lineTo(x - 5, y + 12); ctx.fill();
+  ctx.fillStyle = "#FFF8DC";
+  ctx.fillRect(x - 7, y + 1, 14, 3);
+}
+function drawHeart(x, y) {
+  const s = 1 + Math.sin(elapsed * 6) * 0.1;
+  ctx.save();
+  ctx.translate(x, y); ctx.scale(s, s);
+  ctx.fillStyle = COLORS.cone;
+  ctx.beginPath();
+  ctx.moveTo(0, 10);
+  ctx.bezierCurveTo(-16, -2, -10, -16, 0, -7);
+  ctx.bezierCurveTo(10, -16, 16, -2, 0, 10);
+  ctx.fill();
+  ctx.strokeStyle = COLORS.cream; ctx.lineWidth = 2; ctx.stroke();
+  ctx.restore();
+}
+function drawPillar(x, y, h) {
+  if (h <= 0) return;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x, y, PIPE_WIDTH, h); ctx.clip();
+  ctx.fillStyle = COLORS.pipe;
+  ctx.fillRect(x, y, PIPE_WIDTH, h);
+  ctx.fillStyle = COLORS.stripe;
+  for (let sy = Math.floor(y / 48) * 48; sy < y + h; sy += 48) ctx.fillRect(x, sy, PIPE_WIDTH, 24);
+  ctx.fillStyle = "rgba(0,0,0,0.12)";
+  ctx.fillRect(x + PIPE_WIDTH - 12, y, 12, h);
+  ctx.restore();
+}
+function drawPipes() {
+  for (const pipe of pipes) {
+    const bottom = pipe.top + pipe.gap;
+    drawPillar(pipe.x, 0, pipe.top);
+    drawPillar(pipe.x, bottom, H - GROUND_H - bottom);
+    ctx.fillStyle = COLORS.navy;
+    ctx.fillRect(pipe.x, pipe.top - 16, PIPE_WIDTH, 16);
+    ctx.fillRect(pipe.x, bottom, PIPE_WIDTH, 16);
+    const ix = pipe.x + PIPE_WIDTH / 2, iy = pipe.top + pipe.gap / 2;
+    if (pipe.item === "chip") drawChip(ix, iy);
+    else if (pipe.item === "gold") drawGold(ix, iy);
+    else if (pipe.item === "heart") drawHeart(ix, iy);
+  }
+}
+function drawBird() {
+  ctx.save();
+  ctx.translate(bird.x, bird.y);
+  ctx.rotate(Math.max(-0.4, Math.min(0.8, bird.vy / 500)));
+  if (recovery) {
+    ctx.strokeStyle = COLORS.navy;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(0, 0, bird.r + 7, 0, Math.PI * 2); ctx.stroke();
+  }
+  // Tail
+  ctx.fillStyle = COLORS.wing;
+  ctx.beginPath(); ctx.moveTo(-12, -2); ctx.lineTo(-24, -7); ctx.lineTo(-22, 5); ctx.fill();
+  // Body
+  ctx.fillStyle = COLORS.gull;
+  ctx.beginPath(); ctx.ellipse(0, 2, bird.r + 3, bird.r - 3, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(9, -6, 9, 0, Math.PI * 2); ctx.fill();
+  // Wing flaps while rising and glides while falling.
+  const lift = bird.vy < 0 ? Math.sin(elapsed * 28) * 0.6 - 0.5 : 0.25;
+  ctx.save();
+  ctx.translate(-3, 0); ctx.rotate(lift);
+  ctx.fillStyle = COLORS.wing;
+  ctx.beginPath(); ctx.ellipse(-6, 0, 14, 6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = COLORS.tip;
+  ctx.beginPath(); ctx.ellipse(-17, 0, 4, 4, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  // Eye and beak
+  ctx.fillStyle = COLORS.tip;
+  ctx.beginPath(); ctx.arc(12, -8, 2.5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = COLORS.beak;
+  ctx.beginPath(); ctx.moveTo(16, -5); ctx.lineTo(28, -2); ctx.lineTo(16, 1); ctx.fill();
+  ctx.fillStyle = COLORS.cone;
+  ctx.beginPath(); ctx.arc(23, -1, 1.6, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+function drawText(text, y, size, color, x) {
+  ctx.fillStyle = color || COLORS.navy;
+  ctx.font = "bold " + size + "px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(String(text), x === undefined ? W / 2 : x, y);
+}
+function drawUI() {
+  const light = night > 0.5;
+  drawText(score, 58, 38, light ? COLORS.cream : COLORS.navy);
+  for (const pop of popups) drawText(pop.text, pop.y, 18, light ? "#FFD700" : COLORS.navy, pop.x);
+  if (muted) drawText("MUTED", 24, 12, light ? COLORS.cream : COLORS.navy, W - 36);
+  if (FEATURES.streak && streak >= 2) drawText("×" + streak + " streak", 80, 14, light ? "#FFD700" : COLORS.navy);
+  if (callout) {
+    const grow = 1 + Math.max(0, callout.t - 1.1) * 2;
+    ctx.globalAlpha = Math.min(1, callout.t * 2);
+    drawText(callout.text, 150, Math.round(30 * grow), light ? "#FFD700" : COLORS.stripe);
+    ctx.globalAlpha = 1;
+  }
+  ctx.fillStyle = COLORS.ground;
+  ctx.fillRect(0, H - GROUND_H, W, GROUND_H);
+  ctx.fillStyle = COLORS.pebble;
+  for (let i = 0; i < 18; i++) {
+    ctx.beginPath();
+    ctx.ellipse(wrapX(i * 47 - elapsed * 140, W + 20) - 10, H - GROUND_H + 6 + (i % 3) * 3, 4, 2.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  drawText("Lives " + lives + "   ·   Chips " + chips + "   ·   Best " + best, H - 16, 16);
+  drawCamHud(light);
+  if (state === "playing") return;
+  ctx.fillStyle = COLORS.cream;
+  ctx.fillRect(24, 175, W - 48, 205);
+  ctx.strokeStyle = COLORS.navy; ctx.lineWidth = 2;
+  ctx.strokeRect(24, 175, W - 48, 205);
+  if (state === "start") {
+    drawText("SEAGULL SNATCH", 220, 32);
+    drawText("Steal chips. Dodge the pillars.", 258, 18);
+    drawText(TAGLINE, 286, 16);
+    drawText(FEATURES.handCam ? "Raise your hand, nod up or tap to fly" : "Tap or click to fly", 328, 17);
+    if (FEATURES.handCam) drawText(cam.on ? "Camera on · " + (cam.mode === "head" ? "Head" : "Hand") + " mode" : "Turn on the camera in the header (C)", 356, 14);
+  } else if (state === "paused") {
+    drawText("PAUSED", 235, 32);
+    drawText("Tap, raise your hand or nod up", 305, 18);
+  } else {
+    drawText("FLIGHT OVER", 225, 32);
+    drawText("Score " + score + "   ·   Chips " + chips, 262, 22);
+    drawText("Best " + best + (FEATURES.streak ? "   ·   Longest streak " + bestStreak : ""), 295, 16);
+    drawText("Tap, raise your hand or nod to retry", 335, 17);
+    if (assisted) drawText("Demo run, best score not saved", 362, 13);
+  }
+}
+
+// === AI PROMPT ZONE: CAMERA FLIGHT ===
+// The webcam is read on a small offscreen canvas. No frames leave the device and no library is used.
+// Frame differencing finds movement, and the top of the moving area becomes the marker.
+// Hand mode: one flap when the marker rises above a fixed trigger line. It re-arms below the re-arm line.
+// Head mode: the trigger line follows your resting head height, and one quick upward nod past it is one flap.
+// Each flap has a cooldown, so holding still or waving cannot flap again until the marker re-arms.
+const CAM_W = 64, CAM_H = 48, CAM_FPS = 30, MAX_MOTION_SHARE = 0.55;
+const SENSITIVITY = {
+  low:  { diff:40, minPixels:50, handLine:0.34, headRise:0.12 },
+  med:  { diff:28, minPixels:30, handLine:0.42, headRise:0.08 },
+  high: { diff:18, minPixels:16, handLine:0.50, headRise:0.05 },
+};
+const MODES = {
+  hand: { label:"HAND", cooldown:0.28, smooth:0.6, region:[0, 1], hint:["RAISE HAND ↑", "LOWER HAND ↓"] },
+  head: { label:"HEAD", cooldown:0.45, smooth:0.5, region:[0.2, 0.8], hint:["NOD UP ↑", "SETTLE ↓"] },
+};
+const HUD_X = 10, HUD_Y = 10, HUD_W = 96, HUD_H = 72;
+const cam = { on:false, starting:false, video:null, stream:null, bctx:null, prev:null, mode:"hand", sens:"med",
+  x:0.5, y:1, base:0.5, seenAt:0, armed:true, lastFlap:0, lastSample:0, message:"", messageUntil:0 };
+try {
+  const saved = JSON.parse(localStorage.getItem("seagullSnatchCam") || "{}");
+  if (MODES[saved.mode]) cam.mode = saved.mode;
+  if (SENSITIVITY[saved.sens]) cam.sens = saved.sens;
+} catch { /* Settings are optional. */ }
+const camTools = document.getElementById("camTools");
+const camBtn = document.getElementById("camBtn");
+const sensSelect = document.getElementById("sens");
+function saveCamSettings() {
+  try { localStorage.setItem("seagullSnatchCam", JSON.stringify({ mode:cam.mode, sens:cam.sens })); } catch { /* Optional. */ }
+}
+function triggerLine() {
+  return cam.mode === "hand" ? SENSITIVITY[cam.sens].handLine : Math.max(0.05, cam.base - SENSITIVITY[cam.sens].headRise);
+}
+function rearmLine() {
+  return cam.mode === "hand" ? triggerLine() + 0.16 : cam.base - SENSITIVITY[cam.sens].headRise * 0.35;
+}
+function camNotice(text, seconds) {
+  cam.message = text;
+  cam.messageUntil = performance.now() + seconds * 1000;
+  statusEl.textContent = text;
+}
+function updateCamControls() {
+  camBtn.disabled = cam.starting;
+  camBtn.textContent = cam.starting ? "📷 Starting…" : cam.on ? "📷 Camera on" : "📷 Camera off";
+  camBtn.setAttribute("aria-pressed", String(cam.on));
+  for (const btn of camTools.querySelectorAll("[data-mode]")) btn.setAttribute("aria-pressed", String(btn.dataset.mode === cam.mode));
+  sensSelect.value = cam.sens;
+}
+function setMode(mode) {
+  if (!MODES[mode]) return;
+  cam.mode = mode;
+  cam.armed = true;
+  cam.base = cam.y;
+  saveCamSettings();
+  updateCamControls();
+  camNotice(mode === "head" ? "Head mode. Nod up quickly to flap." : "Hand mode. Raise your hand above the line to flap.", 3);
+}
+async function startCam() {
+  if (!FEATURES.handCam || cam.on || cam.starting) return;
+  if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    camNotice("Camera not available here. Tap or click to fly.", 6);
+    return;
+  }
+  cam.starting = true;
+  updateCamControls();
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video:true });
+    const video = document.createElement("video");
+    video.muted = true; video.playsInline = true; video.srcObject = stream;
+    await video.play();
+    const buffer = document.createElement("canvas");
+    buffer.width = CAM_W; buffer.height = CAM_H;
+    Object.assign(cam, { on:true, video, stream, bctx:buffer.getContext("2d", { willReadFrequently:true }), prev:null, armed:true, y:0.6, base:0.6 });
+    const track = stream.getVideoTracks()[0];
+    if (track) track.addEventListener("ended", () => stopCam("Camera disconnected. Tap or click to fly."));
+    camNotice(cam.mode === "head" ? "Camera on. Nod up quickly to flap." : "Camera on. Raise your hand above the line to flap.", 4);
+  } catch (err) {
+    const name = err && err.name;
+    camNotice(name === "NotAllowedError" || name === "SecurityError" ? "Camera blocked. Tap or click to fly instead."
+      : name === "NotFoundError" || name === "OverconstrainedError" ? "No camera found. Tap or click to fly instead."
+      : "Camera could not start. Tap or click to fly instead.", 6);
+  } finally {
+    cam.starting = false;
+    updateCamControls();
+  }
+}
+function stopCam(message) {
+  if (cam.stream) cam.stream.getTracks().forEach(track => track.stop());
+  Object.assign(cam, { on:false, stream:null, video:null, prev:null });
+  updateCamControls();
+  camNotice(message || "Camera off. Tap or click to fly.", 3);
+}
+function toggleCam() { if (cam.on) stopCam(); else startCam(); }
+function sampleCam(now) {
+  if (demo || !cam.on || !cam.video || cam.video.readyState < 2 || now - cam.lastSample < 1000 / CAM_FPS) return;
+  cam.lastSample = now;
+  const c = cam.bctx, sens = SENSITIVITY[cam.sens], mode = MODES[cam.mode];
+  c.save(); c.translate(CAM_W, 0); c.scale(-1, 1); c.drawImage(cam.video, 0, 0, CAM_W, CAM_H); c.restore();
+  let data;
+  try { data = c.getImageData(0, 0, CAM_W, CAM_H).data; } catch { return; }
+  const gray = new Uint8Array(CAM_W * CAM_H);
+  for (let i = 0, j = 0; i < gray.length; i++, j += 4) gray[i] = (data[j] * 77 + data[j + 1] * 150 + data[j + 2] * 29) >> 8;
+  const prev = cam.prev;
+  cam.prev = gray;
+  if (!prev) return;
+  const x0 = Math.floor(mode.region[0] * CAM_W), x1 = Math.ceil(mode.region[1] * CAM_W);
+  const rows = new Uint16Array(CAM_H), rowX = new Float32Array(CAM_H);
+  let moving = 0;
+  for (let y = 0; y < CAM_H; y++) {
+    for (let x = x0; x < x1; x++) {
+      const i = y * CAM_W + x;
+      if (Math.abs(gray[i] - prev[i]) > sens.diff) { rows[y]++; rowX[y] += x; moving++; }
+    }
+  }
+  if (moving < sens.minPixels || moving > (x1 - x0) * CAM_H * MAX_MOTION_SHARE) return;
+  // The top fifth of the moving pixels is where a raised hand or the top of the head is.
+  let count = 0, sumX = 0, row = 0;
+  for (; row < CAM_H; row++) {
+    count += rows[row]; sumX += rowX[row];
+    if (count >= moving * 0.2) break;
+  }
+  cam.x += (sumX / count / CAM_W - cam.x) * mode.smooth;
+  cam.y += ((row + 0.5) / CAM_H - cam.y) * mode.smooth;
+  cam.seenAt = now;
+  // In Head mode the resting height drifts slowly toward where the head is, so the line follows you.
+  if (cam.mode === "head" && cam.armed) cam.base += (cam.y - cam.base) * 0.08;
+  if (cam.armed && cam.y < triggerLine() && now - cam.lastFlap > mode.cooldown * 1000) {
+    cam.armed = false;
+    cam.lastFlap = now;
+    flap();
+  } else if (!cam.armed && cam.y > rearmLine()) {
+    cam.armed = true;
+  }
+}
+function drawCamHud(light) {
+  const now = performance.now();
+  if (now < cam.messageUntil) {
+    ctx.font = "600 13px system-ui, sans-serif";
+    const width = Math.min(W - 24, ctx.measureText(cam.message).width + 24);
+    ctx.fillStyle = "rgba(7,59,92,0.9)";
+    ctx.fillRect((W - width) / 2, 98, width, 26);
+    drawText(cam.message, 116, 13, COLORS.cream);
+  }
+  if (demo) { drawDemoHud(light); return; }
+  if (!cam.on || !cam.video) return;
+  ctx.save();
+  ctx.fillStyle = COLORS.navy;
+  ctx.fillRect(HUD_X - 2, HUD_Y - 2, HUD_W + 4, HUD_H + 4);
+  ctx.translate(HUD_X + HUD_W, HUD_Y); ctx.scale(-1, 1);
+  try { ctx.drawImage(cam.video, 0, 0, HUD_W, HUD_H); } catch { /* A frame may not be ready yet. */ }
+  ctx.restore();
+  ctx.fillStyle = "rgba(7,59,92,0.75)";
+  ctx.fillRect(HUD_X, HUD_Y, 34, 14);
+  ctx.textAlign = "left";
+  ctx.font = "bold 10px system-ui, sans-serif";
+  ctx.fillStyle = COLORS.cream;
+  ctx.fillText(MODES[cam.mode].label, HUD_X + 4, HUD_Y + 11);
+  const lineY = HUD_Y + HUD_H * triggerLine();
+  ctx.strokeStyle = COLORS.beak; ctx.lineWidth = 2;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(HUD_X, lineY); ctx.lineTo(HUD_X + HUD_W, lineY); ctx.stroke();
+  ctx.setLineDash([]);
+  const rearmY = HUD_Y + HUD_H * Math.min(1, rearmLine());
+  ctx.strokeStyle = "rgba(247,245,240,0.45)"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(HUD_X, rearmY); ctx.lineTo(HUD_X + HUD_W, rearmY); ctx.stroke();
+  const fresh = now - cam.seenAt < 400, flash = now - cam.lastFlap < 200;
+  ctx.fillStyle = flash ? COLORS.beak : cam.armed ? "#3DDC84" : COLORS.stripe;
+  ctx.globalAlpha = fresh ? 1 : 0.35;
+  ctx.beginPath(); ctx.arc(HUD_X + cam.x * HUD_W, HUD_Y + cam.y * HUD_H, flash ? 7 : 5, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = light ? COLORS.cream : COLORS.navy;
+  ctx.fillText(MODES[cam.mode].hint[cam.armed ? 0 : 1], HUD_X, HUD_Y + HUD_H + 14);
+}
+if (FEATURES.handCam) {
+  camBtn.addEventListener("click", () => { toggleCam(); canvas.focus({ preventScroll:true }); });
+  for (const btn of camTools.querySelectorAll("[data-mode]")) {
+    btn.addEventListener("click", () => { setMode(btn.dataset.mode); canvas.focus({ preventScroll:true }); });
+  }
+  sensSelect.addEventListener("change", () => {
+    if (SENSITIVITY[sensSelect.value]) cam.sens = sensSelect.value;
+    saveCamSettings();
+    camNotice("Sensitivity " + sensSelect.options[sensSelect.selectedIndex].text + ".", 2);
+    canvas.focus({ preventScroll:true });
+  });
+  updateCamControls();
+} else {
+  camTools.hidden = true;
+}
+
+// === AI PROMPT ZONE: DEMO ===
+// A 20-second self-playing showcase. The autopilot flaps toward the centre of each gap, which is
+// also where every pickup sits, so it snatches chips, gold chips and hearts on the way.
+// The camera HUD shows simulated trigger pulses: HAND for the first 10 seconds, then HEAD.
+// Tap, click or P hands control back to the player. A demo run never saves a best score.
+const DEMO_SECONDS = 20;
+const DEMO_ITEMS = ["chip", "gold", "chip", "heart", "chip", "chip", "gold", "chip", "heart", "chip"];
+let demo = null, assisted = false;
+const demoBtn = document.getElementById("demoBtn");
+function updateDemoButton() {
+  demoBtn.textContent = demo ? "■ Stop demo" : "▶ Demo (20s)";
+  demoBtn.setAttribute("aria-pressed", String(Boolean(demo)));
+}
+function startDemo() {
+  if (!ctx || !FEATURES.demo) return;
+  reset();
+  assisted = true;
+  demo = { t:DEMO_SECONDS, sinceFlap:1, items:0, pulseAt:-10 };
+  state = "playing";
+  lastTime = performance.now();
+  accumulator = 0;
+  statusEl.textContent = "Demo running. Tap, click or press P to take over.";
+  updateDemoButton();
+}
+function stopDemo(finished) {
+  if (!demo) return;
+  demo = null;
+  updateDemoButton();
+  if (finished) {
+    reset();
+    state = "start";
+    statusEl.textContent = "Demo finished. Tap to play.";
+  } else {
+    statusEl.textContent = "You have control. " + lives + " lives.";
+  }
+}
+function nextDemoItem() {
+  let item = DEMO_ITEMS[demo.items++ % DEMO_ITEMS.length];
+  if (item === "gold" && !FEATURES.gold) item = "chip";
+  if (item === "heart" && (!FEATURES.hearts || lives >= MAX_LIVES)) item = "chip";
+  return item;
+}
+// Runs inside the fixed step, so the demo plays the same at any refresh rate.
+function demoStep(dt) {
+  demo.t -= dt;
+  demo.sinceFlap += dt;
+  if (demo.t <= 0) { stopDemo(true); return; }
+  const next = pipes.find(pipe => pipe.x + PIPE_WIDTH >= bird.x - bird.r);
+  const target = next ? next.top + next.gap / 2 : H * 0.45;
+  // Flap once the gull is falling and has dropped a little below the gap centre.
+  // Each flap lifts it about 46px, so it bobs gently around the centre of the gap.
+  if (bird.vy > 0 && bird.y > target + 20 && demo.sinceFlap > 0.18) {
+    bird.vy = FLAP_STRENGTH;
+    squawk();
+    demo.sinceFlap = 0;
+    demo.pulseAt = elapsed;
+  }
+}
+function drawDemoHud(light) {
+  const mode = demo.t > DEMO_SECONDS / 2 ? "hand" : "head";
+  const info = MODES[mode], sens = SENSITIVITY[cam.sens];
+  const trigger = mode === "hand" ? sens.handLine : 0.55 - sens.headRise;
+  const rearm = mode === "hand" ? sens.handLine + 0.16 : 0.55 - sens.headRise * 0.35;
+  const rest = mode === "hand" ? Math.min(0.92, rearm + 0.12) : 0.6;
+  const since = elapsed - demo.pulseAt;
+  // The marker pops just above the line as the flap fires, then settles back below the re-arm line.
+  let y = rest;
+  if (since < 0.08) y = trigger + 0.04 - (since / 0.08) * 0.12;
+  else if (since < 0.4) y = trigger - 0.08 + ((since - 0.08) / 0.32) * (rest - trigger + 0.08);
+  const cooling = since < info.cooldown;
+  const x = HUD_X, top = HUD_Y;
+  ctx.fillStyle = COLORS.navy;
+  ctx.fillRect(x - 2, top - 2, HUD_W + 4, HUD_H + 4);
+  ctx.fillStyle = "#0B2B40";
+  ctx.fillRect(x, top, HUD_W, HUD_H);
+  // A simple silhouette stands in for the webcam picture.
+  ctx.fillStyle = "rgba(247,245,240,0.28)";
+  if (mode === "hand") {
+    ctx.beginPath(); ctx.arc(x + 42, top + 50, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.fillRect(x + 26, top + 62, 32, 12);
+    ctx.fillRect(x + 63, top + y * HUD_H, 8, HUD_H - y * HUD_H);
+    ctx.beginPath(); ctx.arc(x + 67, top + y * HUD_H, 7, 0, Math.PI * 2); ctx.fill();
+  } else {
+    ctx.beginPath(); ctx.arc(x + HUD_W / 2, top + y * HUD_H + 10, 13, 0, Math.PI * 2); ctx.fill();
+    ctx.fillRect(x + HUD_W / 2 - 20, top + y * HUD_H + 24, 40, 30);
+  }
+  const lineY = top + HUD_H * trigger;
+  ctx.strokeStyle = COLORS.beak; ctx.lineWidth = 2;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(x, lineY); ctx.lineTo(x + HUD_W, lineY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = "rgba(247,245,240,0.45)"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x, top + HUD_H * rearm); ctx.lineTo(x + HUD_W, top + HUD_H * rearm); ctx.stroke();
+  const flash = since < 0.2;
+  ctx.fillStyle = flash ? COLORS.beak : cooling ? COLORS.stripe : "#3DDC84";
+  const markerX = mode === "hand" ? 67 : HUD_W / 2;
+  ctx.beginPath(); ctx.arc(x + markerX, top + y * HUD_H, flash ? 7 : 5, 0, Math.PI * 2); ctx.fill();
+  ctx.textAlign = "left";
+  ctx.font = "bold 10px system-ui, sans-serif";
+  ctx.fillStyle = "rgba(7,59,92,0.85)";
+  ctx.fillRect(x, top, 34, 14); ctx.fillRect(x + HUD_W - 34, top, 34, 14);
+  ctx.fillStyle = COLORS.cream;
+  ctx.fillText(info.label, x + 4, top + 11);
+  ctx.fillStyle = COLORS.beak;
+  ctx.fillText("DEMO", x + HUD_W - 31, top + 11);
+  // Cooldown bar: the next flap can only fire once it is full.
+  ctx.fillStyle = "rgba(7,59,92,0.35)";
+  ctx.fillRect(x, top + HUD_H + 4, HUD_W, 4);
+  ctx.fillStyle = cooling ? COLORS.stripe : "#3DDC84";
+  ctx.fillRect(x, top + HUD_H + 4, HUD_W * Math.min(1, since / info.cooldown), 4);
+  ctx.fillStyle = light ? COLORS.cream : COLORS.navy;
+  ctx.fillText(cooling ? "COOLDOWN" : info.hint[0], x, top + HUD_H + 20);
+}
+function drawDemoBanner() {
+  const text = "DEMO · " + Math.ceil(demo.t) + "s · Tap or press P to take over";
+  ctx.fillStyle = "rgba(7,59,92,0.85)";
+  ctx.fillRect(0, H - GROUND_H - 30, W, 24);
+  drawText(text, H - GROUND_H - 13, 13, COLORS.cream);
+}
+if (FEATURES.demo) {
+  demoBtn.addEventListener("click", () => {
+    if (demo) stopDemo(true); else startDemo();
+    canvas.focus({ preventScroll:true });
+  });
+} else {
+  demoBtn.hidden = true;
+}
+
+// === AI PROMPT ZONE: GAME LOOP ===
+// Fixed steps make the same inputs play the same at 30, 60 and 144Hz.
+// Clamp long frames and pause on focus loss so a tab switch cannot cost a life.
+function loop(timestamp) {
+  if (lastTime !== null && state === "playing") {
+    accumulator += Math.min(0.05, Math.max(0, (timestamp - lastTime) / 1000));
+    while (accumulator + 1e-9 >= STEP && state === "playing") {
+      recovery = Math.max(0, recovery - STEP);
+      elapsed += STEP;
+      if (demo) { demoStep(STEP); if (state !== "playing") break; }
+      updateBird(STEP);
+      if (state === "playing") updatePipes(STEP);
+      accumulator = Math.max(0, accumulator - STEP);
+    }
+  }
+  lastTime = timestamp;
+  if (FEATURES.handCam) sampleCam(timestamp);
+  drawBackground(); drawPipes(); drawBird(); drawUI();
+  if (demo) drawDemoBanner();
+  requestAnimationFrame(loop);
+}
+addEventListener("keydown", event => {
+  if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+  if (event.target.closest?.("a, button, input, textarea, select, [contenteditable]")) return;
+  // Space and Arrow Up do not flap in this build. Camera movement, mouse and touch do.
+  const isMute = FEATURES.sound && event.code === "KeyM";
+  const isCam = FEATURES.handCam && event.code === "KeyC";
+  if (event.code !== "KeyP" && !isMute && !isCam) return;
+  event.preventDefault();
+  if (event.repeat) return;
+  if (isMute) { toggleMute(); return; }
+  if (isCam) { toggleCam(); return; }
+  if (demo) { pause(); return; }
+  if (state === "paused") flap();
+  else pause();
+});
+canvas.addEventListener("pointerdown", event => {
+  if (event.button !== 0) return;
+  event.preventDefault();
+  canvas.focus({ preventScroll:true });
+  if (demo) stopDemo(false);
+  flap();
+});
+addEventListener("blur", pause);
+document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
+reset();
+if (ctx) requestAnimationFrame(loop);
+else {
+  canvas.hidden = true;
+  statusEl.classList.remove("sr-only");
+  statusEl.textContent = "This browser cannot draw the game. Try another browser.";
+}
+</script>
+</body>
+</html>

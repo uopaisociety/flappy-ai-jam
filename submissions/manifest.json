@@ -83,6 +83,30 @@
       "builder": "Ryan Evans",
       "description": "Dodge obstacles and parry attacks with F.",
       "html": true
+    },
+    {
+      "id": "email--demigod-flight",
+      "kind": "submission",
+      "title": "Demigod Flight",
+      "builder": "Benjamin Colgrove",
+      "description": "Fly past Greek monsters and take on Hades and the Olympians. Press Space or tap to flap.",
+      "html": true
+    },
+    {
+      "id": "email--seagull-snatch",
+      "kind": "submission",
+      "title": "Seagull Snatch",
+      "builder": "Kamal Shukri",
+      "description": "Steal chips and dodge pillars. Tap or click to flap in the gallery. Download the HTML for optional hand and head camera controls.",
+      "html": true
+    },
+    {
+      "id": "email--flappy-shooter",
+      "kind": "submission",
+      "title": "Flappy AI Jam · Auto-Fire",
+      "builder": "Hin Mok (Jake)",
+      "description": "Flap to dodge drones and collect power-ups while your bird fires automatically.",
+      "html": true
     }
   ]
 }
