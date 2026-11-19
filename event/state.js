@@ -15,6 +15,14 @@ export async function loadEvent() {
 
 export function awardsFor(event, build) {
   if (build.kind !== "submission") return [];
+  if (Array.isArray(event?.placements)) {
+    const award = event.placements.find((item) => item.id === build.id);
+    if (award) {
+      const tied = event.placements.filter((item) => item.rank === award.rank).length > 1;
+      const suffix = award.rank === 1 ? "st" : award.rank === 2 ? "nd" : award.rank === 3 ? "rd" : "th";
+      return [(tied ? "Joint " : "") + award.rank + suffix + " place"];
+    }
+  }
   const byCategory = Object.entries(awardNames)
     .filter(([key]) => event?.awards?.[key]?.includes(build.id))
     .map(([, name]) => name);

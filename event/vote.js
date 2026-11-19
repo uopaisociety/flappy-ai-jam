@@ -92,7 +92,24 @@ form.addEventListener("submit", async (event) => {
   cast.focus();
 });
 
-function renderResults(event) {
+function renderResults(event, manifest) {
+  if (Array.isArray(event.placements) && event.placements.length) {
+    resultList.replaceChildren(...event.placements.map(({rank, id}) => {
+      const build = manifest.find((candidate) => candidate.id === id);
+      const tied = event.placements.filter((candidate) => candidate.rank === rank).length > 1;
+      const suffix = rank === 1 ? "st" : rank === 2 ? "nd" : rank === 3 ? "rd" : "th";
+      const result = element("li");
+      const link = element("a", build ? build.title + " · " + build.builder : id);
+      link.href = "games.html?build=" + encodeURIComponent(id);
+      result.append((tied ? "Joint " : "") + rank + suffix + " place · ", link);
+      return result;
+    }));
+    return;
+  }
+  if (!Array.isArray(event.candidates) || !event.counts) {
+    resultList.replaceChildren(element("li", "Voting has closed."));
+    return;
+  }
   const ranked = [...event.candidates].sort((a, b) => event.counts[b.id] - event.counts[a.id]);
   resultList.replaceChildren(...ranked.map((candidate) => {
     const count = event.counts[candidate.id];
@@ -237,8 +254,8 @@ else window.addEventListener("resize", resizeFrame);
 let rendered;
 async function refresh() {
   try {
-    const event = await loadEvent();
-    const key = JSON.stringify(event);
+    const [event, manifest] = await Promise.all([loadEvent(), loadManifest()]);
+    const key = JSON.stringify([event, manifest]);
     if (rendered === key) return;
     const open = event.state === "open";
     const closed = event.state === "closed";
@@ -247,7 +264,7 @@ async function refresh() {
       : closed ? "Voting is closed."
       : "Voting opens after the demos. You can try the approved games below while you wait.";
     projectorStatus.textContent = open ? paperOnly ? "Pick one game. Write its number on your paper slip." : "Pick one game. Use a paper slip or scan to vote online."
-      : closed ? "Voting has closed. Scan to see the results."
+      : closed ? "Voting has closed. Scan to see the results and play the games."
       : "Scan to open the ballot. Voting starts after the demos.";
     choices.replaceChildren();
     form.hidden = !open;
@@ -264,7 +281,7 @@ async function refresh() {
         return item;
       }));
     }
-    if (closed) renderResults(event);
+    if (closed) renderResults(event, manifest);
     rendered = key;
   } catch {
     status.textContent = "Couldn’t load the ballot. If you’re in the room, ask the help desk for a paper slip.";

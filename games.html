@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#06283F">
+  <meta name="description" content="Play and share every student-built game from the University of Portsmouth AI Society Flappy AI Jam.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Flappy AI Jam | Student Game Arcade">
+  <meta property="og:description" content="Built by students at Portsmouth. Play the games, share your favourites, and join the AI Society.">
+  <meta property="og:url" content="https://uopaisociety.github.io/flappy-ai-jam/games.html">
+  <title>Play the Games · Flappy AI Jam · UoP AI Society</title>
+  <link rel="icon" href="event/brand/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@700;800&family=JetBrains+Mono:wght@500&display=swap">
+  <link rel="stylesheet" href="event/brand/shell.css">
+  <link rel="stylesheet" href="event/site.css">
+  <link rel="stylesheet" href="event/games.css">
+  <script type="module" src="event/games.js"></script>
+</head>
+<body data-animate>
+  <div class="ambient" aria-hidden="true"></div>
+  <header class="society-header">
+    <a href="https://github.com/uopaisociety" aria-label="University of Portsmouth AI Society on GitHub">
+      <img class="society-logo" src="event/brand/lockup.svg" width="1200" height="360" alt="University of Portsmouth AI Society">
+    </a>
+    <nav class="society-nav" aria-label="Navigation">
+      <a href="showcase.html">Event guide</a>
+      <a href="vote.html">Voting</a>
+      <a href="https://upsu.net/groups/8F8DP/ai-society" target="_blank" rel="noopener noreferrer">Join the society ↗</a>
+    </nav>
+  </header>
+  <main class="wrap games-page">
+    <section class="games-hero" aria-labelledby="games-title">
+      <p class="meta">University of Portsmouth AI Society · 19 November 2026</p>
+      <h1 id="games-title">Your games.<br><span>Our arcade.</span></h1>
+      <p class="intro">Explore the games created by students at our Flappy AI Jam. Play them here, open one in a full-size tab, and share your favourites with friends.</p>
+      <div class="games-hero-actions">
+        <a class="action primary" href="#all-games">Explore all games</a>
+        <a class="action" href="https://upsu.net/groups/8F8DP/ai-society" target="_blank" rel="noopener noreferrer">Join AI Society — free ↗</a>
+      </div>
+    </section>
+    <section class="section" id="results" aria-labelledby="results-title" hidden>
+      <p class="meta">Flappy AI Jam · Official results</p>
+      <h2 class="section-title" id="results-title">The winners</h2>
+      <p class="section-intro">Two games tied for first place, followed by third place. There was no separate second-place award.</p>
+      <div class="grid games-grid" id="results-grid"></div>
+    </section>
+    <section class="section" id="all-games" aria-labelledby="gallery-title">
+      <div class="games-heading">
+        <div>
+          <p class="meta">Made by students</p>
+          <h2 class="section-title" id="gallery-title">All submitted builds</h2>
+          <p class="section-intro">Each game is a different take on the same challenge. Select Play here for a quick look, or Open full game for more room to play.</p>
+        </div>
+        <p class="games-count" id="games-count" aria-live="polite">Loading games…</p>
+      </div>
+      <p class="message" id="games-message" role="status">Loading student builds…</p>
+      <div class="grid games-grid" id="games-grid"></div>
+      <p class="games-share-status" id="share-status" role="status" hidden></p>
+      <label class="games-share-fallback" id="share-fallback" hidden>Copy the game link
+        <input id="share-fallback-input" type="url" readonly>
+      </label>
+    </section>
+    <section class="games-join panel" aria-labelledby="join-title">
+      <div>
+        <p class="meta">Keep building with us</p>
+        <h2 id="join-title">Join Portsmouth AI Society</h2>
+        <p>Workshops, practical AI projects, industry sessions, and students from every course. Membership is free.</p>
+        <div class="actions">
+          <a class="action primary" href="https://upsu.net/groups/8F8DP/ai-society" target="_blank" rel="noopener noreferrer">Become a member ↗</a>
+        </div>
+      </div>
+      <div class="games-socials">
+        <h3>Follow the society</h3>
+        <a href="https://instagram.com/uopaisociety" target="_blank" rel="noopener noreferrer">Instagram · @uopaisociety ↗</a>
+        <a href="https://linkedin.com/company/aisocietyuop" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
+        <a href="https://x.com/uopaisociety" target="_blank" rel="noopener noreferrer">X · @uopaisociety ↗</a>
+        <a href="https://github.com/uopaisociety" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+        <a href="https://luma.com/uopaisociety" target="_blank" rel="noopener noreferrer">Events on Luma ↗</a>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="wrap"><span>University of Portsmouth AI Society</span><a href="showcase.html">About the AI Game Jam</a></div>
+  </footer>
+  <dialog id="games-player" aria-labelledby="games-player-title">
+    <div class="dialog-bar">
+      <a class="action primary" id="games-player-full" target="_blank" rel="noopener noreferrer">Open full game in new tab ↗</a>
+      <form method="dialog"><button type="submit">Close</button></form>
+    </div>
+    <div class="dialog-grid">
+      <div class="frame-box" id="games-frame-box"><p class="frame-message" id="games-frame-status" role="status">Loading game…</p></div>
+      <div class="dialog-copy">
+        <h2 id="games-player-title"></h2>
+        <p class="byline" id="games-player-builder"></p>
+        <p id="games-player-description"></p>
+        <p class="games-player-tip">For a larger view and keyboard controls, use <strong>Open full game in new tab</strong>.</p>
+        <button type="button" id="games-player-share">Share this game</button>
+      </div>
+    </div>
+  </dialog>
+  <noscript><p class="wrap message">Enable JavaScript to browse and play the submitted games.</p></noscript>
+</body>
+</html>

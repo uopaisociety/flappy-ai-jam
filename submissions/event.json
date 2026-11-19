@@ -1,3 +1,17 @@
 {
-  "state": "pending"
+  "state": "closed",
+  "placements": [
+    {
+      "rank": 1,
+      "id": "megarrito"
+    },
+    {
+      "rank": 1,
+      "id": "email--seagull-snatch"
+    },
+    {
+      "rank": 3,
+      "id": "email--flappy-shooter"
+    }
+  ]
 }

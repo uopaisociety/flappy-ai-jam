@@ -121,7 +121,7 @@ jobs:
           set -euo pipefail
           site="$RUNNER_TEMP/jam-pages"
           mkdir -p "$site/submissions"
-          cp index.html arcade.html showcase.html vote.html "$site/"
+          cp index.html arcade.html showcase.html vote.html games.html play.html "$site/"
           cp -r event examples "$site/"
           cp -r submissions/. "$site/submissions/"
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3

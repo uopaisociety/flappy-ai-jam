@@ -13,7 +13,7 @@ Future Technology Centre · Floor 2 · Jam starts at 18:45
 [![Stack](https://img.shields.io/badge/stack-HTML5_Canvas_%7C_Vanilla_JS-073B5C?style=flat-square)](https://github.com/uopaisociety/flappy-ai-jam/blob/main/index.html)
 [![Sprint](https://img.shields.io/badge/sprint-30_minutes-E6B325?style=flat-square&labelColor=073B5C)](https://github.com/uopaisociety/flappy-ai-jam)
 
-[Play the starter](https://uopaisociety.github.io/flappy-ai-jam/) · [Event hub and Hall of Fame](https://uopaisociety.github.io/flappy-ai-jam/showcase.html)
+[Play the starter](https://uopaisociety.github.io/flappy-ai-jam/) · [Play and share student games](https://uopaisociety.github.io/flappy-ai-jam/games.html) · [Event hub and Hall of Fame](https://uopaisociety.github.io/flappy-ai-jam/showcase.html)
 
 [How to hand in your game](https://uopaisociety.github.io/flappy-ai-jam/showcase.html#submit)
 
