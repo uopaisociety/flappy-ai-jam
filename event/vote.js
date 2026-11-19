@@ -1,5 +1,8 @@
 import { drawQr } from "./qr.js";
-import { loadEvent, repository } from "./state.js";
+import {
+  isGeminiShare, loadEvent, loadManifest, loadPublishedGame, publicGameUrl,
+  publishedGamePath, repository, standaloneGameDocument,
+} from "./state.js";
 
 const byId = (id) => document.getElementById(id);
 const form = byId("vote-form");
@@ -57,11 +60,7 @@ function renderChoices(event) {
     const label = element("label", (index + 1) + ". " + candidate.title);
     label.htmlFor = radio.id;
     label.append(element("small", candidate.builder));
-    const play = element("a", "Play ↗︎");
-    play.href = galleryLink(candidate);
-    play.target = "_blank";
-    play.rel = "noopener";
-    play.setAttribute("aria-label", "Play " + candidate.title + " in a new tab");
+    const play = playButton(candidate);
     if (event.paperOnly) {
       row.append(element("span", (index + 1) + "."), element("span", candidate.title + " · " + candidate.builder), play);
     } else {
@@ -103,6 +102,138 @@ function renderResults(event) {
   }));
 }
 
+const player = byId("vote-player");
+const frameBox = byId("vote-frame-box");
+const frameStatus = byId("vote-frame-status");
+let activeFrame = null;
+let gamesById = new Map();
+let gamesKey;
+
+function playableBuild(build) {
+  return build && build.kind === "submission"
+    && typeof build.id === "string" && /^[a-z0-9][a-z0-9-]{0,80}$/i.test(build.id)
+    && typeof build.title === "string" && build.title.trim()
+    && typeof build.builder === "string" && build.builder.trim()
+    && Boolean(publishedGamePath(build) || publicGameUrl(build.url));
+}
+
+function playButton(candidate) {
+  const button = element("button", "Play here");
+  button.type = "button";
+  button.setAttribute("aria-label", "Play " + candidate.title + " on this page");
+  button.addEventListener("click", () => void playById(candidate.id));
+  return button;
+}
+
+function updateGamesStatus(message, hidden = false) {
+  for (const id of ["ballot-games-status", "projector-games-status"]) {
+    const node = byId(id);
+    node.textContent = message;
+    node.hidden = hidden;
+  }
+}
+
+function renderGameList(target, builds) {
+  target.replaceChildren(...builds.map((build) => {
+    const row = element("article", "", "vote-game");
+    const info = element("div");
+    info.append(element("h3", build.title), element("p", build.builder));
+    row.append(info, playButton(build));
+    return row;
+  }));
+}
+
+async function refreshGames() {
+  try {
+    const manifest = await loadManifest();
+    const builds = manifest.filter(playableBuild);
+    const key = JSON.stringify(builds);
+    if (key === gamesKey) return;
+    gamesById = new Map(builds.map((build) => [build.id, build]));
+    renderGameList(byId("ballot-games-list"), builds);
+    renderGameList(byId("projector-games-list"), builds);
+    updateGamesStatus(builds.length ? "" : "No approved games are available yet.", Boolean(builds.length));
+    gamesKey = key;
+  } catch {
+    if (gamesKey === undefined) updateGamesStatus("Couldn’t load the games. Try again shortly.");
+  }
+}
+
+async function playById(id) {
+  if (!gamesById.has(id)) await refreshGames();
+  const build = gamesById.get(id);
+  if (!build) {
+    updateGamesStatus("That game is not available to play here yet. Check the Hall of Fame.");
+    return;
+  }
+  await launchGame(build);
+}
+
+function resizeFrame() {
+  frameBox.style.setProperty("--frame-scale", String(frameBox.clientWidth / 480));
+}
+
+async function launchGame(build) {
+  activeFrame?.remove();
+  activeFrame = null;
+  frameStatus.hidden = false;
+  frameStatus.textContent = "Loading game…";
+  byId("vote-player-title").textContent = build.title;
+  byId("vote-player-builder").textContent = build.builder;
+  const source = publishedGamePath(build);
+  const url = publicGameUrl(build.url);
+  const external = url && isGeminiShare(new URL(url));
+  const fallback = byId("vote-player-external");
+  fallback.href = url || galleryLink(build);
+  fallback.textContent = url ? "Open game in new tab" : "Open in Hall of Fame";
+  byId("vote-player-help").textContent = external
+    ? "This game requires an external page. Open the link above to try it."
+    : "Play with the game’s keyboard or touch controls. If the embedded preview is blocked, open it in a new tab.";
+  frameBox.classList.toggle("external-preview", Boolean(external));
+  if (!player.open) player.showModal();
+  if (external) {
+    frameStatus.textContent = "This game opens on an external page.";
+    fallback.focus();
+    return;
+  }
+  resizeFrame();
+  const frame = element("iframe");
+  frame.title = build.title;
+  frame.width = "480";
+  frame.height = "640";
+  frame.setAttribute("sandbox", "allow-scripts");
+  frame.setAttribute("allow", "microphone 'none'; camera 'none'");
+  frame.referrerPolicy = "no-referrer";
+  frame.addEventListener("load", () => {
+    if (activeFrame === frame) frameStatus.hidden = true;
+  });
+  activeFrame = frame;
+  try {
+    if (source) {
+      const html = await loadPublishedGame(source);
+      if (activeFrame !== frame) return;
+      frame.srcdoc = standaloneGameDocument(html);
+    } else if (url) {
+      frame.src = url;
+    } else {
+      throw new Error("No playable game URL");
+    }
+    frameBox.append(frame);
+  } catch {
+    if (activeFrame !== frame) return;
+    activeFrame = null;
+    frameStatus.textContent = "The game could not load here. Use the link above to open the gallery.";
+  }
+}
+
+player.addEventListener("close", () => {
+  activeFrame?.remove();
+  activeFrame = null;
+  frameStatus.hidden = false;
+});
+if (typeof ResizeObserver === "function") new ResizeObserver(resizeFrame).observe(frameBox);
+else window.addEventListener("resize", resizeFrame);
+
 let rendered;
 async function refresh() {
   try {
@@ -114,7 +245,7 @@ async function refresh() {
     const paperOnly = event.paperOnly === true;
     status.textContent = open ? paperOnly ? "Voting is open on paper." : "Voting is open."
       : closed ? "Voting is closed."
-      : "Voting opens after the demos. You can try the games in the Hall of Fame while you wait.";
+      : "Voting opens after the demos. You can try the approved games below while you wait.";
     projectorStatus.textContent = open ? paperOnly ? "Pick one game. Write its number on your paper slip." : "Pick one game. Use a paper slip or scan to vote online."
       : closed ? "Voting has closed. Scan to see the results."
       : "Scan to open the ballot. Voting starts after the demos.";
@@ -127,8 +258,11 @@ async function refresh() {
     byId("projector-choices").hidden = !open;
     if (open) {
       renderChoices(event);
-      byId("projector-list").replaceChildren(...event.candidates.map((candidate) =>
-        element("li", candidate.title + " · " + candidate.builder)));
+      byId("projector-list").replaceChildren(...event.candidates.map((candidate, index) => {
+        const item = element("li");
+        item.append(element("span", (index + 1) + ". " + candidate.title + " · " + candidate.builder), playButton(candidate));
+        return item;
+      }));
     }
     if (closed) renderResults(event);
     rendered = key;
@@ -142,7 +276,9 @@ async function refresh() {
 }
 
 void refresh();
+void refreshGames();
 setInterval(refresh, 12000);
+setInterval(refreshGames, 15000);
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) void refresh();
 });
