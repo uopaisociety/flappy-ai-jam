@@ -171,7 +171,8 @@ function render() {
 }
 
 function resizeFrame() {
-  frameBox.style.setProperty("--frame-scale", String(frameBox.clientWidth / 480));
+  const width = frameBox.clientWidth;
+  if (width > 0) frameBox.style.setProperty("--frame-scale", String(width / 480));
 }
 
 async function openBuild(build) {
@@ -212,7 +213,7 @@ async function openBuild(build) {
   try {
     if (source) {
       const html = await loadPublishedGame(source);
-      if (activeFrame !== frame) return;
+      if (!player.open || activeFrame !== frame) return;
       frame.srcdoc = standaloneGameDocument(html);
     } else if (externalUrl) {
       frame.src = externalUrl;
@@ -228,6 +229,7 @@ async function openBuild(build) {
 }
 
 player.addEventListener("close", () => {
+  if (player.open) return;
   activeFrame?.remove();
   activeFrame = null;
   selectedBuild = null;

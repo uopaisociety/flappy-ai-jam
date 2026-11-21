@@ -213,7 +213,8 @@ function directLink(id) {
 }
 
 function resizeFrame() {
-  frameBox.style.setProperty("--frame-scale", String(frameBox.clientWidth / 480));
+  const width = frameBox.clientWidth;
+  if (width > 0) frameBox.style.setProperty("--frame-scale", String(width / 480));
 }
 
 async function launchBuild(build) {
@@ -278,7 +279,7 @@ async function launchBuild(build) {
   try {
     if (source) {
       const html = await loadPublishedGame(source);
-      if (frame !== preview) return;
+      if (!dialog.open || frame !== preview) return;
       preview.srcdoc = standaloneGameDocument(html);
     } else {
       preview.src = gameUrl;
@@ -293,6 +294,7 @@ async function launchBuild(build) {
 }
 
 dialog.addEventListener("close", () => {
+  if (dialog.open) return;
   frame?.remove();
   frame = active = null;
   history.replaceState(null, "", directLink(null));

@@ -132,13 +132,17 @@ try {
   if (Number.isSafeInteger(stored) && stored > 0) best = stored;
 } catch { /* The game also works when browser storage is blocked. */ }
 
+const playArea = canvas.parentElement;
+
 function resize() {
-  const space = document.querySelector("main");
-  const scale = Math.max(0.01, Math.min((space.clientWidth - 24) / W, (space.clientHeight - 24) / H));
+  const scale = Math.min((playArea.clientWidth - 24) / W, (playArea.clientHeight - 24) / H);
+  if (scale <= 0) return;
   canvas.style.width = Math.floor(W * scale) + "px";
   canvas.style.height = Math.floor(H * scale) + "px";
 }
-addEventListener("resize", resize);
+// The play area can gain height after the iframe lays out or the controls reflow.
+if (typeof ResizeObserver === "function") new ResizeObserver(resize).observe(playArea);
+else addEventListener("resize", resize);
 resize();
 
 function reset() {

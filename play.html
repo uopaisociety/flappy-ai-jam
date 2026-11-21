@@ -27,7 +27,9 @@
   </header>
   <main class="game-full-main">
     <p id="game-loading" class="game-full-status" role="status">Loading the game…</p>
-    <iframe id="game-frame" title="Student game" sandbox="allow-scripts" allow="camera 'none'; microphone 'none'" referrerpolicy="no-referrer" hidden></iframe>
+    <template id="game-frame-template">
+      <iframe id="game-frame" title="Student game" sandbox="allow-scripts" allow="camera 'none'; microphone 'none'" referrerpolicy="no-referrer"></iframe>
+    </template>
     <div id="game-external" class="game-full-external" hidden>
       <p>This game runs on an external website.</p>
       <a id="game-external-link" class="action primary" target="_blank" rel="noopener noreferrer">Open the original game ↗</a>
