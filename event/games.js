@@ -4,6 +4,7 @@ const $ = (id) => document.getElementById(id);
 const player = $("games-player");
 const frameBox = $("games-frame-box");
 const frameStatus = $("games-frame-status");
+const grid = $("games-grid");
 let builds = [];
 let eventState = null;
 let selectedBuild = null;
@@ -52,34 +53,38 @@ const preferredOrder = [
   "email--stationary-bird",
   "email--flappy-parry",
 ];
-const copyTimers = new WeakMap();
+const copyRequests = new WeakMap();
 
-function notifyCopied(status, button, message) {
-  if (copyTimers.has(status)) clearTimeout(copyTimers.get(status));
-  status.textContent = message;
-  status.hidden = false;
-  if (button) button.classList.add("is-copied");
-  copyTimers.set(status, setTimeout(() => {
-    status.hidden = true;
-    if (button) button.classList.remove("is-copied");
-  }, 3000));
-}
-
-async function copyGameLink(build, status, button = null) {
-  const url = shareUrl(build);
-  $("share-fallback").hidden = true;
+async function copyGameLink(url, status, button) {
+  const request = {};
+  const focus = document.activeElement;
+  copyRequests.set(status, request);
+  status.textContent = "";
+  status.parentElement.querySelector(".games-share-fallback")?.remove();
+  let copied = false;
   try {
-    if (!navigator.clipboard?.writeText) throw new Error("Clipboard not available");
     await navigator.clipboard.writeText(url);
-    notifyCopied(status, button, "✓ Link copied!");
-  } catch {
-    const input = $("share-fallback-input");
-    input.value = url;
-    $("share-fallback").hidden = false;
+    copied = true;
+  } catch { /* Offer the link as a selectable field below. */ }
+  if (!button.isConnected || copyRequests.get(status) !== request || (player.contains(button) && !player.open)) return;
+  if (copied) {
+    status.textContent = "Game link copied.";
+    return;
+  }
+  const field = element("div", "", "games-share-fallback");
+  const label = element("label", "Copy the game link");
+  const input = element("input");
+  input.id = status.id + "-link";
+  input.type = "url";
+  input.readOnly = true;
+  input.value = url;
+  label.htmlFor = input.id;
+  field.append(label, input);
+  status.after(field);
+  status.textContent = "Clipboard unavailable. Copy the link manually.";
+  if (document.activeElement === focus) {
     input.focus();
     input.select();
-    notifyCopied(status, button, "Select and copy the link below");
-    $("share-fallback").scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
 }
 
@@ -100,11 +105,13 @@ function linkIcon() {
 }
 
 function imageFor(build) {
-  if (build.preview !== true) {
+  function placeholderFor() {
     const placeholder = element("div", "", "games-card-placeholder");
+    placeholder.setAttribute("aria-hidden", "true");
     placeholder.append(element("span", "Flappy AI Jam"), element("strong", build.title));
     return placeholder;
   }
+  if (build.preview !== true) return placeholderFor();
   const image = element("img", "", "card-art");
   image.src = "event/previews/" + build.id + ".webp";
   image.alt = "";
@@ -112,19 +119,23 @@ function imageFor(build) {
   image.height = 400;
   image.loading = "lazy";
   image.decoding = "async";
-  image.addEventListener("error", () => {
-    const placeholder = element("div", "", "games-card-placeholder");
-    placeholder.append(element("span", "Flappy AI Jam"), element("strong", build.title));
-    image.replaceWith(placeholder);
-  }, { once: true });
+  image.addEventListener("error", () => image.replaceWith(placeholderFor()), { once: true });
   return image;
 }
 
+function copyButton(title, url, status) {
+  const copy = element("button", "", "games-copy-button");
+  copy.type = "button";
+  copy.title = "Copy link to " + title;
+  copy.setAttribute("aria-label", copy.title);
+  copy.append(linkIcon());
+  copy.addEventListener("click", () => void copyGameLink(url, status, copy));
+  return copy;
+}
+
 function makeCard(build) {
-  const card = element("article", "", "card games-card");
-  card.tabIndex = 0;
-  card.setAttribute("role", "group");
-  card.setAttribute("aria-label", "Play " + build.title);
+  const card = element("li", "", "card games-card");
+  card.dataset.buildId = build.id;
   const media = element("div", "", "games-card-media");
   media.append(imageFor(build));
   const placement = eventState?.placements?.find((item) => item.id === build.id);
@@ -140,34 +151,45 @@ function makeCard(build) {
   const actions = element("div", "", "games-card-actions");
   const play = element("button", "Play game", "primary games-play-button");
   play.type = "button";
-  play.addEventListener("click", () => void openBuild(build));
+  play.setAttribute("aria-label", "Play game: " + build.title);
+  play.setAttribute("aria-haspopup", "dialog");
+  play.addEventListener("click", () => {
+    play.focus({ preventScroll: true });
+    void openBuild(build);
+  });
   const copyWrap = element("div", "", "games-copy-wrap");
-  const copy = element("button", "", "games-copy-button");
-  copy.type = "button";
-  copy.title = "Copy link to " + build.title;
-  copy.setAttribute("aria-label", "Copy link to " + build.title);
-  copy.append(linkIcon());
   const status = element("p", "", "games-copy-feedback");
+  status.id = "games-copy-" + build.id;
   status.setAttribute("role", "status");
-  status.setAttribute("aria-live", "polite");
-  status.hidden = true;
-  copy.addEventListener("click", () => void copyGameLink(build, status, copy));
-  copyWrap.append(copy);
+  copyWrap.append(copyButton(build.title, shareUrl(build), status));
   actions.append(play, copyWrap);
   body.append(actions, status);
   card.append(media, body);
   return card;
 }
 
+for (const card of grid.querySelectorAll(".games-card")) {
+  const link = card.querySelector(".games-copy-button");
+  const status = card.querySelector(".games-copy-feedback");
+  status.id = "games-copy-" + card.dataset.buildId;
+  link.replaceWith(copyButton(card.querySelector("h3").textContent, link.href, status));
+}
+
+grid.addEventListener("click", (event) => {
+  const card = event.target.closest(".games-card");
+  if (card && !event.target.closest("a, button, .games-share-fallback") && window.getSelection()?.isCollapsed !== false) {
+    card.querySelector(".games-play-button").click();
+  }
+});
+
 function render() {
   const sorted = [...builds].sort((a,b) => {
     const ai = preferredOrder.indexOf(a.id), bi = preferredOrder.indexOf(b.id);
     return (ai < 0 ? preferredOrder.length : ai) - (bi < 0 ? preferredOrder.length : bi);
   });
-  $("games-grid").replaceChildren(...sorted.map(makeCard));
+  grid.replaceChildren(...sorted.map(makeCard));
   $("games-count").textContent = sorted.length + (sorted.length === 1 ? " game" : " games");
-  $("games-message").hidden = sorted.length > 0;
-  $("games-message").textContent = "No approved builds are available yet. Check back for new submissions.";
+  $("games-message").textContent = sorted.length ? "" : "No approved builds are available yet. Check back for new submissions.";
 }
 
 function resizeFrame() {
@@ -183,10 +205,14 @@ async function openBuild(build) {
   url.searchParams.set("build", build.id);
   history.replaceState(null, "", url);
   $("games-player-title").textContent = build.title;
-  $("games-player-copy-status").hidden = true;
   $("games-player-builder").textContent = "Built by " + build.builder;
   $("games-player-description").textContent = build.description || "A student-created AI game.";
   $("games-player-full").href = fullGameUrl(build);
+  $("games-player-message").textContent = "";
+  const copyStatus = $("games-player-copy-status");
+  copyRequests.delete(copyStatus);
+  copyStatus.textContent = "";
+  player.querySelector(".games-share-fallback")?.remove();
   frameStatus.hidden = false;
   frameStatus.textContent = "Loading game…";
   const source = publishedGamePath(build);
@@ -200,7 +226,8 @@ async function openBuild(build) {
   }
   resizeFrame();
   const frame = element("iframe");
-  frame.title = build.title;
+  frame.title = build.title + " game";
+  frame.setAttribute("aria-describedby", "games-player-tip");
   frame.width = "480";
   frame.height = "640";
   frame.setAttribute("sandbox", "allow-scripts");
@@ -225,6 +252,7 @@ async function openBuild(build) {
     if (activeFrame !== frame) return;
     activeFrame = null;
     frameStatus.textContent = "Unable to load this game here. Try opening it in a new tab.";
+    $("games-player-message").textContent = frameStatus.textContent;
   }
 }
 
@@ -237,15 +265,16 @@ player.addEventListener("close", () => {
   url.searchParams.delete("build");
   history.replaceState(null, "", url);
 });
-$("games-player-share").addEventListener("click", () => {
-  if (selectedBuild) void copyGameLink(selectedBuild, $("games-player-copy-status"));
+$("games-player-share").addEventListener("click", (event) => {
+  if (selectedBuild) void copyGameLink(shareUrl(selectedBuild), $("games-player-copy-status"), event.currentTarget);
 });
 if (typeof ResizeObserver === "function") new ResizeObserver(resizeFrame).observe(frameBox);
 else window.addEventListener("resize", resizeFrame);
 
 async function refresh() {
-  if (player.open) return;
+  if (player.open || grid.contains(document.activeElement) || typeof player.showModal !== "function") return;
   const [manifest, event] = await Promise.allSettled([loadManifest(), loadEvent()]);
+  if (player.open || grid.contains(document.activeElement)) return;
   if (manifest.status === "rejected") {
     // The HTML contains the current games as a fallback. Retain them if
     // a deployment or network issue prevents the live manifest from loading.
@@ -270,9 +299,8 @@ async function refresh() {
     started = true;
     const selected = new URLSearchParams(location.search).get("build");
     const build = builds.find((item) => item.id === selected);
-    if (build) void openBuild(build);
+    if (build) grid.querySelector(`[data-build-id="${build.id}"] .games-play-button`).click();
     else if (selected) {
-      $("games-message").hidden = false;
       $("games-message").textContent = "That game is not in the approved gallery. Browse the available games below.";
     }
   }
