@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="event/brand/shell.css">
   <link rel="stylesheet" href="event/site.css">
   <link rel="stylesheet" href="event/games.css">
-  <script type="module" src="event/play.js"></script>
+  <script type="module" src="event/play.js?v=2"></script>
 </head>
 <body class="game-full-page">
   <header class="game-full-header">
@@ -27,9 +27,7 @@
   </header>
   <main class="game-full-main">
     <p id="game-loading" class="game-full-status" role="status">Loading the game…</p>
-    <template id="game-frame-template">
-      <iframe id="game-frame" title="Student game" sandbox="allow-scripts" allow="camera 'none'; microphone 'none'" referrerpolicy="no-referrer"></iframe>
-    </template>
+    <iframe id="game-frame" title="Student game" sandbox="allow-scripts" allow="camera 'none'; microphone 'none'" referrerpolicy="no-referrer" hidden></iframe>
     <div id="game-external" class="game-full-external" hidden>
       <p>This game runs on an external website.</p>
       <a id="game-external-link" class="action primary" target="_blank" rel="noopener noreferrer">Open the original game ↗</a>

@@ -70,8 +70,11 @@ async function start() {
       $("game-external-link").href = externalUrl;
       return;
     }
-    const template = $("game-frame-template");
-    const frame = template.content.querySelector("iframe").cloneNode();
+    // Keep the empty placeholder compatible with previously cached player scripts.
+    const placeholder = $("game-frame") ?? $("game-frame-template");
+    const emptyFrame = placeholder.content?.querySelector("iframe") ?? placeholder;
+    const frame = emptyFrame.cloneNode();
+    frame.hidden = false;
     frame.title = build.title;
     frame.addEventListener("load", () => { $("game-loading").hidden = true; }, { once: true });
     if (source) {
@@ -79,7 +82,7 @@ async function start() {
     } else {
       frame.src = externalUrl;
     }
-    template.replaceWith(frame);
+    placeholder.replaceWith(frame);
   } catch {
     fail("Could not load the game. Return to the gallery and try again.");
   }
