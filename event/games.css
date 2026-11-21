@@ -76,17 +76,7 @@
 }
 @media (max-width: 48rem) { .games-join { grid-template-columns: 1fr; } }
 /* Standalone full-size game player */
-.game-full-page { min-height: 100dvh; display: flex; flex-direction: column; }
-.game-full-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; padding: .8rem clamp(1rem, 3vw, 2.5rem); border-bottom: 1px solid var(--line); background: var(--deep); }
-.game-full-title { flex: 1; min-width: 12rem; text-align: center; }
-.game-full-title h1 { font-size: clamp(1rem, 2.4vw, 1.55rem); line-height: 1.15; }
-.game-full-title p { color: var(--muted); font-size: .8rem; }
-.game-full-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
-.game-full-main { flex: 1; position: relative; display: flex; justify-content: center; align-items: center; min-height: 65dvh; background: #061a29; }
+.game-full-main { position: relative; display: grid; place-items: center; min-height: 100vh; min-height: 100dvh; background: #061a29; }
 .game-full-main iframe { display: block; width: 100%; height: 100%; position: absolute; inset: 0; border: 0; background: #081c2a; }
-.game-full-status { position: relative; z-index: 1; max-width: 36rem; text-align: center; padding: 2rem; color: var(--muted); }
-.game-full-external { text-align: center; padding: 2rem; }
-.game-full-external p { margin-bottom: 1rem; }
-.game-full-feedback { padding: .5rem 1rem; text-align: center; }
-#game-share-fallback:not([hidden]) { width: min(100% - 2rem, 45rem); margin: .5rem auto; padding: .7rem; border: 1px solid var(--line); background: var(--deep); }
-@media (max-width: 40rem) { .game-full-header { justify-content: center; } .game-full-title { order: -1; flex-basis: 100%; } }
+.game-full-status, .game-full-external { max-width: 36rem; text-align: center; padding: 2rem; color: var(--muted); }
+.game-full-status .action, .game-full-external .action { margin-top: 1rem; }
