@@ -118,6 +118,15 @@
       "description": "Flap to dodge drones and collect power-ups while your bird fires automatically.",
       "html": true,
       "preview": true
+    },
+    {
+      "id": "email--nyc-purple-night",
+      "kind": "submission",
+      "title": "NYC Purple Night",
+      "builder": "Anonymous",
+      "description": "Fly through New York at night, shoot decoys for bonus points and stop moving towers with an energy pulse.",
+      "html": true,
+      "preview": true
     }
   ]
 }
