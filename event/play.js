@@ -8,7 +8,6 @@ let currentBuild = null;
 function fail(message) {
   $("game-loading").hidden = false;
   $("game-loading").textContent = message;
-  $("game-frame").hidden = true;
 }
 
 function shareLink() {
@@ -65,20 +64,22 @@ async function start() {
     document.title = build.title + " · Flappy AI Jam";
     $("game-title").textContent = build.title;
     $("game-builder").textContent = "By " + build.builder;
-    const frame = $("game-frame");
-    frame.title = build.title;
-    frame.addEventListener("load", () => { $("game-loading").hidden = true; });
-    if (source) {
-      frame.srcdoc = standaloneGameDocument(await loadPublishedGame(source));
-      frame.hidden = false;
-    } else if (isGeminiShare(new URL(externalUrl))) {
+    if (!source && isGeminiShare(new URL(externalUrl))) {
       $("game-loading").hidden = true;
       $("game-external").hidden = false;
       $("game-external-link").href = externalUrl;
+      return;
+    }
+    const template = $("game-frame-template");
+    const frame = template.content.querySelector("iframe").cloneNode();
+    frame.title = build.title;
+    frame.addEventListener("load", () => { $("game-loading").hidden = true; }, { once: true });
+    if (source) {
+      frame.srcdoc = standaloneGameDocument(await loadPublishedGame(source));
     } else {
       frame.src = externalUrl;
-      frame.hidden = false;
     }
+    template.replaceWith(frame);
   } catch {
     fail("Could not load the game. Return to the gallery and try again.");
   }
