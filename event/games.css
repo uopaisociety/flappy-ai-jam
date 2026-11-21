@@ -6,51 +6,6 @@
 }
 .games-atmosphere::before { content: none; }
 .games-atmosphere::after { opacity: .42; }
-.games-atmosphere-glows { position: absolute; inset: 0; }
-.games-atmosphere-glows::before,
-.games-atmosphere-glows::after {
-  content: "";
-  position: absolute;
-}
-.games-atmosphere-glows::before {
-  width: clamp(24rem, 64vw, 68rem);
-  aspect-ratio: 1.36;
-  top: 8%;
-  right: -5%;
-  background: radial-gradient(ellipse at 52% 49%, #f7f5f036, #a7bfb448 23%, #66899847 43%, #66899819 57%, transparent 74%);
-  transform: rotate(-9deg) scale(1, .92);
-}
-.games-atmosphere-glows::after {
-  width: clamp(22rem, 53vw, 56rem);
-  aspect-ratio: 1.24;
-  right: 9%;
-  bottom: -26%;
-  background: radial-gradient(ellipse at 46% 48%, #a7bfb438, #287d9b59 31%, #287d9b24 55%, transparent 74%);
-  opacity: .78;
-  transform: rotate(12deg);
-}
-@media (prefers-reduced-motion: no-preference) {
-  [data-animate] .games-atmosphere-glows { animation: games-glow-sway 61s ease-in-out -20s infinite alternate; }
-  [data-animate] .games-atmosphere-glows::before { animation: games-glow-rise 39s ease-in-out -11s infinite alternate; }
-  [data-animate] .games-atmosphere-glows::after { animation: games-glow-return 53s ease-in-out -22s infinite alternate; }
-}
-@keyframes games-glow-sway {
-  from { transform: translateX(-4%); }
-  to { transform: translateX(5%); }
-}
-@keyframes games-glow-rise {
-  from { transform: translate(5%, 18%) rotate(-12deg) scale(1.08, .79); }
-  to { transform: translate(-8%, -13%) rotate(15deg) scale(.88, 1.12); }
-}
-@keyframes games-glow-return {
-  from { transform: translate(-12%, -23%) rotate(16deg) scale(.90, 1.08); opacity: .83; }
-  to { transform: translate(12%, 6%) rotate(-14deg) scale(1.14, .85); opacity: .64; }
-}
-@media (max-width: 46rem) {
-  .games-atmosphere-glows { opacity: .74; }
-  .games-atmosphere-glows::before { top: 15%; right: -28%; }
-  .games-atmosphere-glows::after { right: -13%; bottom: -10%; }
-}
 
 .games-page { padding-bottom: 4.5rem; }
 .games-header-date { color: var(--muted); font: 500 clamp(.7rem, 1.2vw, .9rem)/1.4 var(--mono); text-align: right; letter-spacing: .04em; }
