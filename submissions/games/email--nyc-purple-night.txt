@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<!--
+  FLAPPY AI JAM · University of Portsmouth AI Society
+  This whole file is the starter. Copy it into Gemini Canvas or open it in a browser.
+  Ask for one change, play a round, and keep the last working version.
+
+  FOR AI CODING AGENTS
+  Keep the game in this one HTML file with inline CSS and JavaScript.
+  Keep Space, Arrow Up, mouse and touch working, along with pause, restart and resizing.
+  Use Canvas shapes and inline styles. Avoid external images, libraries, fonts or packages.
+  Keep the labelled AI PROMPT ZONE comments and edit the working Canvas in place.
+  If you return code as text, return the complete file from <!DOCTYPE html> to </html>.
+  Keep best-score storage optional. Wrap all localStorage reads and writes in try/catch
+  so the game works inside sandboxed previews even when storage is unavailable.
+  Physics use seconds in a fixed-step loop. Never tie movement to screen refresh.
+  The default is a three-life game with a gradual difficulty ramp. Keep each gap reachable.
+  The labelled zones below show where to change artwork, physics, obstacles and scoring.
+  After editing, check the first launch, all three lives, restart and a phone-size view.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>NYC Purple Night · Flappy AI Jam</title>
+<style>
+  :root { --ink:#0E061A; --navy:#1D0E36; --cream:#F5EEFF; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--ink); color:var(--cream); color-scheme:dark;
+    font-family:Arial,sans-serif; }
+  body { height:100svh; display:flex; flex-direction:column; overflow:hidden; }
+  header, footer { display:flex; align-items:center; padding:10px 16px; flex:none; }
+  header { justify-content:space-between; border-bottom:1px solid rgba(216,180,254,.2); }
+  .brand { font-size:13px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; white-space:nowrap; }
+  .society { color:var(--cream); padding:3px; line-height:0; }
+  .society svg { width:36px; height:24px; }
+  .society:focus-visible { outline:2px solid var(--cream); outline-offset:2px; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  main { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:12px; }
+  canvas { background:#0B0418; display:block; touch-action:none; border-radius:16px;
+    outline-offset:4px; border:1px solid rgba(216,180,254,.36); box-shadow:0 18px 50px rgba(9,2,20,.65); }
+  canvas:focus-visible { outline:2px solid var(--cream); }
+  footer { gap:12px; flex-wrap:wrap; text-align:center; justify-content:center; border-top:1px solid rgba(216,180,254,.2);
+    font:11px/1.2 Arial,sans-serif; letter-spacing:.12em; opacity:.86; }
+  .fire-btn { appearance:none; border:1px solid rgba(216,180,254,.55); background:rgba(59,23,110,.7); color:var(--cream);
+    font:700 11px/1 Arial,sans-serif; letter-spacing:.1em; padding:6px 11px; border-radius:999px; cursor:pointer; }
+  .fire-btn:active { transform:scale(.96); background:rgba(126,34,206,.9); }
+  .fire-btn:focus-visible { outline:2px solid var(--cream); outline-offset:2px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Flappy AI Jam</div>
+  <a class="society" href="https://github.com/uopaisociety" target="_blank" rel="noopener noreferrer" aria-label="University of Portsmouth AI Society on GitHub (new tab)">
+    <svg viewBox="172 248 692 450" aria-hidden="true">
+      <g transform="translate(-22 0) translate(-575.84993366 -793.24494091) scale(4.2459962354)" fill="currentColor">
+        <g transform="translate(600 314) scale(1.2) translate(-600 -314)">
+          <g fill-rule="evenodd" transform="translate(175.41909833 172.66980773) scale(0.4500968704)">
+    <path transform="translate(169.0000000 187.6722702) scale(0.250000000)" d="M0.000 774.000C0.000 772.900 0.450 772.000 1.000 772.000C1.550 772.000 2.000 771.580 2.000 771.067C2.000 770.017 16.468 743.247 24.466 729.500C27.346 724.550 31.967 716.225 34.736 711.000C39.758 701.522 62.605 659.871 73.665 640.032L79.500 629.564 89.000 624.212C94.225 621.269 102.325 616.800 107.000 614.280C111.675 611.761 119.824 607.096 125.110 603.914C130.395 600.732 144.570 593.097 156.610 586.947C168.649 580.797 181.650 574.073 185.500 572.006C189.350 569.938 199.475 564.998 208.000 561.028C216.525 557.058 228.000 551.671 233.500 549.058C241.499 545.256 259.082 537.876 276.500 531.008C277.600 530.574 282.550 528.603 287.500 526.628C308.326 518.317 342.288 507.568 374.500 499.092C389.435 495.162 430.782 488.326 454.500 485.865C473.781 483.865 525.349 484.167 544.000 486.390C584.388 491.203 625.526 501.580 656.260 514.707C658.328 515.590 660.269 516.064 660.573 515.760C661.263 515.070 644.321 481.129 616.269 427.000C604.440 404.175 587.779 372.000 579.244 355.500C570.709 339.000 558.000 314.475 551.002 301.000C544.005 287.525 533.417 267.050 527.473 255.500C515.537 232.307 514.811 231.000 513.859 231.000C513.061 231.000 497.706 257.899 489.027 274.500C485.577 281.100 482.407 286.950 481.982 287.500C481.558 288.050 479.068 292.550 476.450 297.500C473.832 302.450 470.014 309.425 467.965 313.000C465.917 316.575 461.868 324.000 458.968 329.500C456.068 335.000 452.936 340.625 452.009 342.000C451.082 343.375 447.482 349.900 444.009 356.500C440.537 363.100 437.127 369.400 436.431 370.500C435.736 371.600 432.277 377.900 428.745 384.500C425.213 391.100 418.362 403.475 413.522 412.000C408.681 420.525 403.828 429.075 402.737 431.000C401.645 432.925 398.951 437.988 396.750 442.250C393.437 448.664 392.332 450.000 390.339 450.000C383.805 450.000 319.694 469.921 290.008 481.175C277.718 485.834 252.825 495.660 248.500 497.560C227.528 506.770 219.582 510.193 214.976 512.001C211.964 513.183 193.975 522.066 175.000 531.741C156.025 541.416 135.209 552.028 128.742 555.325C122.276 558.621 116.753 561.087 116.471 560.804C115.910 560.244 128.820 535.481 138.003 519.500C141.164 514.000 145.804 505.400 148.315 500.388C150.827 495.377 155.303 487.052 158.263 481.888C166.686 467.195 177.000 448.342 177.000 447.640C177.000 447.290 179.984 441.715 183.630 435.252C187.277 428.788 194.749 415.175 200.235 405.000C205.721 394.825 214.597 378.625 219.961 369.000C229.695 351.532 245.917 321.754 257.550 300.000C267.038 282.257 278.327 261.979 281.489 257.000C283.061 254.525 285.659 249.608 287.263 246.074C288.867 242.540 295.237 230.615 301.418 219.574C307.600 208.533 315.199 194.718 318.305 188.873C321.411 183.029 325.988 174.803 328.476 170.595C330.964 166.386 333.000 162.771 333.000 162.561C333.000 162.351 334.738 159.101 336.862 155.340C338.986 151.578 342.509 145.125 344.690 141.000C346.871 136.875 351.586 128.325 355.167 122.000C358.749 115.675 363.617 106.900 365.985 102.500C375.669 84.510 383.821 69.670 391.529 56.000C393.855 51.875 398.140 44.000 401.052 38.500C403.963 33.000 407.227 26.925 408.304 25.000C409.382 23.075 412.498 17.450 415.229 12.500C417.960 7.550 420.715 2.952 421.350 2.282C422.238 1.348 445.153 0.966 520.003 0.640C573.626 0.406 619.577 0.504 622.115 0.858L626.730 1.500 633.508 14.500C637.237 21.650 644.454 35.600 649.547 45.500C654.640 55.400 662.018 69.575 665.943 77.000C669.868 84.425 675.507 95.545 678.473 101.711C681.440 107.878 685.673 116.015 687.880 119.794C690.087 123.573 697.932 138.553 705.314 153.083C712.695 167.612 725.614 192.775 734.022 209.000C759.949 259.032 835.624 408.383 848.281 434.500C851.480 441.100 855.200 448.525 856.550 451.000C857.899 453.475 863.565 464.725 869.140 476.000C874.716 487.275 885.199 508.425 892.435 523.000C899.671 537.575 906.969 552.425 908.652 556.000C910.335 559.575 915.155 569.333 919.362 577.685L927.011 592.871 926.755 683.185L926.500 773.500 913.500 773.394C889.946 773.203 873.490 770.381 840.500 760.878C802.349 749.887 762.481 728.857 700.254 686.900C654.728 656.203 615.213 631.599 598.500 623.541C557.837 603.937 545.446 598.832 520.500 591.409C502.185 585.958 483.230 581.714 464.000 578.756C451.555 576.842 445.461 576.525 421.000 576.521C390.766 576.515 385.141 577.031 361.251 581.998C348.953 584.556 345.000 586.028 345.000 588.051C345.000 588.494 343.484 591.476 341.632 594.678C336.401 603.720 316.820 637.703 312.348 645.500C310.140 649.350 304.433 659.176 299.667 667.337C294.900 675.497 291.000 682.354 291.000 682.574C291.000 682.795 288.130 687.818 284.623 693.738C281.115 699.657 273.088 713.513 266.784 724.528C260.481 735.543 251.130 751.631 246.004 760.278L236.685 776.000 118.343 776.000L0.000 776.000 0.000 774.000ZM972.250 772.338C971.253 771.935 971.000 693.914 971.000 386.917L971.000 2.000 1085.500 2.000L1200.000 2.000 1200.000 387.500L1200.000 773.000 1086.750 772.921C1024.463 772.878 972.938 772.615 972.250 772.338Z"/>
+          </g>
+        </g>
+      </g>
+    </svg>
+  </a>
+  <span id="status" class="sr-only" role="status">Ready to play. Three lives.</span>
+</header>
+<main><canvas id="game" width="400" height="600" tabindex="0" role="img" aria-label="Flappy Bird game. Space, up arrow or tap to flap. F or right-click to shoot. P to pause." aria-describedby="controls">Your browser needs Canvas 2D to play this game.</canvas></main>
+<footer id="controls">
+  <span>SPACE / ↑ / TAP TO FLAP · F / RIGHT-CLICK TO SHOOT · P TO PAUSE</span>
+  <button id="shootBtn" class="fire-btn" type="button" aria-label="Fire energy pulse">FIRE PULSE [F]</button>
+</footer>
+<script>
+"use strict";
+
+// === AI PROMPT ZONE: CONFIG ===
+// Positions are pixels, speed is pixels/second, gravity is pixels/second².
+// Start with colours or one mechanic. The first gates teach the rhythm. Speed and gap difficulty then ramp over a minute.
+const W = 400, H = 600;
+const GRAVITY = 880, FLAP_STRENGTH = -285, MAX_FALL_SPEED = 400;
+const PIPE_GAP = 205, MIN_PIPE_GAP = 145, PIPE_WIDTH = 58, PIPE_SPACING = 260;
+const PIPE_SPEED = 140, MAX_PIPE_SPEED = 220, RAMP_DELAY = 8, RAMP_SECONDS = 60;
+const GROUND_H = 50, START_LIVES = 3, RECOVERY_SECONDS = 1.2, STEP = 1 / 120;
+const SHOT_SPEED = 440, SHOT_COOLDOWN = 0.28, SHOT_RADIUS = 5;
+const COLORS = {
+  skyTop:"#0B0418", skyMid:"#1E0B3B", skyHorizon:"#361563",
+  moon:"#F3E8FF", star:"#F5EEFF",
+  skylineFar:"#17092E", skylineNear:"#230E45",
+  winWarm:"#F5D0FE", winCool:"#C084FC", winGold:"#FDE68A",
+  tower:"#28114D", towerEdge:"#6D28D9", towerCap:"#3B176E", beacon:"#F43F5E",
+  towerLocked:"#1E1B4B", towerLockedEdge:"#38BDF8",
+  decoyCore:"#E879F9", decoyRing:"#FDE68A",
+  bird:"#FFC93C", beak:"#FF7A00", birdWing:"#F59E0B",
+  road:"#140926", curb:"#7E22CE", taxiLine:"#E879F9",
+  hudCard:"#15082B", hudBorder:"#C084FC", hudText:"#F5EEFF"
+};
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const statusEl = document.getElementById("status");
+const shootBtn = document.getElementById("shootBtn");
+let state = "start", bird, pipes, shots, sparks, callouts, score, lives, recovery, elapsed, nextCenter;
+let shotCooldown = 0, decoyFlash = 0, pipeCount = 0;
+let overAt = 0, best = 0, lastTime = null, accumulator = 0;
+try {
+  const stored = Number(localStorage.getItem("flappyAiJamBest"));
+  if (Number.isSafeInteger(stored) && stored > 0) best = stored;
+} catch { /* The game also works when browser storage is blocked. */ }
+
+const playArea = canvas.parentElement;
+
+function resize() {
+  const scale = Math.min((playArea.clientWidth - 24) / W, (playArea.clientHeight - 24) / H);
+  if (scale <= 0) return;
+  canvas.style.width = Math.floor(W * scale) + "px";
+  canvas.style.height = Math.floor(H * scale) + "px";
+}
+// The play area can gain height after the iframe lays out or the controls reflow.
+if (typeof ResizeObserver === "function") new ResizeObserver(resize).observe(playArea);
+else addEventListener("resize", resize);
+resize();
+
+function reset() {
+  bird = { x:100, y:285, vy:0, r:15 };
+  pipes = [];
+  shots = [];
+  sparks = [];
+  callouts = [];
+  score = elapsed = recovery = shotCooldown = decoyFlash = pipeCount = 0;
+  lives = START_LIVES;
+  nextCenter = bird.y;
+}
+
+// === AI PROMPT ZONE: PHYSICS & INPUT ===
+// Each press is one flap. Ignore a held key's repeat events.
+// A resume input leaves the current position intact. A restart creates a new run.
+function flap() {
+  if (!ctx || document.hidden) return;
+  const freshStart = state !== "playing";
+  if (state === "paused") {
+    state = "playing";
+  } else {
+    if (state === "over") {
+      if (performance.now() - overAt < 350) return;
+      reset();
+    }
+    state = "playing";
+    bird.vy = FLAP_STRENGTH;
+  }
+  if (freshStart) {
+    lastTime = performance.now();
+    accumulator = 0;
+    statusEl.textContent = "Playing. " + lives + " lives. Keep flapping.";
+  }
+}
+function shoot() {
+  if (!ctx || document.hidden || state !== "playing" || shotCooldown > 0) return;
+  shotCooldown = SHOT_COOLDOWN;
+  shots.push({
+    x: bird.x + bird.r + 6,
+    y: bird.y + 2,
+    vx: SHOT_SPEED,
+    r: SHOT_RADIUS
+  });
+  addSparks(bird.x + bird.r + 4, bird.y + 2, COLORS.winGold, 5);
+}
+function pause() {
+  if (state !== "playing") return;
+  state = "paused";
+  statusEl.textContent = "Paused. Tap or press Space to resume.";
+  lastTime = null;
+  accumulator = 0;
+}
+function updateBird(dt) {
+  bird.vy = Math.min(MAX_FALL_SPEED, bird.vy + GRAVITY * dt);
+  bird.y += bird.vy * dt;
+  // The ceiling is forgiving. The floor uses the same life/recovery rule as pipes.
+  if (bird.y < bird.r) {
+    bird.y = bird.r;
+    bird.vy = Math.max(0, bird.vy);
+  }
+  if (bird.y + bird.r > H - GROUND_H) {
+    bird.y = H - GROUND_H - bird.r;
+    bird.vy = 0;
+    loseLife();
+  }
+}
+
+// === AI PROMPT ZONE: PIPES / LEVEL ===
+// The first two gaps are centered. Later gaps move farther as the run progresses.
+// Store each new gap on its pipe. Moving skyscrapers oscillate within reachable margins.
+// Every visible pipe endcap belongs to its collision box.
+function addSparks(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.6;
+    const speed = 45 + Math.random() * 125;
+    sparks.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 0.35 + Math.random() * 0.25,
+      maxLife: 0.6,
+      color
+    });
+  }
+}
+function addCallout(x, y, text, color) {
+  callouts.push({ x, y, text, color, life: 0.75 });
+}
+function recordScore(points) {
+  score += points;
+  if (score > best) {
+    best = score;
+    try { localStorage.setItem("flappyAiJamBest", String(best)); } catch { /* Optional. */ }
+  }
+}
+function updatePipes(dt) {
+  const difficulty = Math.min(1, Math.max(0, (elapsed - RAMP_DELAY) / RAMP_SECONDS));
+  const speed = PIPE_SPEED + (MAX_PIPE_SPEED - PIPE_SPEED) * difficulty;
+  const last = pipes[pipes.length - 1];
+  if (!last || last.x <= W - PIPE_SPACING) {
+    const gap = PIPE_GAP + (MIN_PIPE_GAP - PIPE_GAP) * difficulty;
+    const drift = 55 + 30 * difficulty;
+    if (pipeCount > 1) {
+      nextCenter = Math.max(gap / 2 + 54,
+        Math.min(H - GROUND_H - gap / 2 - 54, nextCenter + (Math.random() * 2 - 1) * drift));
+    }
+    const isMoving = pipeCount >= 2 && (pipeCount % 2 === 0 || difficulty > 0.35);
+    const maxAmp = Math.min(46, 24 + 22 * difficulty);
+    const minTop = 44;
+    const maxTop = H - GROUND_H - gap - 44;
+    const baseTop = Math.max(minTop, Math.min(maxTop, nextCenter - gap / 2));
+    const safeAmp = Math.max(0, Math.min(maxAmp, baseTop - minTop, maxTop - baseTop));
+    const hasDecoy = pipeCount >= 1 && pipeCount % 2 === 1;
+    const decoyOffset = (Math.random() < 0.5 ? -1 : 1) * Math.min(26, gap * 0.18);
+    pipes.push({
+      x: last ? W : W + 100,
+      top: baseTop,
+      baseTop,
+      gap,
+      passed: false,
+      moving: isMoving && safeAmp > 6,
+      amp: isMoving ? safeAmp : 0,
+      freq: 1.55 + difficulty * 0.75,
+      phase: Math.random() * Math.PI * 2,
+      lockTimer: 0,
+      decoy: hasDecoy ? { offsetY: decoyOffset, active: true, r: 12 } : null
+    });
+    pipeCount++;
+  }
+
+  // Update energy pulses and check hits against decoys and skyscrapers
+  for (const shot of shots) {
+    shot.x += shot.vx * dt;
+    let consumed = false;
+    for (const pipe of pipes) {
+      if (pipe.decoy && pipe.decoy.active) {
+        const dx = shot.x - (pipe.x + PIPE_WIDTH / 2);
+        const dy = shot.y - (pipe.top + pipe.gap / 2 + pipe.decoy.offsetY);
+        const hitDist = shot.r + pipe.decoy.r + 3;
+        if (dx * dx + dy * dy <= hitDist * hitDist) {
+          pipe.decoy.active = false;
+          pipe.moving = false;
+          pipe.lockTimer = 2.6;
+          consumed = true;
+          recordScore(2);
+          addSparks(pipe.x + PIPE_WIDTH / 2, pipe.top + pipe.gap / 2 + pipe.decoy.offsetY, COLORS.decoyRing, 14);
+          addCallout(pipe.x + PIPE_WIDTH / 2, pipe.top + pipe.gap / 2 - 14, "+2 DECOY!", COLORS.winGold);
+          statusEl.textContent = "Decoy shattered! Plus 2 points and tower stabilized.";
+          break;
+        }
+      }
+      const inPipeX = shot.x + shot.r >= pipe.x && shot.x - shot.r <= pipe.x + PIPE_WIDTH;
+      const inTopSeg = shot.y - shot.r <= pipe.top;
+      const inBotSeg = shot.y + shot.r >= pipe.top + pipe.gap;
+      if (inPipeX && (inTopSeg || inBotSeg)) {
+        consumed = true;
+        const minTop = 40;
+        const maxTop = H - GROUND_H - pipe.gap - 40;
+        // Shift the gap toward the bird's current altitude and stabilize the tower
+        const targetTop = Math.max(minTop, Math.min(maxTop, bird.y - pipe.gap / 2));
+        pipe.top += (targetTop - pipe.top) * 0.55;
+        pipe.baseTop = pipe.top;
+        pipe.moving = false;
+        pipe.lockTimer = 2.2;
+        addSparks(shot.x, shot.y, COLORS.towerLockedEdge, 10);
+        addCallout(pipe.x + PIPE_WIDTH / 2, pipe.top + pipe.gap / 2, "SHIFTED!", COLORS.towerLockedEdge);
+        break;
+      }
+    }
+    if (consumed) shot.dead = true;
+  }
+  shots = shots.filter(s => !s.dead && s.x - s.r <= W + 12);
+
+  for (const pipe of pipes) {
+    pipe.x -= speed * dt;
+    if (pipe.lockTimer > 0) pipe.lockTimer = Math.max(0, pipe.lockTimer - dt);
+    if (pipe.moving) {
+      pipe.phase += pipe.freq * dt;
+      const minTop = 40;
+      const maxTop = H - GROUND_H - pipe.gap - 40;
+      pipe.top = Math.max(minTop, Math.min(maxTop, pipe.baseTop + Math.sin(pipe.phase) * pipe.amp));
+    }
+
+    // Passing through an unshot decoy is harmless holographic turbulence
+    if (pipe.decoy && pipe.decoy.active) {
+      const dx = bird.x - (pipe.x + PIPE_WIDTH / 2);
+      const dy = bird.y - (pipe.top + pipe.gap / 2 + pipe.decoy.offsetY);
+      const touchDist = bird.r + pipe.decoy.r;
+      if (dx * dx + dy * dy <= touchDist * touchDist) {
+        pipe.decoy.active = false;
+        decoyFlash = 0.45;
+        addSparks(bird.x, bird.y, COLORS.decoyCore, 10);
+        addCallout(bird.x, bird.y - 22, "HOLOGRAM!", COLORS.winWarm);
+      }
+    }
+
+    const overlaps = bird.x + bird.r - 3 > pipe.x && bird.x - bird.r + 3 < pipe.x + PIPE_WIDTH;
+    const outsideGap = bird.y - bird.r + 3 < pipe.top || bird.y + bird.r - 3 > pipe.top + pipe.gap;
+    if (!recovery && overlaps && outsideGap) {
+      loseLife(pipe);
+      if (state === "over") return;
+    }
+    if (!pipe.passed && pipe.x + PIPE_WIDTH < bird.x - bird.r) {
+      pipe.passed = true;
+      recordScore(1);
+    }
+  }
+  pipes = pipes.filter(pipe => pipe.x + PIPE_WIDTH > 0);
+}
+
+// === AI PROMPT ZONE: SCORE & GAME OVER ===
+// One contact costs one life. Recovery prevents overlapping obstacles taking all lives.
+// Return immediately when the last life is lost. Never score after game over.
+function loseLife(pipe) {
+  if (recovery || state !== "playing") return;
+  lives--;
+  if (!lives) {
+    state = "over";
+    overAt = performance.now();
+    statusEl.textContent = "Flight finished. Score " + score + ". Tap or press Space to try again.";
+    return;
+  }
+  recovery = RECOVERY_SECONDS;
+  const next = pipe || pipes.find(item => item.x + PIPE_WIDTH >= bird.x - bird.r);
+  bird.y = next ? next.top + next.gap / 2 : 285;
+  bird.vy = 0;
+  statusEl.textContent = lives + (lives === 1 ? " life left." : " lives left.") + " Keep flapping.";
+}
+
+// === AI PROMPT ZONE: GRAPHICS ===
+// Draw with shapes. Keep controls and the score legible over any new artwork.
+function drawSkylineTower(x, baseY, w, h, style, seed) {
+  const topY = baseY - h;
+  ctx.fillRect(x, topY, w, h);
+
+  if (style === "empire") {
+    ctx.fillRect(x + w * 0.16, topY - 22, w * 0.68, 22);
+    ctx.fillRect(x + w * 0.34, topY - 40, w * 0.32, 18);
+    ctx.fillRect(x + w * 0.48, topY - 68, 3, 28);
+  } else if (style === "chrysler") {
+    for (let tier = 0; tier < 4; tier++) {
+      const inset = tier * 5;
+      ctx.fillRect(x + inset, topY - (tier + 1) * 8, w - inset * 2, 8);
+    }
+    ctx.fillRect(x + w * 0.48, topY - 52, 2.5, 22);
+  } else if (style === "wtc") {
+    ctx.beginPath();
+    ctx.moveTo(x + 4, topY);
+    ctx.lineTo(x + w * 0.5, topY - 14);
+    ctx.lineTo(x + w - 4, topY);
+    ctx.fill();
+    ctx.fillRect(x + w * 0.48, topY - 58, 3, 44);
+  }
+
+  for (let wy = topY + 12; wy < baseY - 10; wy += 13) {
+    for (let wx = x + 6; wx < x + w - 8; wx += 9) {
+      const hash = (Math.floor(wx) * 13 + Math.floor(wy) * 7 + seed * 19) % 11;
+      if (hash < 4) {
+        ctx.fillStyle = hash === 0 ? "rgba(253, 230, 138, 0.52)" : "rgba(216, 180, 254, 0.32)";
+        ctx.fillRect(wx, wy, 4, 6);
+      }
+    }
+  }
+}
+
+function drawSkyscraperSegment(x, y, w, h, isTop, locked, moving) {
+  if (h <= 0) return;
+  // Main steel/slate tower shaft
+  ctx.fillStyle = locked ? COLORS.towerLocked : COLORS.tower;
+  ctx.fillRect(x, y, w, h);
+
+  // Architectural vertical trim
+  ctx.fillStyle = locked ? COLORS.towerLockedEdge : COLORS.towerEdge;
+  ctx.fillRect(x, y, 3, h);
+  ctx.fillRect(x + w - 3, y, 3, h);
+
+  // Illuminated office window grid (kept away from the 16px endcap)
+  const bodyTop = isTop ? y + 6 : y + 22;
+  const bodyBottom = isTop ? y + h - 22 : y + h - 6;
+  const cols = 4;
+  const padX = 8;
+  const winW = 7;
+  const winH = 9;
+  const stepX = (w - padX * 2 - winW) / (cols - 1);
+
+  for (let wy = bodyTop; wy + winH <= bodyBottom; wy += 16) {
+    for (let c = 0; c < cols; c++) {
+      const wx = x + padX + c * stepX;
+      const pattern = (Math.floor(wy / 16) * 7 + c * 5) % 9;
+      if (pattern === 0 || pattern === 4) continue;
+      ctx.fillStyle = locked
+        ? COLORS.towerLockedEdge
+        : (pattern % 4 === 0 ? COLORS.winGold : (pattern % 2 === 0 ? COLORS.winWarm : COLORS.winCool));
+      ctx.fillRect(wx, wy, winW, winH);
+    }
+  }
+
+  // 16px violet rooftop setback cap matching exact collision bounds
+  const capY = isTop ? y + h - 16 : y;
+  ctx.fillStyle = locked ? "#1D4ED8" : COLORS.towerCap;
+  ctx.fillRect(x, capY, w, 16);
+  ctx.strokeStyle = locked ? COLORS.towerLockedEdge : COLORS.winWarm;
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(x + 1, capY + 1, w - 2, 14);
+
+  // Elevator-arrow indicator on moving skyscrapers
+  if (moving && !locked) {
+    ctx.fillStyle = COLORS.winGold;
+    const arrowY = isTop ? capY + 8 : capY + 8;
+    ctx.beginPath();
+    ctx.moveTo(x + 11, arrowY - 3);
+    ctx.lineTo(x + 14, arrowY + 2);
+    ctx.lineTo(x + 8, arrowY + 2);
+    ctx.fill();
+  }
+
+  // Subtle magenta-violet aviation beacon pulse on the gap edge
+  const pulse = 0.45 + 0.55 * Math.abs(Math.sin(elapsed * 4 + x * 0.05));
+  ctx.fillStyle = locked
+    ? "rgba(56, 189, 248, " + pulse.toFixed(2) + ")"
+    : "rgba(244, 63, 94, " + pulse.toFixed(2) + ")";
+  const beaconY = isTop ? capY + 13 : capY + 3;
+  ctx.beginPath();
+  ctx.arc(x + w / 2, beaconY, 2.2, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawDecoy(x, y, r) {
+  ctx.save();
+  ctx.translate(x, y);
+  const pulse = 1 + 0.12 * Math.sin(elapsed * 8);
+  const aura = ctx.createRadialGradient(0, 0, 2, 0, 0, r * 1.9);
+  aura.addColorStop(0, "rgba(232, 121, 249, 0.55)");
+  aura.addColorStop(1, "rgba(232, 121, 249, 0)");
+  ctx.fillStyle = aura;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 1.9, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.rotate(elapsed * 2.4);
+  ctx.strokeStyle = COLORS.decoyRing;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath();
+  ctx.arc(0, 0, r * pulse, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = COLORS.decoyCore;
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.65);
+  ctx.lineTo(r * 0.65, 0);
+  ctx.lineTo(0, r * 0.65);
+  ctx.lineTo(-r * 0.65, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = COLORS.winGold;
+  ctx.beginPath();
+  ctx.arc(0, 0, 2.6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawPipes() {
+  for (const pipe of pipes) {
+    const locked = pipe.lockTimer > 0;
+    drawSkyscraperSegment(pipe.x, 0, PIPE_WIDTH, pipe.top, true, locked, pipe.moving);
+    drawSkyscraperSegment(
+      pipe.x,
+      pipe.top + pipe.gap,
+      PIPE_WIDTH,
+      H - GROUND_H - pipe.top - pipe.gap,
+      false,
+      locked,
+      pipe.moving
+    );
+    if (pipe.decoy && pipe.decoy.active) {
+      drawDecoy(pipe.x + PIPE_WIDTH / 2, pipe.top + pipe.gap / 2 + pipe.decoy.offsetY, pipe.decoy.r);
+    }
+  }
+}
+
+function drawEffects() {
+  for (const shot of shots) {
+    ctx.save();
+    const grad = ctx.createLinearGradient(shot.x - 16, shot.y, shot.x + shot.r, shot.y);
+    grad.addColorStop(0, "rgba(232, 121, 249, 0)");
+    grad.addColorStop(1, COLORS.winGold);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(shot.x - 16, shot.y);
+    ctx.lineTo(shot.x, shot.y);
+    ctx.stroke();
+
+    ctx.fillStyle = COLORS.hudText;
+    ctx.beginPath();
+    ctx.arc(shot.x, shot.y, shot.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  for (const sp of sparks) {
+    ctx.fillStyle = sp.color;
+    ctx.globalAlpha = Math.max(0, sp.life / sp.maxLife);
+    ctx.fillRect(sp.x - 2, sp.y - 2, 4, 4);
+  }
+  ctx.globalAlpha = 1;
+
+  for (const c of callouts) {
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, c.life * 1.6);
+    ctx.font = "bold 13px Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(11, 4, 24, 0.9)";
+    ctx.fillText(c.text, c.x + 1, c.y + 1);
+    ctx.fillStyle = c.color;
+    ctx.fillText(c.text, c.x, c.y);
+    ctx.restore();
+  }
+}
+
+function drawBackground() {
+  // Deep NYC twilight-violet sky gradient
+  const sky = ctx.createLinearGradient(0, 0, 0, H - GROUND_H);
+  sky.addColorStop(0, COLORS.skyTop);
+  sky.addColorStop(0.55, COLORS.skyMid);
+  sky.addColorStop(1, COLORS.skyHorizon);
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  // Twinkling lavender & white stars
+  for (let i = 0; i < 34; i++) {
+    const sx = (i * 73 + 19) % W;
+    const sy = (i * 41 + 17) % 255;
+    const twinkle = 0.35 + 0.65 * Math.abs(Math.sin(elapsed * 2.1 + i * 1.7));
+    ctx.fillStyle = i % 3 === 0
+      ? "rgba(232, 121, 249, " + twinkle.toFixed(2) + ")"
+      : "rgba(245, 238, 255, " + twinkle.toFixed(2) + ")";
+    ctx.fillRect(sx, sy, i % 5 === 0 ? 2 : 1.5, i % 5 === 0 ? 2 : 1.5);
+  }
+
+  // Pale-lavender crescent moon with soft violet halo
+  const moonX = 324, moonY = 82;
+  const halo = ctx.createRadialGradient(moonX, moonY, 6, moonX, moonY, 44);
+  halo.addColorStop(0, "rgba(216, 180, 254, 0.36)");
+  halo.addColorStop(1, "rgba(216, 180, 254, 0)");
+  ctx.fillStyle = halo;
+  ctx.beginPath();
+  ctx.arc(moonX, moonY, 44, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = COLORS.moon;
+  ctx.beginPath();
+  ctx.arc(moonX, moonY, 18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = COLORS.skyMid;
+  ctx.beginPath();
+  ctx.arc(moonX + 7, moonY - 5, 15, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Parallax NYC skyline layer
+  const loopW = 560;
+  const scroll = (elapsed * 18) % loopW;
+  const skyline = [
+    { x: 10, w: 46, h: 135, style: "box", seed: 1 },
+    { x: 64, w: 54, h: 195, style: "empire", seed: 2 },
+    { x: 128, w: 42, h: 120, style: "box", seed: 3 },
+    { x: 178, w: 52, h: 175, style: "chrysler", seed: 4 },
+    { x: 240, w: 48, h: 145, style: "box", seed: 5 },
+    { x: 298, w: 56, h: 205, style: "wtc", seed: 6 },
+    { x: 364, w: 44, h: 130, style: "box", seed: 7 },
+    { x: 418, w: 58, h: 168, style: "box", seed: 8 },
+    { x: 486, w: 52, h: 150, style: "box", seed: 9 }
+  ];
+  for (let rep = 0; rep < 2; rep++) {
+    for (const b of skyline) {
+      const bx = b.x - scroll + rep * loopW;
+      if (bx > W || bx + b.w < 0) continue;
+      ctx.fillStyle = b.seed % 2 === 0 ? COLORS.skylineNear : COLORS.skylineFar;
+      drawSkylineTower(bx, H - GROUND_H, b.w, b.h, b.style, b.seed);
+    }
+  }
+}
+
+function drawBird() {
+  ctx.save();
+  ctx.translate(bird.x, bird.y);
+  ctx.rotate(Math.max(-0.4, Math.min(0.8, bird.vy / 500)));
+
+  // Subtle violet-gold night-flight aura so the bird pops against the purple skyline
+  const glow = ctx.createRadialGradient(0, 0, bird.r * 0.4, 0, 0, bird.r + 14);
+  glow.addColorStop(0, "rgba(216, 180, 254, 0.36)");
+  glow.addColorStop(1, "rgba(216, 180, 254, 0)");
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(0, 0, bird.r + 14, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (recovery) {
+    ctx.strokeStyle = COLORS.winWarm;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, bird.r + 7, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Body with crisp lavender-cream rim highlight
+  ctx.fillStyle = COLORS.bird;
+  ctx.beginPath();
+  ctx.arc(0, 0, bird.r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#F5EEFF";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Animated wing
+  const wingOffset = Math.sin(elapsed * 18) * 2.5;
+  ctx.fillStyle = COLORS.birdWing;
+  ctx.beginPath();
+  ctx.ellipse(-4, 2 + wingOffset, 7, 4.5, -0.25, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eye
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(6, -5, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#040814";
+  ctx.beginPath();
+  ctx.arc(8, -5, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Beak
+  ctx.fillStyle = COLORS.beak;
+  ctx.beginPath();
+  ctx.moveTo(12, 0);
+  ctx.lineTo(24, 4);
+  ctx.lineTo(12, 8);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawText(text, y, size, color = COLORS.hudText) {
+  ctx.save();
+  ctx.font = "bold " + size + "px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillStyle = "rgba(11, 4, 24, 0.9)";
+  ctx.fillText(String(text), W / 2 + 1.5, y + 2);
+  ctx.fillStyle = color;
+  ctx.fillText(String(text), W / 2, y);
+  ctx.restore();
+}
+
+function drawUI() {
+  // Score at top with bright lavender-white contrast
+  drawText(score, 58, 40, COLORS.hudText);
+
+  // Purple NYC avenue at night
+  const roadY = H - GROUND_H;
+  ctx.fillStyle = COLORS.road;
+  ctx.fillRect(0, roadY, W, GROUND_H);
+
+  // Neon-lavender sidewalk curb & streetlamp glow strip
+  ctx.fillStyle = COLORS.curb;
+  ctx.fillRect(0, roadY, W, 5);
+  ctx.fillStyle = "rgba(216, 180, 254, 0.28)";
+  ctx.fillRect(0, roadY + 5, W, 3);
+
+  // Scrolling magenta-orchid NYC avenue lane dashes
+  ctx.fillStyle = COLORS.taxiLine;
+  const dashStep = 56;
+  const dashOffset = (elapsed * PIPE_SPEED) % dashStep;
+  for (let x = -dashOffset; x < W; x += dashStep) {
+    ctx.fillRect(x, roadY + 11, 26, 3);
+  }
+
+  // Bottom status bar (Lives & Best)
+  drawText("Lives " + lives + " / " + START_LIVES + "   ·   Best " + best, H - 14, 15, COLORS.hudText);
+
+  if (state === "playing") return;
+
+  // High-contrast dark plum & glowing lavender modal card
+  ctx.save();
+  ctx.fillStyle = "rgba(21, 8, 43, 0.94)";
+  ctx.fillRect(24, 175, W - 48, 205);
+  ctx.strokeStyle = COLORS.hudBorder;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(24, 175, W - 48, 205);
+  ctx.strokeStyle = "rgba(245, 208, 254, 0.35)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(29, 180, W - 58, 195);
+  ctx.restore();
+
+  if (state === "start") {
+    drawText("FLAPPY AI JAM", 220, 30, COLORS.winWarm);
+    drawText("NYC Purple Night · 3 Lives", 258, 16, COLORS.winCool);
+    drawText("Space / Tap to flap · F / Right-Click to shoot", 296, 14, COLORS.hudText);
+    drawText("Shoot decoys (+2) or shift moving towers", 326, 14, COLORS.winGold);
+    drawText("It gets faster as you go", 354, 13, "rgba(245, 238, 255, 0.8)");
+  } else if (state === "paused") {
+    drawText("PAUSED", 235, 32, COLORS.winWarm);
+    drawText("Tap or press Space to resume", 305, 18, COLORS.hudText);
+  } else {
+    drawText("FLIGHT OVER", 225, 32, COLORS.winWarm);
+    drawText("Score " + score + "   ·   Best " + best, 275, 22, COLORS.winCool);
+    drawText("Tap or press Space to try again", 330, 18, COLORS.hudText);
+  }
+}
+
+// === AI PROMPT ZONE: GAME LOOP ===
+// Fixed steps make the same inputs play the same at 30, 60 and 144Hz.
+// Clamp long frames and pause on focus loss so a tab switch cannot cost a life.
+function loop(timestamp) {
+  if (lastTime !== null && state === "playing") {
+    accumulator += Math.min(0.05, Math.max(0, (timestamp - lastTime) / 1000));
+    while (accumulator + 1e-9 >= STEP && state === "playing") {
+      recovery = Math.max(0, recovery - STEP);
+      shotCooldown = Math.max(0, shotCooldown - STEP);
+      decoyFlash = Math.max(0, decoyFlash - STEP);
+      elapsed += STEP;
+      updateBird(STEP);
+      if (state === "playing") updatePipes(STEP);
+      for (const sp of sparks) {
+        sp.x += sp.vx * STEP;
+        sp.y += sp.vy * STEP;
+        sp.life -= STEP;
+      }
+      sparks = sparks.filter(sp => sp.life > 0);
+      for (const c of callouts) {
+        c.y -= 28 * STEP;
+        c.life -= STEP;
+      }
+      callouts = callouts.filter(c => c.life > 0);
+      accumulator = Math.max(0, accumulator - STEP);
+    }
+  }
+  lastTime = timestamp;
+  drawBackground(); drawPipes(); drawEffects(); drawBird(); drawUI();
+  requestAnimationFrame(loop);
+}
+addEventListener("keydown", event => {
+  if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+  if (event.target.closest?.("a, button, input, textarea, select, [contenteditable]")) return;
+  const isFlap = event.code === "Space" || event.code === "ArrowUp";
+  const isShoot = event.code === "KeyF" || event.code === "Enter" || event.code === "ShiftLeft" || event.code === "ShiftRight";
+  if (!isFlap && !isShoot && event.code !== "KeyP") return;
+  event.preventDefault();
+  if (event.repeat) return;
+  if (isFlap) flap();
+  else if (isShoot) shoot();
+  else if (state === "paused") flap();
+  else pause();
+});
+canvas.addEventListener("pointerdown", event => {
+  event.preventDefault();
+  canvas.focus({ preventScroll:true });
+  if (event.button === 2) {
+    shoot();
+    return;
+  }
+  if (event.button === 0) flap();
+});
+canvas.addEventListener("contextmenu", event => event.preventDefault());
+shootBtn.addEventListener("pointerdown", event => {
+  event.preventDefault();
+  event.stopPropagation();
+  canvas.focus({ preventScroll:true });
+  shoot();
+});
+addEventListener("blur", pause);
+document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
+reset();
+if (ctx) requestAnimationFrame(loop);
+else {
+  canvas.hidden = true;
+  statusEl.classList.remove("sr-only");
+  statusEl.textContent = "This browser cannot draw the game. Try another browser.";
+}
+</script>
+</body>
+</html>
