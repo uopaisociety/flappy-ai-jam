@@ -174,6 +174,6 @@ Future event pages can import `event/brand/shell.css` for the join-page header a
 
 University of Portsmouth AI Society. Free to join, for every course and every level.
 
-[GitHub](https://github.com/uopaisociety) · [Instagram](https://instagram.com/uopaisociety) · [X](https://x.com/uopaisociety) · [Luma](https://luma.com/uopaisociety) · [LinkedIn](https://linkedin.com/company/aisocietyuop) · [aisociety@upsu.net](mailto:aisociety@upsu.net)
+[GitHub](https://github.com/uopaisociety) · [Instagram](https://instagram.com/uopaisociety) · [X](https://x.com/uopaisociety) · [Luma](https://luma.com/uopaisociety) · [LinkedIn](https://www.linkedin.com/company/uopaisociety/) · [aisociety@upsu.net](mailto:aisociety@upsu.net)
 
 If you post your game, tag @uopaisociety.
