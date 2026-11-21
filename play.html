@@ -10,31 +10,24 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@700;800&family=JetBrains+Mono:wght@500&display=swap">
   <link rel="stylesheet" href="event/brand/shell.css">
   <link rel="stylesheet" href="event/site.css">
-  <link rel="stylesheet" href="event/games.css">
-  <script type="module" src="event/play.js?v=2"></script>
+  <link rel="stylesheet" href="event/games.css?v=3">
+  <script type="module" src="event/play.js?v=3"></script>
 </head>
-<body class="game-full-page">
-  <header class="game-full-header">
-    <a href="games.html" class="action">← All games</a>
-    <div class="game-full-title">
-      <h1 id="game-title">Loading game…</h1>
-      <p id="game-builder"></p>
-    </div>
-    <div class="game-full-actions">
-      <button type="button" id="game-share">Share game</button>
-      <a class="action" href="https://upsu.net/groups/8F8DP/ai-society" target="_blank" rel="noopener noreferrer">Join AI Society ↗</a>
-    </div>
-  </header>
+<body>
   <main class="game-full-main">
-    <p id="game-loading" class="game-full-status" role="status">Loading the game…</p>
+    <div id="game-status" class="game-full-status">
+      <p id="game-loading" role="status"></p>
+      <a href="games.html" id="game-return" class="action" hidden>Back to all games</a>
+      <noscript>
+        <p>Enable JavaScript to play the game.</p>
+        <a href="games.html" class="action">Back to all games</a>
+      </noscript>
+    </div>
     <iframe id="game-frame" title="Student game" sandbox="allow-scripts" allow="camera 'none'; microphone 'none'" referrerpolicy="no-referrer" hidden></iframe>
     <div id="game-external" class="game-full-external" hidden>
       <p>This game runs on an external website.</p>
       <a id="game-external-link" class="action primary" target="_blank" rel="noopener noreferrer">Open the original game ↗</a>
     </div>
   </main>
-  <p id="game-share-status" class="game-full-feedback" role="status" hidden></p>
-  <input id="game-share-fallback" type="url" aria-label="Shareable game link" readonly hidden>
-  <noscript><p class="wrap message">Enable JavaScript to play the game.</p></noscript>
 </body>
 </html>
